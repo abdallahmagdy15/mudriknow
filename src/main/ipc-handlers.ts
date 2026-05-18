@@ -14,17 +14,11 @@ function findOpenCodeAuthPath(): string {
   return path.join(xdgData, "opencode", "auth.json");
 }
 
-/**
- * Mirror Mudrik's apiKey changes into OpenCode's on-disk auth.json. Env-var
- * injection is enough to make a Mudrik-spawned `opencode run` use the right
- * key, but if the user later runs `opencode` from a terminal, they'd see a
- * stale or missing entry — so we keep the file in sync.
- *
- * `key === null` clears the entry. Only touches `type: "api"` rows so any
- * OAuth credentials written by `opencode auth login` survive untouched.
- */
-function syncOpenCodeAuth(provider: string, key: string | null): void {
-  const authPath = findOpenCodeAuthPath();
+function findIsolatedOpenCodeAuthPath(workingDir: string): string {
+  return path.join(workingDir, "opencode-data", "opencode", "auth.json");
+}
+
+function updateAuthFile(authPath: string, provider: string, key: string | null): void {
   let auth: OpenCodeAuthFile = {};
   try {
     if (fs.existsSync(authPath)) {
@@ -33,12 +27,12 @@ function syncOpenCodeAuth(provider: string, key: string | null): void {
       if (parsed && typeof parsed === "object") auth = parsed as OpenCodeAuthFile;
     }
   } catch (err: any) {
-    log(`syncOpenCodeAuth: read failed (${err.message}) — starting fresh`);
+    log(`updateAuthFile: read failed (${err.message}) — starting fresh`);
   }
 
   const existing = auth[provider];
   if (existing && existing.type !== "api") {
-    log(`syncOpenCodeAuth: skipping ${provider} — entry is type=${existing.type}, not API key`);
+    log(`updateAuthFile: skipping ${provider} — entry is type=${existing.type}, not API key`);
     return;
   }
 
@@ -51,9 +45,31 @@ function syncOpenCodeAuth(provider: string, key: string | null): void {
   try {
     fs.mkdirSync(path.dirname(authPath), { recursive: true });
     fs.writeFileSync(authPath, JSON.stringify(auth, null, 2));
-    log(`syncOpenCodeAuth: ${key ? "set" : "cleared"} ${provider} in ${authPath}`);
+    log(`updateAuthFile: ${key ? "set" : "cleared"} ${provider} in ${authPath}`);
   } catch (err: any) {
-    log(`syncOpenCodeAuth: write failed (${err.message}) — env-var injection still works for Mudrik-spawned runs`);
+    log(`updateAuthFile: write failed (${err.message})`);
+  }
+}
+
+/**
+ * Mirror Mudrik's apiKey changes into OpenCode's on-disk auth.json. Env-var
+ * injection is enough to make a Mudrik-spawned `opencode run` use the right
+ * key, but if the user later runs `opencode` from a terminal, they'd see a
+ * stale or missing entry — so we keep the file in sync.
+ *
+ * `key === null` clears the entry. Only touches `type: "api"` rows so any
+ * OAuth credentials written by `opencode auth login` survive untouched.
+ *
+ * Writes to BOTH the global auth.json (for CLI usage) and the isolated
+ * auth.json (for Mudrik-spawned runs with XDG_DATA_HOME isolation).
+ */
+function syncOpenCodeAuth(provider: string, key: string | null, workingDir?: string): void {
+  const globalPath = findOpenCodeAuthPath();
+  updateAuthFile(globalPath, provider, key);
+
+  if (workingDir) {
+    const isolatedPath = findIsolatedOpenCodeAuthPath(workingDir);
+    updateAuthFile(isolatedPath, provider, key);
   }
 }
 
@@ -64,7 +80,7 @@ let userStoppedCurrentResponse = false;
 import { executeAction, parseActionsFromResponse, ActionResult, setLastContextElement, validateAction, isInteractiveAction } from "./action-executor";
 import { showNotification } from "./tray";
 import { cleanupImage, captureAndOptimize } from "./vision";
-import { saveConfig, ensureIsolatedOpenCodeConfig } from "./config-store";
+import { saveConfig, ensureIsolatedOpenCodeConfig, ensureIsolatedOpenCodeDataDir } from "./config-store";
 import { spawn } from "child_process";
 import * as os from "os";
 import * as path from "path";
@@ -427,7 +443,7 @@ async function initGuideControllerIfNeeded(): Promise<void> {
           Math.round((display.bounds.x + display.bounds.width) * sf),
           Math.round((display.bounds.y + display.bounds.height) * sf),
         ).catch((e: any) => { log(`guide follow-up: screenshot failed (${e?.message || e})`); return null as string | null; });
-        const ctxPromise = ctxReader.readContextAtPoint(point.x, point.y).catch((e: any) => {
+        const ctxPromise = ctxReader.readContextAtPoint(point.x, point.y, targetHwnd).catch((e: any) => {
           log(`guide follow-up: UIA capture failed (${e?.message || e}) — falling back to cached context`);
           return null;
         });
@@ -658,13 +674,15 @@ export function registerIpcHandlers(
   // (Playwright, zai-mcp-server, etc.) are invisible to Mudrik's subprocess.
   // The runtime kill-switch stays as a second layer of defense.
   const isolatedOpenCodeConfig = ensureIsolatedOpenCodeConfig(workingDir);
+  const isolatedOpenCodeDataDir = ensureIsolatedOpenCodeDataDir(workingDir);
   client = new OpenCodeClient(
     config.model || "ollama-cloud/gemini-3-flash-preview",
     workingDir,
     config.apiKeys,
     isolatedOpenCodeConfig,
+    isolatedOpenCodeDataDir,
   );
-  log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(config.apiKeys || {}).length}, isolatedConfig=${isolatedOpenCodeConfig}`);
+  log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(config.apiKeys || {}).length}, isolatedConfig=${isolatedOpenCodeConfig}, isolatedData=${isolatedOpenCodeDataDir}`);
 
   ipcMain.on(IPC.DISMISS, () => {
     log("DISMISS received");
@@ -697,7 +715,8 @@ export function registerIpcHandlers(
     Object.assign(config, newConfig, { recentModels: config.recentModels });
     if (newConfig.workingDir) {
       const isolated = ensureIsolatedOpenCodeConfig(config.workingDir);
-      client = new OpenCodeClient(config.model, config.workingDir, config.apiKeys, isolated);
+      const isolatedData = ensureIsolatedOpenCodeDataDir(config.workingDir);
+      client = new OpenCodeClient(config.model, config.workingDir, config.apiKeys, isolated, isolatedData);
     }
     // If keys changed without a full client rebuild, propagate the new map.
     if (newConfig.apiKeys) {
@@ -783,7 +802,7 @@ export function registerIpcHandlers(
     saveConfig(config);
     // Mirror into OpenCode's auth.json so a plain `opencode` invocation from
     // a terminal sees the same credentials Mudrik uses internally.
-    syncOpenCodeAuth(normalized, trimmed || null);
+    syncOpenCodeAuth(normalized, trimmed || null, config.workingDir);
     log(`SAVE_API_KEY: provider=${provider} (${trimmed ? "set" : "cleared"}), total providers=${Object.keys(map).length}`);
     return { ok: true };
   });
@@ -819,7 +838,7 @@ export function registerIpcHandlers(
       delete nextKeys[removedProvider];
       config.apiKeys = nextKeys;
       client.updateApiKeys(nextKeys);
-      syncOpenCodeAuth(removedProvider, null);
+      syncOpenCodeAuth(removedProvider, null, config.workingDir);
       log(`REMOVE_MODEL: cleared API key for provider=${removedProvider} (no remaining models use it)`);
     }
     saveConfig(config);
@@ -1407,7 +1426,15 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       });
       const sessions = JSON.parse(listRaw);
       if (!Array.isArray(sessions) || sessions.length === 0) { log("restoreSession: no sessions"); return null; }
-      const sessionId = sessions[0].id;
+      // Filter to sessions created from Mudrik's working directory. Without
+      // this we restore the most recent GLOBAL OpenCode session — which may
+      // belong to a CLI run in the user's home dir and leak unrelated
+      // conversation history into Mudrik's chat.
+      const ourSessions = sessions
+        .filter((s: any) => s.directory === cwd)
+        .sort((a: any, b: any) => b.created - a.created);
+      if (ourSessions.length === 0) { log(`restoreSession: no sessions for directory ${cwd}`); return null; }
+      const sessionId = ourSessions[0].id;
       log(`restoreSession: latest=${sessionId.slice(0, 30)}`);
       const exportRaw = await new Promise<string>((res, rej) => {
         execFile("node", [opencodeBin, "export", sessionId], { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 5*1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
@@ -1422,11 +1449,35 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         const texts: string[] = [];
         for (const p of msg.parts) { if (p.type === "text" && p.text) texts.push(p.text); }
         if (texts.length === 0) continue;
-        const role = msg.info?.role || "user";
-        let content = texts.join("\n");
+        // OpenCode export format: msg.info.role. When missing, infer from
+        // content shape rather than blindly defaulting to "user" — that
+        // causes assistant responses to be parsed with the user regex,
+        // which fails and exposes raw model output.
+        let role = msg.info?.role;
+        const rawContent = texts.join("\n");
+        if (!role) {
+          role = rawContent.includes("--- USER MESSAGE ---") ? "user" : "assistant";
+        }
+        if (role === "system") continue; // never replay system prompts
+        let content = rawContent;
         if (role === "user") {
-          const msgMatch = content.match(/--- USER MESSAGE ---\n([\s\S]*?)\n--- END MESSAGE ---/);
-          if (msgMatch) content = msgMatch[1].trim();
+          // Tolerate CRLF from Windows-hosted OpenCode exports.
+          const msgMatch = content.match(/--- USER MESSAGE ---\r?\n([\s\S]*?)\r?\n--- END MESSAGE ---/);
+          if (msgMatch) {
+            content = msgMatch[1].trim();
+          } else {
+            // Fallback: if the content looks like a full prompt (contains
+            // the system/context wrapper), extract the last user message
+            // block — better than showing the entire prompt.
+            const lastUserIdx = content.lastIndexOf("--- USER MESSAGE ---");
+            const lastEndIdx = content.lastIndexOf("--- END MESSAGE ---");
+            if (lastUserIdx !== -1 && lastEndIdx !== -1 && lastEndIdx > lastUserIdx) {
+              content = content.slice(lastUserIdx + "--- USER MESSAGE ---".length, lastEndIdx).trim();
+              log(`restoreSession: regex missed but fallback extraction succeeded (${content.length} chars)`);
+            } else {
+              log(`restoreSession: user message extraction failed — preserving raw content (${content.length} chars)`);
+            }
+          }
         } else {
           content = cleanAssistantContent(content);
         }

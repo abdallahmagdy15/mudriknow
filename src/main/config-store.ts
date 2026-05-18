@@ -114,6 +114,37 @@ export function ensureIsolatedOpenCodeConfig(workingDir: string): string {
 }
 
 /**
+ * Provision an isolated XDG_DATA_HOME for OpenCode so session history,
+ * exports, and any on-disk state live under Mudrik's own directory
+ * (%APPDATA%/mudrik/opencode-data/) instead of the global shared
+ * `~/.local/share/opencode/`. Without this, `opencode session list` sees
+ * every session the user ever created with the CLI tool itself — Mudrik
+ * restores the wrong conversation and cleanupOldSessions can accidentally
+ * delete non-Mudrik sessions.
+ */
+export function ensureIsolatedOpenCodeDataDir(workingDir: string): string {
+  const xdgDataHome = path.join(workingDir, "opencode-data");
+  try {
+    fs.mkdirSync(xdgDataHome, { recursive: true });
+    // Seed the isolated auth.json from the global one so Mudrik-spawned
+    // OpenCode processes (which read auth via XDG_DATA_HOME) can authenticate
+    // against providers like ollama-cloud. Without this, the isolated dir's
+    // auth.json is empty and no provider models are visible.
+    const globalAuthPath = path.join(os.homedir(), ".local", "share", "opencode", "auth.json");
+    const isolatedAuthPath = path.join(xdgDataHome, "opencode", "auth.json");
+    if (fs.existsSync(globalAuthPath) && !fs.existsSync(isolatedAuthPath)) {
+      fs.mkdirSync(path.dirname(isolatedAuthPath), { recursive: true });
+      fs.copyFileSync(globalAuthPath, isolatedAuthPath);
+      log(`Synced global auth.json into isolated data dir: ${isolatedAuthPath}`);
+    }
+    log(`isolated opencode data dir provisioned at ${xdgDataHome} (XDG_DATA_HOME=${xdgDataHome})`);
+  } catch (e: any) {
+    log(`ensureIsolatedOpenCodeDataDir FAILED (non-fatal): ${e.message}`);
+  }
+  return xdgDataHome;
+}
+
+/**
  * Persisted config lives at `<userData>/config.json`. Writes are atomic
  * (write to `.tmp`, then rename) so a crash mid-write can't leave a
  * corrupt file that bricks startup. Unknown fields from future versions

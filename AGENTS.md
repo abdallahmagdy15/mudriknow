@@ -2,12 +2,16 @@
 
 Compact, high-signal notes for OpenCode sessions working in this repo. For full architecture, threat model, and design specs, see [`CLAUDE.md`](CLAUDE.md).
 
+> **Behavioral guidelines:** See [`.opencode/instructions.md`](.opencode/instructions.md) for general LLM coding rules (simplicity, surgical changes, goal-driven execution, update summary format, etc.).
+
 ## Build & run
 
 - `npm run build` — webpack bundles into `dist/`. **Required before launch** because `package.json > main` is `dist/main.js`.
 - `npm start` — build + launch (`webpack && electron .`).
 - `npm run dev` — webpack watch mode. Re-run `electron .` manually to pick up main/preload changes; renderer changes hot-reload on window reload.
 - `npm test` — vitest, `src/**/*.test.ts` only. No linter or formatter is configured.
+- `npm run pack:dir` — unsigned unpackaged build (`release/win-unpacked/`). Faster than `dist` for manual QA.
+- `npx tsc --noEmit` — standalone typecheck. CI runs this **before** `npm run build`.
 
 ## Architecture (the non-obvious parts)
 
@@ -21,6 +25,10 @@ Compact, high-signal notes for OpenCode sessions working in this repo. For full 
   Plus: guide-overlay preload/renderer, calibrate preload/renderer.
 - **`@shared/*` alias** maps to `src/shared/*`. The single source of truth for IPC event names, `ContextPayload`, `Action`, and `Config` types lives in `src/shared/types.ts`. When adding an IPC channel, add the name to the `IPC` object there, wire it in `src/preload.ts`, and handle it in `src/main/ipc-handlers.ts`.
 - **`robotjs` and `koffi` are externals** in the main bundle (native modules).
+- **`tsconfig.json` has `strict: true`** — typecheck failures are blocking in CI.
+- **`postinstall` auto-prunes** cross-platform native binaries (`linux/`, `mac/` under `app-builder-bin` and `7zip-bin`). Do not remove `scripts/prune-platform-bins.js` from `package.json`.
+- **Tests run in `node` environment** (`vitest.config.ts`) — there are no DOM or renderer-process tests.
+- **electron-builder outputs to `release/`** (`electron-builder.yml > directories.output`). `asarUnpack` unpacks `robotjs` because its `.node` must load from a real disk path.
 
 ## Security & sandbox (never weaken accidentally)
 
