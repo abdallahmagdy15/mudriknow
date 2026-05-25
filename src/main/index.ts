@@ -392,64 +392,7 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
   // Start UIA immediately. Target HWND is locked — panel visible/not doesn't matter.
   const ctxPromise = readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
 
-  if (config.autoAttachImage) {
-    // Screenshot must capture CLEAN desktop (no Mudrik panel in pixels).
-    // Show loading overlay, capture, then reveal panel. UIA races independently.
-    import("./guide/guide-overlay").then(async (overlayMod) => {
-      let imagePath: string | null = null;
-      let capturedScreenWidth = 0;
-      let capturedScreenHeight = 0;
-      let capturedScaleFactor = 1;
-      try {
-        overlayMod.showOverlayLoading();
-        const { screen: electronScreen } = require("electron") as typeof import("electron");
-        const display = electronScreen.getDisplayNearestPoint(cursorPos);
-        const sf = display.scaleFactor || 1;
-        const b = display.bounds;
-        capturedScreenWidth = Math.round(b.width * sf);
-        capturedScreenHeight = Math.round(b.height * sf);
-        capturedScaleFactor = sf;
-        imagePath = await captureAndOptimize(
-          Math.round(b.x * sf), Math.round(b.y * sf),
-          Math.round((b.x + b.width) * sf), Math.round((b.y + b.height) * sf)
-        );
-      } catch (e: any) {
-        log(`auto-attach screenshot failed: ${e?.message || e}`);
-      }
-      overlayMod.hideOverlayLoading();
-      showPanelWithLoading(cursorPos);
-      // Wait for UIA, then deliver context WITH screenshot
-      ctxPromise.then((ctx) => {
-        if (myActivation !== activationSeq) {
-          if (imagePath) cleanupImage(imagePath);
-          return;
-        }
-        lastShouldAutoScreenshot = !!ctx.shouldAutoScreenshot;
-        const context: ContextPayload = { ...ctx, cursorPos };
-        if (imagePath) {
-          attachAutoScreenshot(imagePath);
-          context.hasScreenshot = true;
-          if (capturedScreenWidth > 0) {
-            const mode = ctx.shouldAutoScreenshot ? "chromium-auto" as const : "manual" as const;
-            setScreenshotMode(mode, { physicalWidth: capturedScreenWidth, physicalHeight: capturedScreenHeight, scaleFactor: capturedScaleFactor });
-          }
-        } else {
-          resetScreenshotMode();
-        }
-        setContext(context);
-        showElementHighlight(ctx.element.bounds);
-        updatePanelContext(context);
-      }).catch((err) => {
-        if (myActivation !== activationSeq) return;
-        log(`ERROR reading context: ${err.message}`);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
-        }
-      });
-    }).catch(() => {
-      showPanelWithLoading(cursorPos);
-    });
-  } else {
+  {
     showPanelWithLoading(cursorPos);
     ctxPromise.then(async (ctx) => {
       if (myActivation !== activationSeq) return;

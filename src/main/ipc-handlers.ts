@@ -198,8 +198,7 @@ export function getLastContext(): ContextPayload | null {
 }
 
 /**
- * Attach an auto-captured screenshot to the current pointer context.
- * Called from the main hotkey flow when `autoAttachImage` is enabled.
+ * Attach a screenshot to the current pointer context.
  * Sets the imagePath on currentContext + arms the `attachScreenshotNext`
  * flag so the next SEND_PROMPT includes the image.
  */

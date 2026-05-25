@@ -156,8 +156,6 @@ export interface Config {
   fontSize: number;
   /** When true, restores previous chat history on panel popup. When false, always starts fresh. */
   restoreSessionOnActivate: boolean;
-  /** When true, automatically captures and attaches a full-screen screenshot on Alt+Space (pointer) activation. Area selection always includes its screenshot regardless. */
-  autoAttachImage: boolean;
   /** When true, enables Auto-Guide mode (step-by-step walkthroughs of
    *  multi-step tasks). Adds ~700 tokens to every system prompt — opt-in
    *  to keep prompts lean. Lazy-loads the guide module on first use. */
@@ -180,7 +178,6 @@ export const DEFAULT_CONFIG: Config = {
   lang: "en",
   fontSize: 14,
   restoreSessionOnActivate: true,
-  autoAttachImage: false,
   autoGuideEnabled: false,
 };
 

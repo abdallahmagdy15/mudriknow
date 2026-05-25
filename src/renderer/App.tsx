@@ -172,7 +172,6 @@ export function App() {
   }, [settingsOpen]);
   const [fontSize, setFontSize] = useState(14);
   const [restoreSessionOnActivate, setRestoreSessionOnActivate] = useState(true);
-  const [autoAttachImage, setAutoAttachImage] = useState(false);
   const [autoGuideEnabled, setAutoGuideEnabled] = useState(false);
   const [guideState, setGuideState] = useState<any | null>(null);
   // Mirror guideState into a ref so the main mount-effect's closures
@@ -370,7 +369,6 @@ if (!data?.hasImage) {
         setRestoreSessionOnActivate(cfg.restoreSessionOnActivate);
         restoreSessionRef.current = cfg.restoreSessionOnActivate;
       }
-      if (cfg?.autoAttachImage !== undefined) setAutoAttachImage(cfg.autoAttachImage);
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
       configLoadedRef.current = true;
     });
@@ -538,12 +536,6 @@ if (!data?.hasImage) {
     restoreSessionRef.current = newVal;
     window.hoverbuddy.setConfig({ restoreSessionOnActivate: newVal });
   }, [restoreSessionOnActivate]);
-
-  const handleToggleAutoAttachImage = useCallback(() => {
-    const newVal = !autoAttachImage;
-    setAutoAttachImage(newVal);
-    window.hoverbuddy.setConfig({ autoAttachImage: newVal });
-  }, [autoAttachImage]);
 
   const handleToggleAutoGuideEnabled = useCallback(() => {
     const newVal = !autoGuideEnabled;
@@ -943,12 +935,6 @@ if (!data?.hasImage) {
                   <label className="settings-toggle">
                     <span>{t("restoreChatOnPopup")}</span>
                     <div className={`toggle-switch ${restoreSessionOnActivate ? "on" : ""}`} onClick={handleToggleRestoreSession}>
-                      <div className="toggle-knob" />
-                    </div>
-                  </label>
-                  <label className="settings-toggle" title={t("autoAttachImageHint")}>
-                    <span>{t("autoAttachImage")}</span>
-                    <div className={`toggle-switch ${autoAttachImage ? "on" : ""}`} onClick={handleToggleAutoAttachImage}>
                       <div className="toggle-knob" />
                     </div>
                   </label>
