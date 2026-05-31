@@ -738,7 +738,14 @@ if (!data?.hasImage) {
           </button>
         </div>
         {settingsOpen && (
-          <div className="settings-dropdown">
+          <div className="settings-panel">
+            <div className="settings-panel-header">
+              <button className="settings-back" onClick={() => setSettingsOpen(false)} title="Back">
+                <i className="fa-solid fa-arrow-left"></i>
+              </button>
+              <span className="settings-panel-title">Settings</span>
+            </div>
+            <div className="settings-panel-body">
             <div className={`settings-section ${openSections.model ? "open" : "closed"}`}>
               <button
                 type="button"
@@ -779,7 +786,7 @@ if (!data?.hasImage) {
                           title={`Remove ${m} from recent models`}
                           aria-label={`Remove ${m}`}
                         >
-                          ×
+                          <i className="fa-solid fa-xmark"></i>
                         </button>
                       )}
                     </div>
@@ -976,6 +983,7 @@ if (!data?.hasImage) {
                 </div>
               )}
             </div>
+            </div>
           </div>
         )}
       </div>
@@ -983,11 +991,11 @@ if (!data?.hasImage) {
            internally but the UI doesn't need to show the raw element data. */}
       {!screenshotAttached ? (
         <button className="btn-attach-screenshot" onClick={handleAttachScreenshot} disabled={streaming}>
-          <i className="fa-solid fa-image"></i> {t("attachScreenshot")}
+          {t("attachScreenshot")}
         </button>
       ) : (
         <div className="screenshot-badge">
-          <i className="fa-solid fa-image"></i> {t("screenshotAttached")}
+          {t("screenshotAttached")}
           <button className="screenshot-badge-x" onClick={handleRemoveScreenshot} title={t("removeScreenshot")}><i className="fa-solid fa-xmark"></i></button>
         </div>
       )}
@@ -1017,7 +1025,7 @@ if (!data?.hasImage) {
         )}
         {messages.map((msg, i) => (
           <div key={i} className={`message message-${msg.role}`}>
-            <div className="message-role">{msg.role === "user" ? t("you") : t("assistant")}{msg.screenshotAttached ? "  " : ""}{msg.screenshotAttached && <i className="fa-solid fa-image" style={{ fontSize: 10 }}></i>}</div>
+            <div className="message-role">{msg.role === "user" ? t("you") : "Mudrik"}</div>
             <pre className="message-content">{renderSegments(msg.content, `m${i}`)}</pre>
             {streaming && !currentResponse && msg.role === "user" && i === messages.length - 1 && (
               <div className="loading-bar-container">
@@ -1030,13 +1038,13 @@ if (!data?.hasImage) {
         ))}
         {currentResponse && (
           <div className="message message-assistant">
-            <div className="message-role">{t("assistant")}</div>
+            <div className="message-role">Mudrik</div>
             <pre className="message-content">{renderSegments(currentResponse, "streaming")}</pre>
             {streaming && <span className="cursor-blink">|</span>}
             {streaming && <button className="btn-stop-inline" onClick={handleStopResponse}>{t("stop")}</button>}
           </div>
         )}
-        {actionResults.map((ar, i) => (
+        {actionResults.filter(ar => !ar.action.type.startsWith('guide_')).map((ar, i) => (
           <div key={`action-${i}`} className={`action-result ${ar.result.success ? "action-success" : "action-failed"}`}>
             <span className="action-result-label">{ar.action.type}{ar.action.selector ? `: ${ar.action.selector}` : ""}</span>
             <span className="action-result-status">{ar.result.success ? "OK" : "FAIL"}</span>

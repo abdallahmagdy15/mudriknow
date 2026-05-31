@@ -12,6 +12,17 @@
   --beak: #F2A93A;
   --ink: #0C2530;
 
+  /* Primary (Orange) & Secondary (Blue) Color System */
+  --primary: #F2A93A;
+  --primary-light: #F2C94C;
+  --primary-faded: rgba(242, 169, 58, 0.15);
+  --primary-glow: rgba(242, 169, 58, 0.25);
+  --secondary: #7499C2;
+  --secondary-light: #9DB8D6;
+  --secondary-deep: #4F7399;
+  --secondary-faded: rgba(116, 153, 194, 0.12);
+  --secondary-glow: rgba(116, 153, 194, 0.2);
+
   /* Light Theme (default) */
   --bg-page: #141a24;
   --bg-panel: #f0f4f8;

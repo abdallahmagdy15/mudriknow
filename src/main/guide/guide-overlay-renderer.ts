@@ -234,7 +234,12 @@ bubble.addEventListener("mouseenter", () => {
 
 bubble.addEventListener("mouseleave", () => {
   startInactivityTimer();
-  window.guideOverlay?.setIgnoreMouseEvents(true);
+  // Small delay to prevent flickering when moving between bubble elements
+  setTimeout(() => {
+    if (!bubble.matches(':hover')) {
+      window.guideOverlay?.setIgnoreMouseEvents(true);
+    }
+  }, 50);
 });
 
 // Track owl position for bubble positioning

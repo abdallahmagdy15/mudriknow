@@ -169,22 +169,156 @@ body {
 }
 
 /* ── Settings ── */
-.settings-dropdown {
+.settings-panel {
   position: absolute;
-  top: 100%;
-  right: 8px;
-  margin-top: 6px;
+  inset: 0;
   background: var(--bg-overlay);
-  border: 1px solid var(--border-bright);
   border-radius: var(--radius);
-  padding: 10px 12px;
   z-index: 100;
-  min-width: 260px;
-  max-height: calc(100vh - 76px);
-  overflow-y: auto;
-  box-shadow: 0 16px 48px rgba(6, 14, 24, 0.55);
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  animation: overlayIn 0.25s var(--ease-out);
   -webkit-app-region: no-drag;
-  animation: overlayIn 0.2s var(--ease-out);
+  overflow: hidden;
+}
+
+.settings-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 12px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.settings-back {
+  background: none;
+  border: none;
+  color: var(--text-subtle);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s var(--ease-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-back:hover {
+  background: rgba(116, 153, 194, 0.08);
+  color: var(--text);
+}
+
+.settings-panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.settings-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.settings-section.closed {
+  padding-bottom: 0;
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: inherit;
+  font-size: 13px;
+  transition: background 0.15s var(--ease-out);
+}
+
+.settings-section-header:hover {
+  background: rgba(116, 153, 194, 0.04);
+}
+
+.settings-section-header .settings-label {
+  margin-bottom: 0;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-section-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.settings-section-meta {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-ghost);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "JetBrains Mono", "Segoe UI Mono", Consolas, monospace;
+}
+
+.settings-chevron {
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: transform 0.15s var(--ease-out);
+  flex-shrink: 0;
+  width: 16px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.settings-chevron.open {
+  transform: rotate(180deg);
+}
+
+.settings-section-body {
+  padding: 0 12px 12px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s var(--ease-out), opacity 0.2s var(--ease-out);
+}
+
+.settings-section-body.open {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.settings-section-body:not(.open) {
+  animation: sectionSlide 0.15s var(--ease-out);
+  max-height: none;
+  opacity: 1;
+  padding-bottom: 10px;
 }
 
 .settings-section {
@@ -900,11 +1034,15 @@ body {
 
 .message-user {
   background: var(--bg-elevated);
-  border: 1px solid rgba(116, 153, 194, 0.12);
+  border: 1px solid var(--primary-faded);
+}
+
+.message-user .message-content {
+  color: var(--primary);
 }
 
 .message-assistant {
-  background: rgba(116, 153, 194, 0.06);
+  background: var(--secondary-faded);
   border: 1px solid rgba(116, 153, 194, 0.10);
 }
 
@@ -915,6 +1053,10 @@ body {
   letter-spacing: 0.12em;
   color: var(--text-muted);
   margin-bottom: 6px;
+}
+
+.message-user .message-role {
+  color: var(--primary);
 }
 
 .message-content {
@@ -1082,20 +1224,20 @@ body {
   justify-content: center;
   padding: 0;
   border-radius: 6px;
-  background: linear-gradient(135deg, var(--cyan-deep), var(--cyan));
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
   border: none;
   cursor: pointer;
   transition: all 0.15s var(--ease-out);
   flex-shrink: 0;
   align-self: flex-end;
-  box-shadow: 0 2px 8px rgba(116, 153, 194, 0.2);
+  box-shadow: 0 2px 8px var(--primary-glow);
 }
 
 .btn-send:hover:not(:disabled) {
   filter: brightness(1.15);
   transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 4px 16px rgba(116, 153, 194, 0.35);
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 
 .btn-send:active:not(:disabled) {
@@ -1263,14 +1405,15 @@ body {
 }
 
 .option-btn.primary {
-  background: linear-gradient(135deg, var(--cyan-deep), var(--cyan));
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
+  box-shadow: 0 2px 8px var(--primary-glow);
 }
 
 .option-btn.primary:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(116, 153, 194, 0.3);
+  box-shadow: 0 4px 12px var(--primary-glow);
 }
 
 .option-btn.primary:active {
@@ -1295,9 +1438,9 @@ body {
 }
 
 .option-btn.ghost:hover {
-  color: var(--text-subtle);
-  border-color: var(--border-bright);
-  background: rgba(116, 153, 194, 0.04);
+  color: var(--secondary);
+  border-color: var(--secondary-light);
+  background: var(--secondary-faded);
 }
 
 .option-btn:active {
