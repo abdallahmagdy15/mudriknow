@@ -302,22 +302,7 @@ body {
 
 .settings-section-body {
   padding: 0 12px 12px;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s var(--ease-out), opacity 0.2s var(--ease-out);
-}
-
-.settings-section-body.open {
-  max-height: 500px;
-  opacity: 1;
-}
-
-.settings-section-body:not(.open) {
-  animation: sectionSlide 0.15s var(--ease-out);
-  max-height: none;
-  opacity: 1;
-  padding-bottom: 10px;
+  animation: sectionSlide 0.15s ease;
 }
 
 .settings-section {
