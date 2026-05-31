@@ -386,16 +386,7 @@ async function initGuideControllerIfNeeded(): Promise<void> {
     sendFollowUp: async (actionDesc) => {
       const win = getPanelWindow();
       if (!win) return;
-      // CRITICAL: hide Mudrik's panel BEFORE the screenshot AND UIA tree
-      // capture. Both reads must happen with the panel out of the way:
-      // - Screenshot: otherwise the panel's pixels are baked into the image
-      //   and the AI's vision can't see the underlying app properly.
-      // - UIA tree: otherwise GetForegroundWindow returns Mudrik's HWND and
-      //   the candidates list is Mudrik's own buttons (Settings, Close, etc)
-      //   instead of the target app's clickables — every previous follow-up
-      //   logged "Active window: Mudrik" because of this. With panel hidden,
-      //   focus reverts to the app the user was being guided through, and
-      //   UIA reads the right tree.
+      // Keep panel visible during thinking — only hide briefly during screenshot
       const { screen: electronScreen } = require("electron") as typeof import("electron");
       // CRITICAL: use the display where the user's app actually is, NOT
       // getPrimaryDisplay(). On multi-monitor setups the app may be on
@@ -422,21 +413,16 @@ async function initGuideControllerIfNeeded(): Promise<void> {
       const ph = Math.round(display.bounds.height * sf);
       log(`guide follow-up: capture display="${display.label}" bounds=${display.bounds.width}x${display.bounds.height} logical, ${pw}x${ph} physical @${sf}x, cursor=(${cursor.x},${cursor.y})`);
 
-        let imagePath: string | null = null;
+      let imagePath: string | null = null;
       let fresh: Awaited<ReturnType<typeof import("./context-reader").readContextAtPoint>> | null = null;
       try {
         const visionMod = await import("./vision");
         const ctxReader = await import("./context-reader");
-        const wasVisible = win.isVisible();
-        if (wasVisible) {
-          try { win.blur(); } catch { /* best-effort */ }
-          win.hide();
-        }
-        // Always restore the user's app to foreground before capture. If the
-        // panel was already hidden (pre-hide on mousedown, or guide controller
-        // auto-hide), the current foreground may be the wrong window — Windows'
-        // default Z-order transitions are unreliable after hide().
         const targetHwnd = currentContext?.windowInfo?.hwnd || 0;
+        
+        // Only hide panel during actual screenshot capture, keep it visible otherwise
+        const wasVisible = win.isVisible();
+        
         if (targetHwnd) {
           try {
             const { setForegroundHwnd, getActiveHwnd } = await import("./guide/active-window");
@@ -459,21 +445,19 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         } else {
           await new Promise((r) => setTimeout(r, 350));
         }
-        // Show a semi-transparent loading indicator on the overlay window
-        // (always-on-top, click-through, fullscreen transparent) so the
-        // user sees progress during the 1-4 second capture gap. The panel
-        // stays hidden — otherwise it would appear in the screenshot and
-        // UIA would read Mudrik's own tree instead of the target app.
-        overlayMod.showOverlayLoading();
+        
+        // Hide panel only for the screenshot capture moment
+        if (wasVisible) {
+          try { win.blur(); } catch { /* best-effort */ }
+          win.hide();
+        }
+        
         const point =
           actionDesc.kind === "click"
             ? { x: actionDesc.x, y: actionDesc.y }
             : ctxReader.getCursorPos();
-        // Run screenshot + UIA in parallel. Show panel as soon as the
-        // CLEAN screenshot is captured — don't wait for UIA to finish.
-        // UIA locks onto the target HWND, so panel visibility doesn't
-        // affect its results. Panel appears with internal loading state
-        // until updatePanelContext delivers the real data.
+        
+        // Run screenshot + UIA in parallel
         const shotPromise = visionMod.captureAndOptimize(
           Math.round(display.bounds.x * sf),
           Math.round(display.bounds.y * sf),
@@ -484,18 +468,19 @@ async function initGuideControllerIfNeeded(): Promise<void> {
           log(`guide follow-up: UIA capture failed (${e?.message || e}) — falling back to cached context`);
           return null;
         });
-        // Reveal panel the moment the clean screenshot is captured
-        shotPromise.then(() => {
-          overlayMod.hideOverlayLoading();
-          if (!win.isDestroyed()) win.show();
-        });
+        
         const [shot, ctx] = await Promise.all([shotPromise, ctxPromise]);
         imagePath = shot;
         fresh = ctx;
+        
+        // Re-show panel immediately after capture
+        if (!win.isDestroyed()) win.show();
+        
         log(`guide follow-up: capture complete — screenshot=${imagePath ? "yes" : "no"} uia=${fresh ? `yes (active="${fresh.windowInfo?.title || "?"}")` : "no"}`);
       } catch (err: any) {
         log(`guide follow-up: capture path errored (${err?.message || err}) — proceeding without`);
-        overlayMod.hideOverlayLoading();
+        // Ensure panel is re-shown even on error
+        if (!win.isDestroyed()) win.show();
       }
 
       // Build prompt from the FRESH capture (panel-hidden window). Falls
@@ -638,8 +623,18 @@ async function initGuideControllerIfNeeded(): Promise<void> {
           log("guide follow-up: STOP was hit — discarding buffered guide markers");
         } else {
           const { actions } = parseActionsFromResponse(buffer);
-          for (const action of actions) {
-            if ((["guide_offer","guide_step","guide_complete","guide_abort"] as string[]).includes(action.type)) {
+          const guideTypes = new Set(["guide_offer","guide_step","guide_complete","guide_abort"]);
+          const guideActions = actions.filter((action) => guideTypes.has(action.type));
+          if (guideActions.length === 0) {
+            log("guide follow-up: AI responded but no guide markers found — session may have ended unexpectedly");
+            // If the AI didn't emit any guide markers, show the response text to the user
+            // and clear the guide state so the panel shows normally
+            const m = await import("./guide/guide-controller");
+            if (m.isControllerInitialized()) {
+              await m.getController().cancel();
+            }
+          } else {
+            for (const action of guideActions) {
               const result = await executeAction(action, {
                 actionsEnabled: appConfig.actionsEnabled,
                 autoGuideEnabled: appConfig.autoGuideEnabled,
@@ -666,13 +661,17 @@ async function initGuideControllerIfNeeded(): Promise<void> {
       }
       // Mirror caption/options to overlay bubble
       const overlayMod = require("./guide/guide-overlay") as typeof import("./guide/guide-overlay");
+      const theme = appConfig?.theme === "system"
+        ? (require("electron").nativeTheme.shouldUseDarkColors ? "dark" : "light")
+        : (appConfig?.theme || "light");
       if (state.phase === "step-active" && state.caption) {
-        const theme = appConfig?.theme === "system"
-          ? (require("electron").nativeTheme.shouldUseDarkColors ? "dark" : "light")
-          : (appConfig?.theme || "light");
         overlayMod.showBubble(state.caption, state.options || [], theme);
-      } else if (state.phase === "waiting" || state.phase === "recapturing" || state.phase === "awaiting-ai") {
-        overlayMod.fadeBubble(0.3);
+      } else if (state.phase === "waiting") {
+        overlayMod.showBubble("Waiting...", [], theme);
+      } else if (state.phase === "recapturing") {
+        overlayMod.showBubble("Capturing...", [], theme);
+      } else if (state.phase === "awaiting-ai") {
+        overlayMod.showBubble("Thinking...", [], theme);
       } else if (state.phase === "idle" || state.phase === "offer") {
         overlayMod.hideBubble();
       }

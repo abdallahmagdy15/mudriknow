@@ -334,6 +334,12 @@ export class GuideController {
     this.pendingAction = null;
     this.processing = false;
     this.deps.onStateUpdate({ phase: "idle", finalMessage: p.summary });
+    // Ensure panel is visible when guide completes
+    const { getPanelWindow } = require("../ipc-handlers");
+    const win = getPanelWindow();
+    if (win && !win.isDestroyed() && !win.isVisible()) {
+      win.show();
+    }
   }
 
   private handleAbort(p: GuideAbortPayload): void {
@@ -344,6 +350,12 @@ export class GuideController {
     this.pendingAction = null;
     this.processing = false;
     this.deps.onStateUpdate({ phase: "idle", finalMessage: p.reason });
+    // Ensure panel is visible when guide aborts
+    const { getPanelWindow } = require("../ipc-handlers");
+    const win = getPanelWindow();
+    if (win && !win.isDestroyed() && !win.isVisible()) {
+      win.show();
+    }
   }
 
   private recordPendingAction(
@@ -360,14 +372,14 @@ export class GuideController {
     const isCurrent = () => this.runGeneration === myGen && this.phase !== "idle";
     this.processing = true;
     this.clearInactivityTimer();
-    this.deps.overlay.hide();
+    // Keep overlay visible — show thinking state instead of hiding
     const waitMs = this.currentStep.waitMs;
     const action = this.pendingAction;
     this.pendingAction = null;
 
     // WAITING phase
     this.phase = "waiting";
-    this.deps.onStateUpdate({ phase: "waiting" });
+    this.deps.onStateUpdate({ phase: "waiting", caption: "Waiting...", options: [] });
     await sleep(waitMs);
     if (!isCurrent()) {
       this.processing = false;
@@ -376,11 +388,11 @@ export class GuideController {
 
     // RECAPTURING phase
     this.phase = "recapturing";
-    this.deps.onStateUpdate({ phase: "recapturing" });
+    this.deps.onStateUpdate({ phase: "recapturing", caption: "Capturing...", options: [] });
 
     // AWAITING_AI phase — send follow-up (capture + format + dispatch)
     this.phase = "awaiting-ai";
-    this.deps.onStateUpdate({ phase: "awaiting-ai" });
+    this.deps.onStateUpdate({ phase: "awaiting-ai", caption: "Thinking...", options: [] });
     try {
       await this.deps.sendFollowUp(action);
       if (!isCurrent()) {
