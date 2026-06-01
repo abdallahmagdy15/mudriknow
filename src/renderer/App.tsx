@@ -119,6 +119,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [recentChatsOpen, setRecentChatsOpen] = useState(false);
   const [recentChats, setRecentChats] = useState<{ id: string; title: string; created: number }[]>([]);
+  const [recentChatsLoading, setRecentChatsLoading] = useState(false);
   const [actionsEnabled, setActionsEnabled] = useState(true);
   const [currentModel, setCurrentModel] = useState("ollama-cloud/gemini-3-flash-preview");
   const [recentModels, setRecentModels] = useState<string[]>(["ollama-cloud/gemini-3-flash-preview"]);
@@ -532,19 +533,24 @@ if (!data?.hasImage) {
     window.hoverbuddy.dismiss();
   }, []);
 
-  const handleToggleRecentChats = useCallback(async () => {
+  const handleToggleRecentChats = useCallback(() => {
     if (guideState && guideState.phase !== "idle") return;
-    if (!recentChatsOpen) {
-      try {
-        const chats = await window.hoverbuddy.getRecentChats();
-        setRecentChats(chats);
-      } catch (e) {
-        console.log("[RENDERER] Failed to load recent chats", e);
-        setRecentChats([]);
+    setRecentChatsOpen((prev) => {
+      const opening = !prev;
+      if (opening) {
+        setRecentChatsLoading(true);
+        window.hoverbuddy.getRecentChats().then((chats) => {
+          setRecentChats(chats);
+        }).catch((e) => {
+          console.log("[RENDERER] Failed to load recent chats", e);
+          setRecentChats([]);
+        }).finally(() => {
+          setRecentChatsLoading(false);
+        });
       }
-    }
-    setRecentChatsOpen((prev) => !prev);
-  }, [recentChatsOpen, guideState]);
+      return opening;
+    });
+  }, [guideState]);
 
   const handleRestoreChat = useCallback(async (sessionId: string) => {
     console.log(`[RENDERER] Restore chat: ${sessionId.slice(0, 30)}`);
@@ -764,6 +770,9 @@ if (!data?.hasImage) {
           </span>
         </div>
         <div className="header-actions">
+          <button className="btn-icon btn-new-session" onClick={handleNewSession} title={`${t("startNewConversation")} (${t("newSession")})`}>
+            <i className="fa-solid fa-plus"></i>
+          </button>
           <button
             className="btn-icon btn-recent-chats"
             onClick={handleToggleRecentChats}
@@ -771,9 +780,6 @@ if (!data?.hasImage) {
             disabled={guideState && guideState.phase !== "idle"}
           >
             <i className="fa-solid fa-clock-rotate-left"></i>
-          </button>
-          <button className="btn-icon btn-new-session" onClick={handleNewSession} title={`${t("startNewConversation")} (${t("newSession")})`}>
-            <i className="fa-solid fa-plus"></i>
           </button>
           <button className="btn-icon btn-settings" onClick={() => setSettingsOpen(!settingsOpen)} title={t("settings")}>
             <i className="fa-solid fa-gear"></i>
@@ -792,7 +798,9 @@ if (!data?.hasImage) {
             </button>
           </div>
           <div className="recent-chats-list">
-            {recentChats.length === 0 ? (
+            {recentChatsLoading ? (
+              <div className="recent-chats-empty"><i className="fa-solid fa-circle-notch fa-spin"></i> {t("loadingHistory")}</div>
+            ) : recentChats.length === 0 ? (
               <div className="recent-chats-empty">{t("noRecentChats")}</div>
             ) : (
               recentChats.map((chat) => (
