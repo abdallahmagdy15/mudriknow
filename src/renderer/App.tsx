@@ -560,6 +560,8 @@ if (!data?.hasImage) {
     setError(null);
     setActionResults([]);
     setStreaming(false);
+    setScreenshotAttached(false);
+    lastPromptRef.current = "";
     setRestoringSession(true);
     try {
       await window.hoverbuddy.restoreSession(sessionId);

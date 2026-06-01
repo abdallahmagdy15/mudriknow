@@ -1585,7 +1585,27 @@ contextBlock += `\n--- END CONTEXT ---\n`;
               content = content.slice(lastUserIdx + "--- USER MESSAGE ---".length, lastEndIdx).trim();
               log(`restoreSession: regex missed but fallback extraction succeeded (${content.length} chars)`);
             } else {
-              log(`restoreSession: user message extraction failed — preserving raw content (${content.length} chars)`);
+              // Last resort: strip known prompt wrappers if present
+              const systemIdx = content.indexOf("--- SCREEN CONTEXT");
+              const settingIdx = content.indexOf("--- USER SETTING");
+              const msgIdx = content.indexOf("--- USER MESSAGE");
+              if (systemIdx !== -1 || settingIdx !== -1 || msgIdx !== -1) {
+                // Content contains prompt wrappers but no clear boundaries —
+                // strip everything before the last "--- USER MESSAGE ---" or
+                // after "--- END MESSAGE ---" if found.
+                const endMsgIdx = content.lastIndexOf("--- END MESSAGE ---");
+                if (endMsgIdx !== -1) {
+                  content = content.slice(0, endMsgIdx).trim();
+                  const lastUserMarker = content.lastIndexOf("--- USER MESSAGE ---");
+                  if (lastUserMarker !== -1) {
+                    content = content.slice(lastUserMarker + "--- USER MESSAGE ---".length).trim();
+                  }
+                }
+                log(`restoreSession: stripped prompt wrappers (${content.length} chars)`);
+              } else {
+                // Truly raw user message (follow-up without wrappers)
+                log(`restoreSession: follow-up message without wrappers (${content.length} chars)`);
+              }
             }
           }
         } else {
