@@ -4,7 +4,20 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-06-02
+
+### Changed
+- **Dropped XDG_DATA_HOME isolation.** Mudrik's opencode subprocesses no longer override `XDG_DATA_HOME`. Sessions, auth, and all opencode state now live at the platform default (`~/.local/share/opencode/` on Windows), the same location a standalone `opencode` CLI uses. `opencode session list` from any terminal now finds Mudrik's sessions — zero env-var setup. Old isolated data at `%APPDATA%\mudrik\opencode-data/` is auto-migrated to the default location on first launch, and the now-empty isolated dirs are cleaned up.
+- **API keys no longer mirrored to global auth.json.** The `syncOpenCodeAuth` → `writeOpenCodeAuth` rename restricts key writes to the default opencode auth store only. Keys pasted into Mudrik settings are no longer silently duplicated to the global `~/.local/share/opencode/auth.json`.
+- **Model validation errors improved.** Unknown providers and model IDs missing a `/` now produce clear, actionable error messages instead of the generic "not found" text.
+
+### Fixed
+- **Model row UI:** the edit-key button now shows a pen icon (`fa-pen`) instead of an ambiguous `×` that looked like a second delete button.
+- **Repo hygiene:** untracked `.impeccable/`, `.planning/`, and `.opencode/instructions.md` from the public repository. Moved the dev-only `oopif-diagnostic.ps1` to `scripts/diagnostics/`.
+
 ## [Unreleased]
+
+## [1.0.0] — 2026-05-01
 
 ### Changed
 - **UIA context capture rewritten** — `context-reader.ts` PowerShell script (v22→v28):
@@ -22,6 +35,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Action executor** (`action-executor-heavy.ts`):
   - `GetChildren` uses pure `TreeWalker` in both find-element (v9→v10) and UIA-action (v4→v5) scripts
 - **Calibration tool simplified** — removed multi-strategy diagnostic (desktop scan), restored single-strategy with 50 samples
+- **Auto-Guide mode** — Step-by-step walkthroughs with an owl cursor that points to each target and shows step-by-step instructions in a speech bubble. Panel hides during guide sessions. Coordinate grid overlay on screenshots.
+- **High-DPI multi-monitor support** — Pixel-perfect coordinates on any display configuration.
+- **Timestamp support** — Sessions carry creation timestamps for the recent-chats picker.
 
 ### Fixed
 - `HasDocumentElement` used invalid `[ControlTypeCondition]::Document` syntax — always threw, causing Chromium wake-up to wait full 2500ms. Fixed to use `PropertyCondition`.
@@ -80,5 +96,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
-[Unreleased]: https://github.com/abdallahmagdy15/mudrik/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/abdallahmagdy15/mudrik/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.0.0...v1.3.0
+[1.0.0]: https://github.com/abdallahmagdy15/mudrik/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/abdallahmagdy15/mudrik/releases/tag/v0.9.0
