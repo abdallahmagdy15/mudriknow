@@ -658,9 +658,11 @@ if (!data?.hasImage) {
         setAuthPromptProvider(result.provider);
         setModelValidationError(result.error || `API key required for ${result.provider}`);
       } else {
-        setModelValidationError(result.suggestions?.length
-          ? `${result.error}. Did you mean: ${result.suggestions.join(", ")}?`
-          : (result.error || t("modelNotFound")));
+        setModelValidationError(
+          result.suggestions?.length
+            ? `${result.error}\nAvailable: ${result.suggestions.join(", ")}`
+            : (result.error || t("modelNotFound")),
+        );
       }
     } catch (err: any) {
       setModelValidationError(err.message);
@@ -855,12 +857,12 @@ if (!data?.hasImage) {
                     {m === currentModel && <span className="model-check"><i className="fa-solid fa-check"></i></span>}
                     <button
                       type="button"
-                      className="model-remove"
-                      onClick={(e) => handleRemoveModel(m, e)}
-                      title={`Remove ${m} from recent models`}
-                      aria-label={`Remove ${m}`}
+                      className="model-edit-key"
+                      onClick={(e) => handleEditProviderKey(m, e)}
+                      title={`Edit API key for ${m.split("/")[0]}`}
+                      aria-label={`Edit key for ${m.split("/")[0]}`}
                     >
-                      <i className="fa-solid fa-xmark"></i>
+                      <i className="fa-solid fa-pen"></i>
                     </button>
                     {recentModels.length > 1 && (
                       <button

@@ -33,6 +33,11 @@ const KNOWN_PROVIDER_ENV_VARS: Record<string, string> = {
   ollama: "OLLAMA_API_KEY",
 };
 
+/** Names of providers Mudrik knows how to inject credentials for.
+ *  Used by the renderer to surface a friendly "unknown provider" message
+ *  when the user types a typo like `anthrop/claude-…`. */
+export const knownProviderNames: readonly string[] = Object.keys(KNOWN_PROVIDER_ENV_VARS);
+
 /** Returns the env-var name that OpenCode reads for a given provider. */
 export function envVarForProvider(provider: string): string {
   const normalized = provider.toLowerCase().trim();

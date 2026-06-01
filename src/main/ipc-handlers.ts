@@ -2,18 +2,18 @@ import { ipcMain, BrowserWindow, app } from "electron";
 import { Config, ContextPayload, IPC, Action, VisibleWindow } from "../shared/types";
 import { OpenCodeClient, OpenCodeEvent } from "./opencode-client";
 import { buildSystemPrompt } from "../shared/prompts";
-import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile } from "../shared/providers";
+import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames } from "../shared/providers";
 
 /**
- * OpenCode reads provider credentials from `<XDG_DATA_HOME>/opencode/auth.json`.
- * Mudrik spawns the CLI with `XDG_DATA_HOME=<workingDir>/opencode-data`, so
- * the auth.json we care about lives under Mudrik's APPDATA. We never write
- * to the global `~/.local/share/opencode/auth.json` — that path is reserved
- * for the user's standalone opencode CLI invocations and is bootstrapped into
- * the isolated dir once by `ensureIsolatedOpenCodeDataDir` on first launch.
+ * OpenCode reads provider credentials from `<XDG_DATA_HOME>/opencode/auth.json`,
+ * defaulting to `~/.local/share/opencode/auth.json` on Windows when no
+ * `XDG_DATA_HOME` is set. Mudrik writes to that same default path so a
+ * user's standalone `opencode auth login` / `opencode auth list` from a
+ * terminal sees the same credentials Mudrik's subprocesses use.
  */
-function findIsolatedOpenCodeAuthPath(workingDir: string): string {
-  return path.join(workingDir, "opencode-data", "opencode", "auth.json");
+function findOpenCodeAuthPath(): string {
+  const xdgData = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
+  return path.join(xdgData, "opencode", "auth.json");
 }
 
 function updateAuthFile(authPath: string, provider: string, key: string | null): void {
@@ -50,23 +50,17 @@ function updateAuthFile(authPath: string, provider: string, key: string | null):
 }
 
 /**
- * Persist Mudrik's apiKey changes into OpenCode's on-disk auth.json inside
- * Mudrik's isolated data dir. Env-var injection on the opencode spawn is
- * enough for a running session to see the new key, but writing to auth.json
- * also keeps the in-session store consistent (e.g. after a process restart
- * that re-reads auth from disk).
+ * Persist Mudrik's apiKey changes into OpenCode's on-disk auth.json at the
+ * default opencode data location. Writing to the same path a standalone
+ * `opencode` CLI uses means the credentials stay in sync between Mudrik
+ * and any CLI invocation — no separate Mudrik-only store to forget about.
  *
  * `key === null` clears the entry. Only touches `type: "api"` rows so any
  * OAuth credentials written by `opencode auth login` survive untouched.
- *
- * Writes ONLY to the isolated auth.json. The user's standalone opencode CLI
- * state at `~/.local/share/opencode/auth.json` is left alone — keys the user
- * pastes into Mudrik must not leak into the global store.
  */
-function writeIsolatedOpenCodeAuth(provider: string, key: string | null, workingDir?: string): void {
-  if (!workingDir) return;
-  const isolatedPath = findIsolatedOpenCodeAuthPath(workingDir);
-  updateAuthFile(isolatedPath, provider, key);
+function writeOpenCodeAuth(provider: string, key: string | null): void {
+  const authPath = findOpenCodeAuthPath();
+  updateAuthFile(authPath, provider, key);
 }
 
 /** True while a SEND_PROMPT cycle is in-flight. STOP_RESPONSE flips this so
@@ -76,7 +70,7 @@ let userStoppedCurrentResponse = false;
 import { executeAction, parseActionsFromResponse, ActionResult, setLastContextElement, validateAction, isInteractiveAction } from "./action-executor";
 import { showNotification } from "./tray";
 import { cleanupImage, captureAndOptimize } from "./vision";
-import { saveConfig, ensureIsolatedOpenCodeConfig, ensureIsolatedOpenCodeDataDir } from "./config-store";
+import { saveConfig, ensureIsolatedOpenCodeConfig, migrateIsolatedOpenCodeDataToDefault } from "./config-store";
 import { spawn } from "child_process";
 import * as os from "os";
 import * as path from "path";
@@ -750,15 +744,18 @@ export function registerIpcHandlers(
   // (Playwright, zai-mcp-server, etc.) are invisible to Mudrik's subprocess.
   // The runtime kill-switch stays as a second layer of defense.
   const isolatedOpenCodeConfig = ensureIsolatedOpenCodeConfig(workingDir);
-  const isolatedOpenCodeDataDir = ensureIsolatedOpenCodeDataDir(workingDir);
+  // Migrate any opencode data previous Mudrik versions stored under isolated
+  // paths (<workingDir>/opencode-data/opencode/ or <workingDir>/opencode/) to
+  // the default opencode data dir, so a `opencode session list` from a
+  // terminal finds Mudrik's sessions without any env-var setup.
+  migrateIsolatedOpenCodeDataToDefault(workingDir);
   client = new OpenCodeClient(
     config.model || "ollama-cloud/gemini-3-flash-preview",
     workingDir,
     config.apiKeys,
     isolatedOpenCodeConfig,
-    isolatedOpenCodeDataDir,
   );
-  log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(config.apiKeys || {}).length}, isolatedConfig=${isolatedOpenCodeConfig}, isolatedData=${isolatedOpenCodeDataDir}`);
+  log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(config.apiKeys || {}).length}, isolatedConfig=${isolatedOpenCodeConfig}`);
 
   ipcMain.on(IPC.DISMISS, () => {
     log("DISMISS received");
@@ -791,8 +788,8 @@ export function registerIpcHandlers(
     Object.assign(config, newConfig, { recentModels: config.recentModels });
     if (newConfig.workingDir) {
       const isolated = ensureIsolatedOpenCodeConfig(config.workingDir);
-      const isolatedData = ensureIsolatedOpenCodeDataDir(config.workingDir);
-      client = new OpenCodeClient(config.model, config.workingDir, config.apiKeys, isolated, isolatedData);
+      migrateIsolatedOpenCodeDataToDefault(config.workingDir);
+      client = new OpenCodeClient(config.model, config.workingDir, config.apiKeys, isolated);
     }
     // If keys changed without a full client rebuild, propagate the new map.
     if (newConfig.apiKeys) {
@@ -822,7 +819,6 @@ export function registerIpcHandlers(
       const { execFile } = require("child_process");
       const cwd = appConfig.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      env.XDG_DATA_HOME = path.join(cwd, "opencode-data");
       const raw = await new Promise<string>((res, rej) => {
         execFile("node", [opencodeBin, "models"], { encoding: "utf-8", timeout: 30000, cwd, env, maxBuffer: 5*1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
       });
@@ -831,23 +827,51 @@ export function registerIpcHandlers(
       if (match) {
         return { valid: true, modelId: match };
       }
-      // Miss — figure out whether it's the provider that isn't authed, vs the
-      // model name being wrong on an authed provider. `allModels` lists every
-      // model OpenCode can see right now; if NONE of them start with the same
-      // provider prefix the user typed, the provider is likely unauthenticated
-      // and the UI should offer an API-key input.
+      // Miss — classify it so the renderer can show a useful message and pick
+      // the right recovery (paste API key, or show suggestions).
       const provider = providerFromModelId(modelId);
+      const hasSlash = modelId.includes("/");
+      const known = knownProviderNames.includes(provider.toLowerCase());
       const providerHasAnyModel = allModels.some((m: string) =>
         providerFromModelId(m).toLowerCase() === provider.toLowerCase(),
       );
-      const needsAuth = !providerHasAnyModel && !!provider && provider !== modelId;
-      const suggestions = allModels.filter((m: string) => m.toLowerCase().includes(modelId.split("/").pop()!.toLowerCase())).slice(0, 5);
-      log(`VALIDATE_MODEL miss: modelId=${modelId}, provider=${provider}, needsAuth=${needsAuth}, suggestions=${suggestions.length}`);
+      const needsAuth = !providerHasAnyModel && !!provider && hasSlash;
+      log(`VALIDATE_MODEL miss: modelId=${modelId}, provider=${provider}, known=${known}, hasSlash=${hasSlash}, needsAuth=${needsAuth}`);
+
+      // Pick the most helpful error text. Order of priority:
+      //   1. No slash → "wrong format" hint, since neither auth nor model
+      //      lookup can succeed without it.
+      //   2. Unknown provider name → tell the user the provider doesn't
+      //      exist (typo? made-up?). This is more honest than "needs auth",
+      //      which would just bounce them into a dead-end key prompt.
+      //   3. Known provider, no models visible → "needs auth" prompt.
+      //   4. Provider authed, model name wrong → "model not found" plus a
+      //      list of the provider's actually-available models.
+      let error: string;
+      let suggestions: string[] = [];
+      const queryTail = modelId.split("/").pop() || "";
+      if (!hasSlash) {
+        error = `Model must be in the form "provider/model-name" (e.g. "anthropic/claude-3-5-sonnet-20241022"). Got "${modelId}".`;
+      } else if (!known) {
+        error = `Unknown provider "${provider}". Known providers: ${knownProviderNames.join(", ")}.`;
+      } else if (needsAuth) {
+        error = `Provider "${provider}" is not authenticated. Add an API key to use its models.`;
+      } else {
+        error = `Model "${modelId}" not found for provider "${provider}".`;
+        const providerModels = allModels.filter((m: string) =>
+          providerFromModelId(m).toLowerCase() === provider.toLowerCase(),
+        );
+        if (providerModels.length > 0) {
+          suggestions = providerModels.slice(0, 6);
+        } else {
+          suggestions = allModels
+            .filter((m: string) => m.toLowerCase().includes(queryTail.toLowerCase()))
+            .slice(0, 5);
+        }
+      }
       return {
         valid: false,
-        error: needsAuth
-          ? `Provider "${provider}" is not authenticated. Add an API key to use this model.`
-          : `Model "${modelId}" not found`,
+        error,
         suggestions,
         needsAuth,
         provider: needsAuth ? provider : undefined,
@@ -879,7 +903,7 @@ export function registerIpcHandlers(
     saveConfig(config);
     // Mirror into OpenCode's auth.json so a plain `opencode` invocation from
     // a terminal sees the same credentials Mudrik uses internally.
-    writeIsolatedOpenCodeAuth(normalized, trimmed || null, config.workingDir);
+    writeOpenCodeAuth(normalized, trimmed || null);
     log(`SAVE_API_KEY: provider=${provider} (${trimmed ? "set" : "cleared"}), total providers=${Object.keys(map).length}`);
     return { ok: true };
   });
@@ -915,7 +939,7 @@ export function registerIpcHandlers(
       delete nextKeys[removedProvider];
       config.apiKeys = nextKeys;
       client.updateApiKeys(nextKeys);
-      writeIsolatedOpenCodeAuth(removedProvider, null, config.workingDir);
+      writeOpenCodeAuth(removedProvider, null);
       log(`REMOVE_MODEL: cleared API key for provider=${removedProvider} (no remaining models use it)`);
     }
     saveConfig(config);
@@ -1539,7 +1563,6 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       const { execFile } = require("child_process");
       const cwd = config.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      env.XDG_DATA_HOME = path.join(cwd, "opencode-data");
       let targetSessionId: string;
       if (sessionId) {
         targetSessionId = sessionId;
@@ -1561,7 +1584,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       }
       log(`restoreSession: target=${targetSessionId.slice(0, 30)}`);
       const exportRaw = await new Promise<string>((res, rej) => {
-        execFile("node", [opencodeBin, "export", targetSessionId], { encoding: "utf-8", timeout: 15000, cwd, env: { ...env, XDG_DATA_HOME: path.join(cwd, "opencode-data") }, maxBuffer: 5*1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
+        execFile("node", [opencodeBin, "export", targetSessionId], { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 5*1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
       });
       const jsonStart = exportRaw.indexOf("{");
       if (jsonStart < 0) { log("restoreSession: no json"); return null; }
@@ -1674,7 +1697,6 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       const { execFile } = require("child_process");
       const cwd = config.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      env.XDG_DATA_HOME = path.join(cwd, "opencode-data");
       const listRaw = await new Promise<string>((res, rej) => {
         execFile("node", [opencodeBin, "session", "list", "--format", "json", "-n", "5"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
       });
@@ -1714,7 +1736,6 @@ function cleanupOldSessions(): void {
   const { execFile } = require("child_process");
   const cwd = appConfig.workingDir || os.homedir();
   const env = buildCleanOpenCodeEnv(process.env, appConfig.apiKeys);
-  env.XDG_DATA_HOME = path.join(cwd, "opencode-data");
 
   execFile("node", [opencodeBin, "session", "list", "--format", "json", "-n", "100"], { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 2*1024*1024 }, async (err: any, stdout: string) => {
     if (err) { log(`cleanupSessions list error: ${err.message}`); return; }

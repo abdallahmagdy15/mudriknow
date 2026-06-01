@@ -95,8 +95,6 @@ export class OpenCodeClient {
    * the AI Mudrik runs. Provisioned via `ensureIsolatedOpenCodeConfig`.
    */
   private isolatedConfigDir: string | null = null;
-  /** Isolated XDG_DATA_HOME so OpenCode session DB lives under Mudrik. */
-  private isolatedDataDir: string | null = null;
   // True when the active process was killed via `kill()` (user clicked
   // Stop, or the idle-timeout fired). The close handler uses this to
   // suppress the silent-failure diagnostic — surfacing "model
@@ -109,14 +107,12 @@ export class OpenCodeClient {
     workingDir?: string,
     apiKeys?: Record<string, string>,
     isolatedConfigDir?: string,
-    isolatedDataDir?: string,
   ) {
     this.model = model;
     this.workingDir = workingDir || os.homedir();
     this.apiKeys = apiKeys || {};
     this.isolatedConfigDir = isolatedConfigDir || null;
-    this.isolatedDataDir = isolatedDataDir || null;
-    log(`OpenCodeClient created: model=${this.model}, dir=${this.workingDir}, keys=${Object.keys(this.apiKeys).length}, isolatedConfig=${this.isolatedConfigDir || "none"}, isolatedData=${this.isolatedDataDir || "none"}`);
+    log(`OpenCodeClient created: model=${this.model}, dir=${this.workingDir}, keys=${Object.keys(this.apiKeys).length}, isolatedConfig=${this.isolatedConfigDir || "none"}`);
   }
 
   updateModel(model: string): void {
@@ -203,9 +199,6 @@ export class OpenCodeClient {
       // detectDisallowedTool stays as a belt-and-suspenders second layer.
       if (this.isolatedConfigDir) {
         cleanEnv.XDG_CONFIG_HOME = this.isolatedConfigDir;
-      }
-      if (this.isolatedDataDir) {
-        cleanEnv.XDG_DATA_HOME = this.isolatedDataDir;
       }
       const proc = spawn("node", args, {
         cwd: this.workingDir,

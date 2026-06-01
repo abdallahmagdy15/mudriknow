@@ -114,34 +114,48 @@ export function ensureIsolatedOpenCodeConfig(workingDir: string): string {
 }
 
 /**
- * Provision an isolated XDG_DATA_HOME for OpenCode so session history,
- * exports, and any on-disk state live under Mudrik's own directory
- * (%APPDATA%/mudrik/opencode-data/) instead of the global shared
- * `~/.local/share/opencode/`. Without this, `opencode session list` sees
- * every session the user ever created with the CLI tool itself — Mudrik
- * restores the wrong conversation and cleanupOldSessions can accidentally
- * delete non-Mudrik sessions.
+ * Default opencode data location. Used after the XDG_DATA_HOME isolation was
+ * removed — Mudrik's opencode subprocesses now share the same data dir as a
+ * user's standalone `opencode` CLI invocation, so `opencode session list`
+ * finds Mudrik's sessions without any env-var gymnastics.
  */
-export function ensureIsolatedOpenCodeDataDir(workingDir: string): string {
-  const xdgDataHome = path.join(workingDir, "opencode-data");
-  try {
-    fs.mkdirSync(xdgDataHome, { recursive: true });
-    // Seed the isolated auth.json from the global one so Mudrik-spawned
-    // OpenCode processes (which read auth via XDG_DATA_HOME) can authenticate
-    // against providers like ollama-cloud. Without this, the isolated dir's
-    // auth.json is empty and no provider models are visible.
-    const globalAuthPath = path.join(os.homedir(), ".local", "share", "opencode", "auth.json");
-    const isolatedAuthPath = path.join(xdgDataHome, "opencode", "auth.json");
-    if (fs.existsSync(globalAuthPath) && !fs.existsSync(isolatedAuthPath)) {
-      fs.mkdirSync(path.dirname(isolatedAuthPath), { recursive: true });
-      fs.copyFileSync(globalAuthPath, isolatedAuthPath);
-      log(`Synced global auth.json into isolated data dir: ${isolatedAuthPath}`);
+export function getDefaultOpenCodeDataDir(): string {
+  const xdgData = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
+  return path.join(xdgData, "opencode");
+}
+
+/**
+ * One-time migration: move any opencode data that previous Mudrik versions
+ * stored under isolated paths to the default opencode data dir. Old paths:
+ *   - <workingDir>/opencode-data/opencode/   (original isolation)
+ *   - <workingDir>/opencode/                  (intermediate layout)
+ * If the default dir already has data (user used the opencode CLI directly
+ * before), the old isolated dirs are simply removed — newer Mudrik data
+ * is expected to be in the default dir.
+ */
+export function migrateIsolatedOpenCodeDataToDefault(workingDir: string): void {
+  const defaultDataHome = getDefaultOpenCodeDataDir();
+  const oldSources = [
+    path.join(workingDir, "opencode-data", "opencode"),
+    path.join(workingDir, "opencode"),
+  ];
+  for (const src of oldSources) {
+    if (!fs.existsSync(src)) continue;
+    try {
+      if (!fs.existsSync(defaultDataHome)) {
+        fs.mkdirSync(path.dirname(defaultDataHome), { recursive: true });
+        fs.cpSync(src, defaultDataHome, { recursive: true });
+        log(`Migrated opencode data: ${src} -> ${defaultDataHome}`);
+      } else {
+        log(`Default opencode data already exists; removing old isolated dir: ${src}`);
+      }
+      fs.rmSync(src, { recursive: true, force: true });
+    } catch (e: any) {
+      log(`Migration from ${src} failed: ${e.message}`);
     }
-    log(`isolated opencode data dir provisioned at ${xdgDataHome} (XDG_DATA_HOME=${xdgDataHome})`);
-  } catch (e: any) {
-    log(`ensureIsolatedOpenCodeDataDir FAILED (non-fatal): ${e.message}`);
   }
-  return xdgDataHome;
+  const oldParent = path.join(workingDir, "opencode-data");
+  try { fs.rmdirSync(oldParent); } catch { /* not empty, ignore */ }
 }
 
 /**
