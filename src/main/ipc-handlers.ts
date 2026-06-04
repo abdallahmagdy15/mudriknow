@@ -808,7 +808,12 @@ export function registerIpcHandlers(
       const cursor = screen.getCursorScreenPoint();
       const display = screen.getDisplayNearestPoint(cursor);
       const wa = display.workArea;
-      win.setBounds({ x: wa.x, y: wa.y, width: wa.width, height: wa.height });
+      win.setBounds({
+        x: restoreBounds.x,
+        y: wa.y,
+        width: restoreBounds.width,
+        height: wa.height,
+      });
     }
   });
 
