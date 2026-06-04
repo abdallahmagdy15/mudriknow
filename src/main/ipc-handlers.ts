@@ -1764,12 +1764,12 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       if (!Array.isArray(sessions) || sessions.length === 0) { log("getRecentChats: no sessions"); return []; }
       const ourSessions = sessions
         .filter((s: any) => s.directory === cwd)
-        .sort((a: any, b: any) => b.created - a.created)
+        .sort((a: any, b: any) => b.updated - a.updated)
         .slice(0, 5);
       if (ourSessions.length === 0) { log(`getRecentChats: no sessions for directory ${cwd}`); return []; }
       const result = ourSessions.map((s: any) => ({
         id: s.id,
-        title: new Date(s.created).toLocaleString(),
+        title: (s.title && !s.title.startsWith("New session") ? s.title : new Date(s.created).toLocaleString()).slice(0, 42),
         created: s.created,
       }));
       recentChatsCache = result;

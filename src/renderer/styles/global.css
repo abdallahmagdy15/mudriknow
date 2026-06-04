@@ -916,7 +916,7 @@ body {
   top: -10px;
   display: block;
   height: 24px;
-  margin: -10px -10px 0 -10px;
+  margin: -10px -10px -14px -10px;
   background: linear-gradient(to bottom, var(--bg-msg) 0%, var(--bg-msg) 50%, transparent 100%);
   pointer-events: none;
   z-index: 1;
