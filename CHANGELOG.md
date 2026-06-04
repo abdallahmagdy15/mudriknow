@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-06-04
+
+### Fixed
+- **opencode-ai ≥1.15.x compatibility.** `opencode-ai` 1.15+ ships a native Windows binary (`opencode.exe`) instead of the old JS shim (`opencode`). Mudrik now searches for both and spawns correctly: `.exe` directly, JS shim via `node`. Fixes `spawn opencode ENOENT` on PCs with newer opencode-ai installs.
+
 ## [1.3.0] — 2026-06-02
 
 ### Changed
@@ -96,7 +101,8 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
-[Unreleased]: https://github.com/abdallahmagdy15/mudrik/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/abdallahmagdy15/mudrik/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.0.0...v1.3.0
 [1.0.0]: https://github.com/abdallahmagdy15/mudrik/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/abdallahmagdy15/mudrik/releases/tag/v0.9.0

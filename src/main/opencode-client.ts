@@ -159,7 +159,6 @@ export class OpenCodeClient {
       }
 
       const args: string[] = [
-        opencodeBin,
         "run",
         "--format", "json",
         "--model", this.model,
@@ -185,7 +184,7 @@ export class OpenCodeClient {
       }
 
       const promptSnippet = prompt.slice(0, 80).replace(/\n/g, " ");
-      log(`Spawning node ${args.join(" ")} (prompt: "${promptSnippet}...")`);
+      log(`Spawning ${opencodeBin} ${args.join(" ")} (prompt: "${promptSnippet}...")`);
 
       // Use a minimal env (Windows essentials + provider keys) to avoid
       // the Bun 1.3.13 segfault triggered by Electron/Chromium-injected env
@@ -200,11 +199,21 @@ export class OpenCodeClient {
       if (this.isolatedConfigDir) {
         cleanEnv.XDG_CONFIG_HOME = this.isolatedConfigDir;
       }
-      const proc = spawn("node", args, {
-        cwd: this.workingDir,
-        stdio: ["pipe", "pipe", "pipe"],
-        env: cleanEnv,
-      });
+
+      // opencode-ai ≤1.14.x ships a JS shim — must run via node.
+      // opencode-ai ≥1.15.x ships a native binary — spawn directly.
+      const isNativeBinary = opencodeBin.endsWith(".exe");
+      const proc = isNativeBinary
+        ? spawn(opencodeBin, args, {
+            cwd: this.workingDir,
+            stdio: ["pipe", "pipe", "pipe"],
+            env: cleanEnv,
+          })
+        : spawn("node", [opencodeBin, ...args], {
+            cwd: this.workingDir,
+            stdio: ["pipe", "pipe", "pipe"],
+            env: cleanEnv,
+          });
 
       this.activeProcess = proc;
       let buffer = "";
@@ -387,25 +396,38 @@ export class OpenCodeClient {
   }
 
   private findOpenCodeBin(): string | null {
-    const paths = [
-      path.join(os.homedir(), "AppData", "Roaming", "npm", "node_modules", "opencode-ai", "bin", "opencode"),
-      path.join(os.homedir(), ".local", "share", "npm", "node_modules", "opencode-ai", "bin", "opencode"),
-      path.join("/usr", "local", "lib", "node_modules", "opencode-ai", "bin", "opencode"),
+    // opencode-ai ≤1.14.x ships a JS shim at bin/opencode (needs node).
+    // opencode-ai ≥1.15.x ships a native binary at bin/opencode.exe (spawn directly).
+    // We try both so Mudrik works regardless of which version is installed.
+    const candidates = process.platform === "win32"
+      ? ["opencode.exe", "opencode"]
+      : ["opencode"];
+
+    const basePaths = [
+      path.join(os.homedir(), "AppData", "Roaming", "npm", "node_modules", "opencode-ai", "bin"),
+      path.join(os.homedir(), ".local", "share", "npm", "node_modules", "opencode-ai", "bin"),
+      path.join("/usr", "local", "lib", "node_modules", "opencode-ai", "bin"),
     ];
 
-    for (const p of paths) {
-      if (fs.existsSync(p)) {
-        log(`Found opencode bin: ${p}`);
-        return p;
+    for (const base of basePaths) {
+      for (const name of candidates) {
+        const p = path.join(base, name);
+        if (fs.existsSync(p)) {
+          log(`Found opencode bin: ${p}`);
+          return p;
+        }
       }
     }
 
     const npmGlobalPrefix = this.getNpmGlobalPrefix();
     if (npmGlobalPrefix) {
-      const globalPath = path.join(npmGlobalPrefix, "node_modules", "opencode-ai", "bin", "opencode");
-      if (fs.existsSync(globalPath)) {
-        log(`Found opencode bin via npm prefix: ${globalPath}`);
-        return globalPath;
+      const globalBase = path.join(npmGlobalPrefix, "node_modules", "opencode-ai", "bin");
+      for (const name of candidates) {
+        const p = path.join(globalBase, name);
+        if (fs.existsSync(p)) {
+          log(`Found opencode bin via npm prefix: ${p}`);
+          return p;
+        }
       }
     }
 
