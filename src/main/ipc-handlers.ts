@@ -16,6 +16,31 @@ function findOpenCodeAuthPath(): string {
   return path.join(xdgData, "opencode", "auth.json");
 }
 
+function readOpenCodeAuthKeys(): Record<string, string> {
+  const authPath = findOpenCodeAuthPath();
+  const keys: Record<string, string> = {};
+  try {
+    if (fs.existsSync(authPath)) {
+      const raw = fs.readFileSync(authPath, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        for (const [provider, entry] of Object.entries(parsed as Record<string, any>)) {
+          if (entry && entry.type === "api" && typeof entry.key === "string" && entry.key) {
+            keys[provider] = entry.key;
+          }
+        }
+      }
+    }
+  } catch { /* best-effort */ }
+  return keys;
+}
+
+/** Merge auth.json keys into config.apiKeys (config wins over auth.json). */
+function mergedApiKeys(configApiKeys: Record<string, string>): Record<string, string> {
+  const authKeys = readOpenCodeAuthKeys();
+  return { ...authKeys, ...configApiKeys };
+}
+
 function updateAuthFile(authPath: string, provider: string, key: string | null): void {
   let auth: OpenCodeAuthFile = {};
   try {
@@ -752,13 +777,14 @@ export function registerIpcHandlers(
   // the default opencode data dir, so a `opencode session list` from a
   // terminal finds Mudrik's sessions without any env-var setup.
   migrateIsolatedOpenCodeDataToDefault(workingDir);
+  const allApiKeys = mergedApiKeys(config.apiKeys || {});
   client = new OpenCodeClient(
     config.model || "ollama-cloud/gemini-3-flash-preview",
     workingDir,
-    config.apiKeys,
+    allApiKeys,
     isolatedOpenCodeConfig,
   );
-  log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(config.apiKeys || {}).length}, isolatedConfig=${isolatedOpenCodeConfig}`);
+  log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(allApiKeys).length} (config=${Object.keys(config.apiKeys || {}).length}, auth=${Object.keys(readOpenCodeAuthKeys()).length}), isolatedConfig=${isolatedOpenCodeConfig}`);
 
   ipcMain.on(IPC.DISMISS, () => {
     log("DISMISS received");
@@ -812,7 +838,7 @@ export function registerIpcHandlers(
     }
     // If keys changed without a full client rebuild, propagate the new map.
     if (newConfig.apiKeys) {
-      client.updateApiKeys(config.apiKeys);
+      client.updateApiKeys(mergedApiKeys(config.apiKeys));
     }
     log(`Config updated: model=${config.model}, recentModels=${JSON.stringify(config.recentModels)}`);
     saveConfig(config);
@@ -918,7 +944,7 @@ export function registerIpcHandlers(
       delete map[normalized];
     }
     config.apiKeys = map;
-    client.updateApiKeys(map);
+    client.updateApiKeys(mergedApiKeys(map));
     saveConfig(config);
     // Mirror into OpenCode's auth.json so a plain `opencode` invocation from
     // a terminal sees the same credentials Mudrik uses internally.
@@ -957,7 +983,7 @@ export function registerIpcHandlers(
       const nextKeys = { ...config.apiKeys };
       delete nextKeys[removedProvider];
       config.apiKeys = nextKeys;
-      client.updateApiKeys(nextKeys);
+      client.updateApiKeys(mergedApiKeys(nextKeys));
       writeOpenCodeAuth(removedProvider, null);
       log(`REMOVE_MODEL: cleared API key for provider=${removedProvider} (no remaining models use it)`);
     }

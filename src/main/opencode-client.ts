@@ -316,6 +316,12 @@ export class OpenCodeClient {
 
       proc.on("close", (code) => {
         log(`Process exited with code ${code}`);
+        if (stderrBuf.trim()) {
+          log(`stderr (${stderrBuf.trim().length} chars): ${stderrBuf.trim().slice(0, 500)}`);
+        }
+        if (buffer.trim()) {
+          log(`close buffer (${buffer.trim().length} chars): ${buffer.trim().slice(0, 500)}`);
+        }
 
         if (buffer.trim()) {
           try {
