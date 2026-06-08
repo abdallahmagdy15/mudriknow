@@ -186,6 +186,14 @@ export function setContext(context: ContextPayload): void {
 
   if (isSameContext) {
     log(`setContext: same context — not marking for re-send (hash=${newHash})`);
+    // If restoreSessionOnActivate is disabled, start a fresh session even
+    // on the same context. Otherwise a stale session ID from hours ago
+    // gets reused and the provider returns empty responses.
+    if (!appConfig?.restoreSessionOnActivate) {
+      hasSentFirstMessage = false;
+      client.resetSession();
+      log("setContext: restoreSessionOnActivate=false — resetting session");
+    }
   } else {
     contextNeedsSending = true;
     lastContextHash = newHash;
