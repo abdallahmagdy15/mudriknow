@@ -150,6 +150,7 @@ export function App() {
   const [restoringSession, setRestoringSession] = useState(false);
   const [hotkeyPointer, setHotkeyPointer] = useState("Alt+Space");
   const [hotkeyArea, setHotkeyArea] = useState("CommandOrControl+Space");
+  const [hotkeyQuick, setHotkeyQuick] = useState("Alt+X");
   const [hotkeyError, setHotkeyError] = useState<string | null>(null);
   const [launchOnStartup, setLaunchOnStartup] = useState(false);
   const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
@@ -400,6 +401,7 @@ if (!data?.hasImage) {
       if (cfg?.recentModels) setRecentModels(cfg.recentModels);
       if (cfg?.hotkeyPointer) setHotkeyPointer(cfg.hotkeyPointer);
       if (cfg?.hotkeyArea) setHotkeyArea(cfg.hotkeyArea);
+      if (cfg?.hotkeyQuick) setHotkeyQuick(cfg.hotkeyQuick);
       if (cfg?.launchOnStartup !== undefined) setLaunchOnStartup(cfg.launchOnStartup);
       if (cfg?.theme) setTheme(cfg.theme);
       if (cfg?.lang) setLang(cfg.lang);
@@ -629,13 +631,14 @@ if (!data?.hasImage) {
     window.hoverbuddy.setConfig({ lang: newLang });
   }, []);
 
-  const commitHotkeys = useCallback(async (pointer: string, area: string) => {
+  const commitHotkeys = useCallback(async (pointer: string, area: string, quick: string) => {
     setHotkeyError(null);
-    const cfg: any = await window.hoverbuddy.setConfig({ hotkeyPointer: pointer, hotkeyArea: area });
-    if (cfg?.hotkeyPointer !== pointer || cfg?.hotkeyArea !== area) {
+    const cfg: any = await window.hoverbuddy.setConfig({ hotkeyPointer: pointer, hotkeyArea: area, hotkeyQuick: quick });
+    if (cfg?.hotkeyPointer !== pointer || cfg?.hotkeyArea !== area || cfg?.hotkeyQuick !== quick) {
       setHotkeyError(t("hotkeyInUse"));
       if (cfg?.hotkeyPointer) setHotkeyPointer(cfg.hotkeyPointer);
       if (cfg?.hotkeyArea) setHotkeyArea(cfg.hotkeyArea);
+      if (cfg?.hotkeyQuick) setHotkeyQuick(cfg.hotkeyQuick);
     }
   }, []);
 
@@ -956,7 +959,7 @@ if (!data?.hasImage) {
             >
               <span className="settings-section-icon"><i className="fa-solid fa-keyboard"></i></span>
               <span className="settings-label">{t("hotkeys")}</span>
-              <span className="settings-section-meta">{hotkeyPointer} · {hotkeyArea.replace("CommandOrControl", "Ctrl")}</span>
+              <span className="settings-section-meta">{hotkeyPointer} · {hotkeyArea.replace("CommandOrControl", "Ctrl")} · {hotkeyQuick}</span>
               <span className={`settings-chevron ${openSections.hotkeys ? "open" : ""}`}><i className="fa-solid fa-chevron-down"></i></span>
             </button>
             {openSections.hotkeys && (
@@ -968,7 +971,7 @@ if (!data?.hasImage) {
                     type="text"
                     value={hotkeyPointer}
                     onChange={(e) => setHotkeyPointer(e.target.value)}
-                    onBlur={() => { if (hotkeyPointer) commitHotkeys(hotkeyPointer, hotkeyArea); }}
+                    onBlur={() => { if (hotkeyPointer) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
                     onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                     placeholder="Alt+Space"
                   />
@@ -980,9 +983,21 @@ if (!data?.hasImage) {
                     type="text"
                     value={hotkeyArea}
                     onChange={(e) => setHotkeyArea(e.target.value)}
-                    onBlur={() => { if (hotkeyArea) commitHotkeys(hotkeyPointer, hotkeyArea); }}
+                    onBlur={() => { if (hotkeyArea) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
                     onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                     placeholder="CommandOrControl+Space"
+                  />
+                </label>
+                <label className="hotkey-row">
+                  <span>Quick Chat</span>
+                  <input
+                    className="hotkey-input"
+                    type="text"
+                    value={hotkeyQuick}
+                    onChange={(e) => setHotkeyQuick(e.target.value)}
+                    onBlur={() => { if (hotkeyQuick) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                    placeholder="Alt+X"
                   />
                 </label>
                 {hotkeyError && <div className="model-error">{hotkeyError}</div>}

@@ -6,19 +6,22 @@ const log = (msg: string) => console.log(`[HOTKEY] ${msg}`);
 export interface HotkeyCallbacks {
   onPointerActivate: (cursorPos: { x: number; y: number }) => void;
   onAreaActivate: () => void;
+  onQuickActivate: (cursorPos: { x: number; y: number }) => void;
 }
 
 export interface HotkeyBindings {
   pointer: string;
   area: string;
+  quick: string;
 }
 
 let lastPointerTime = 0;
 let lastAreaTime = 0;
+let lastQuickTime = 0;
 const DEBOUNCE_MS = 800;
 
 let activeCallbacks: HotkeyCallbacks | null = null;
-let activeBindings: HotkeyBindings = { pointer: "Alt+Space", area: "CommandOrControl+Space" };
+let activeBindings: HotkeyBindings = { pointer: "Alt+Space", area: "CommandOrControl+Space", quick: "Alt+X" };
 
 export function startHotkeyListener(callbacks: HotkeyCallbacks, initial?: HotkeyBindings): void {
   log("Starting hotkey listener...");
@@ -39,33 +42,37 @@ export function stopHotkeyListener(): void {
  * previous working bindings are restored and `{ ok: false, failed }` is
  * returned so the caller can surface a notification and roll back config.
  */
-export function applyHotkeys(next: HotkeyBindings): { ok: boolean; failed?: Array<"pointer" | "area"> } {
+export function applyHotkeys(next: HotkeyBindings): { ok: boolean; failed?: Array<"pointer" | "area" | "quick"> } {
   if (!activeCallbacks) {
     log("applyHotkeys called before startHotkeyListener — nothing to do");
     return { ok: false };
   }
   const prev = { ...activeBindings };
   globalShortcut.unregisterAll();
-  const failed: Array<"pointer" | "area"> = [];
+  const failed: Array<"pointer" | "area" | "quick"> = [];
   const pointerOk = registerPointer(next.pointer);
   const areaOk = registerArea(next.area);
+  const quickOk = registerQuick(next.quick);
   if (!pointerOk) failed.push("pointer");
   if (!areaOk) failed.push("area");
+  if (!quickOk) failed.push("quick");
   if (failed.length > 0) {
-    log(`applyHotkeys FAILED for: ${failed.join(", ")} — rolling back to ${prev.pointer} / ${prev.area}`);
+    log(`applyHotkeys FAILED for: ${failed.join(", ")} — rolling back to ${prev.pointer} / ${prev.area} / ${prev.quick}`);
     globalShortcut.unregisterAll();
     registerPointer(prev.pointer);
     registerArea(prev.area);
+    registerQuick(prev.quick);
     return { ok: false, failed };
   }
   activeBindings = { ...next };
-  log(`Hotkeys applied: pointer=${next.pointer} area=${next.area}`);
+  log(`Hotkeys applied: pointer=${next.pointer} area=${next.area} quick=${next.quick}`);
   return { ok: true };
 }
 
 function applyBindings(b: HotkeyBindings): void {
   registerPointer(b.pointer);
   registerArea(b.area);
+  registerQuick(b.quick);
 }
 
 function registerPointer(accelerator: string): boolean {
@@ -96,6 +103,25 @@ function registerArea(accelerator: string): boolean {
       lastAreaTime = now;
       log(`Area hotkey triggered!`);
       activeCallbacks?.onAreaActivate();
+    });
+    if (!ok) log(`ERROR: Failed to register ${accelerator} — may already be in use`);
+    return ok;
+  } catch (e: any) {
+    log(`ERROR: Failed to register ${accelerator}: ${e.message}`);
+    return false;
+  }
+}
+
+function registerQuick(accelerator: string): boolean {
+  log(`Registering quick shortcut: ${accelerator}`);
+  try {
+    const ok = globalShortcut.register(accelerator, () => {
+      const now = Date.now();
+      if (now - lastQuickTime < DEBOUNCE_MS) return;
+      lastQuickTime = now;
+      const pos = robot.getMousePos();
+      log(`Quick hotkey at: x=${pos.x}, y=${pos.y}`);
+      activeCallbacks?.onQuickActivate({ x: pos.x, y: pos.y });
     });
     if (!ok) log(`ERROR: Failed to register ${accelerator} — may already be in use`);
     return ok;

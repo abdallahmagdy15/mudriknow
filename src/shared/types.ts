@@ -146,6 +146,7 @@ export interface Config {
   apiKeys: Record<string, string>;
   hotkeyPointer: string;
   hotkeyArea: string;
+  hotkeyQuick: string;
   panelWidth: number;
   panelHeight: number;
   launchOnStartup: boolean;
@@ -170,6 +171,7 @@ export const DEFAULT_CONFIG: Config = {
   apiKeys: {},
   hotkeyPointer: "Alt+Space",
   hotkeyArea: "CommandOrControl+Space",
+  hotkeyQuick: "Alt+X",
   panelWidth: 440,
   panelHeight: 500,
   launchOnStartup: false,

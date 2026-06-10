@@ -14,7 +14,7 @@ import { startAreaSelection } from "./area-selector";
 import { scanArea } from "./area-scanner";
 import { showElementHighlight, showAreaHighlight } from "./highlight";
 import { cleanupImage, captureAndOptimize } from "./vision";
-import { log } from "./logger";
+import { log, pruneOldLogs } from "./logger";
 
 app.commandLine.appendSwitch("enable-features", "BackDropFilter");
 
@@ -447,6 +447,29 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
   }
 }
 
+function handleQuickActivate(cursorPos: { x: number; y: number }): void {
+  const myActivation = ++activationSeq;
+  log(`Quick hotkey at cursor pos: x=${cursorPos.x}, y=${cursorPos.y} (activation #${myActivation})`);
+  hidePanel();
+  const display = screen.getDisplayNearestPoint(cursorPos);
+  const emptyContext: ContextPayload = {
+    element: {
+      name: "",
+      type: "none",
+      value: "",
+      bounds: { x: 0, y: 0, width: 0, height: 0 },
+      children: [],
+    },
+    surrounding: [],
+    cursorPos: {
+      x: Math.round(display.bounds.x + display.bounds.width / 2),
+      y: Math.round(display.bounds.y + display.bounds.height / 2),
+    },
+  };
+  setContext(emptyContext);
+  showPanel(emptyContext);
+}
+
 function handleAreaActivate(): void {
   const myActivation = ++activationSeq;
   log(`Area hotkey triggered — starting area selection (activation #${myActivation})`);
@@ -584,6 +607,8 @@ app.whenReady().then(async () => {
 
   ensureAgentInWorkingDir(config.workingDir);
 
+  pruneOldLogs(30 * 24 * 60 * 60 * 1000); // 30 days
+
   applyTheme(config.theme);
   applyLoginItemSetting(config.launchOnStartup);
 
@@ -627,12 +652,13 @@ app.whenReady().then(async () => {
   log("Tray created");
 
   registerIpcHandlers(config, showPanel, hidePanel, (next, prev) => {
-    if (next.hotkeyPointer !== prev.hotkeyPointer || next.hotkeyArea !== prev.hotkeyArea) {
-      const result = applyHotkeys({ pointer: next.hotkeyPointer, area: next.hotkeyArea });
+    if (next.hotkeyPointer !== prev.hotkeyPointer || next.hotkeyArea !== prev.hotkeyArea || next.hotkeyQuick !== prev.hotkeyQuick) {
+      const result = applyHotkeys({ pointer: next.hotkeyPointer, area: next.hotkeyArea, quick: next.hotkeyQuick });
       if (!result.ok) {
         // Roll back the in-memory config so UI shows the previous working values.
         config.hotkeyPointer = prev.hotkeyPointer;
         config.hotkeyArea = prev.hotkeyArea;
+        config.hotkeyQuick = prev.hotkeyQuick;
         saveConfig(config);
       }
     }
@@ -652,8 +678,9 @@ app.whenReady().then(async () => {
     {
       onPointerActivate: handlePointerActivate,
       onAreaActivate: handleAreaActivate,
+      onQuickActivate: handleQuickActivate,
     },
-    { pointer: config.hotkeyPointer, area: config.hotkeyArea }
+    { pointer: config.hotkeyPointer, area: config.hotkeyArea, quick: config.hotkeyQuick }
   );
   log("Hotkey listener started");
 

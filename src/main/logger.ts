@@ -24,3 +24,22 @@ export function log(msg: string): void {
     fs.appendFileSync(LOG_FILE, line);
   } catch { /* can't write to log file */ }
 }
+
+export function pruneOldLogs(maxAgeMs: number): void {
+  try {
+    if (!fs.existsSync(NEW_LOG_DIR)) return;
+    const files = fs.readdirSync(NEW_LOG_DIR);
+    const now = Date.now();
+    for (const file of files) {
+      if (!file.endsWith(".log")) continue;
+      const full = path.join(NEW_LOG_DIR, file);
+      try {
+        const stat = fs.statSync(full);
+        if (now - stat.mtimeMs > maxAgeMs) {
+          fs.unlinkSync(full);
+          console.log(`[LOGGER] Pruned old log: ${file}`);
+        }
+      } catch { /* skip unreadable files */ }
+    }
+  } catch { /* directory may not exist yet */ }
+}
