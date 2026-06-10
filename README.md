@@ -4,7 +4,7 @@
 
 # Mudrik  ·  <span dir="rtl">مدرك</span>
 
-***Stop pasting screenshots into AI chats.*** **Mudrik is an open-source Windows AI assistant that sees what you see — and answers, types, pastes, or clicks for you.**
+***Stop pasting screenshots into AI chats.*** **Mudrik is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.**
 
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0FA8C9?style=flat-square)](https://github.com/abdallahmagdy15/mudrik/releases)
 [![License](https://img.shields.io/badge/license-MIT-18BFE1?style=flat-square)](LICENSE)
@@ -28,9 +28,9 @@
 
 ## ✨ What it does
 
-Hover anywhere on Windows and press **Alt+Space**. A quick floating panel slides in on the **opposite half** of your screen from your cursor — what you're pointing at stays in clear view, and Mudrik's actions land on the real element instead of the panel itself.
+Press **Alt+Space** anywhere on Windows. Mudrik scans your active window's UI — every button, field, label, and value — and opens a floating panel opposite your cursor so nothing gets covered. The element you're pointing at becomes the focal anchor. For web apps and Chromium windows, Mudrik auto-attaches a screenshot, because browser UIA trees can miss page content.
 
-Mudrik reads your **whole active window** — every visible button, field, label, value, and the list of other open windows — with the element under your cursor marked as the focal anchor. All of it is preloaded as context — no screenshot needed. From there: ask, translate, fix, summarize — or tell it to *act*: type, paste, click, press a chord, or let Mudrik guide you step-by-step through complex tasks with a friendly owl cursor that points exactly where to go.
+From there: ask, translate, fix, summarize. Or tell it to **act**: type, paste, click, invoke, press shortcuts. Turn on **Auto-Guide** and Mudrik becomes a teacher — an owl cursor appears on screen and walks you step‑by‑step through any multi‑step task.
 
 ## 🚀 Install
 
@@ -48,80 +48,69 @@ Mudrik reads your **whole active window** — every visible button, field, label
 
 ## ⌨️ Hotkeys
 
-Two global hotkeys put Mudrik in front of you. Both are rebindable from the ⚙ menu — pick something that doesn't fight your daily shortcuts.
+Two global hotkeys put Mudrik in front of you. Both are rebindable from the ⚙ menu.
 
-| Shortcut     | What happens                                                                                                                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Alt+Space`  | Panel slides in on the opposite side of your cursor. Mudrik scans the active window's full UI tree — every visible button, field, label, and value — and the list of other open windows, with your cursor element marked as the focal anchor. The AI is now aware of your screen, with your cursor showing where to focus. |
-| `Ctrl+Space` | Switches to area-select. Drag a rectangle — the region is screenshotted *and* any UIA elements inside are scanned. Use this when the target is a chart, image, or custom canvas that UIA alone can't read.                     |
-| `Esc`        | Cancels whatever's currently happening: stops a streaming response, exits area-select mode, or closes the panel. Your prompt and chat history are preserved.                                                                   |
-| `Enter`      | Sends your prompt. `Shift+Enter` inserts a newline for multi-line prompts.                                                                                                                                                     |
+| Shortcut     | What happens |
+| ------------ | ------------ |
+| `Alt+Space`  | Scans the window's UI tree at your cursor. Mudrik opens opposite your cursor, ready to help. |
+| `Ctrl+Space` | Drag to select a screen region. Gives the AI a focused view of exactly what you want it to see. |
+| `Esc`        | Cancel: stops streaming, exits area-select, or closes the panel. |
+| `Enter`      | Send prompt. `Shift+Enter` for newline. |
 
 ## 🛠 Features
 
 | <br />                       | <br />                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🎯 **Cursor-anchored**       | The panel opens on the opposite half of your screen from your cursor — what you're pointing at stays in clear view. No more switching to a separate AI chat app or browser tab.                               |
-| 🪟 **Reads any Windows app** | Uses Windows UI Automation  to pick up buttons, fields, text, menus, lists. Works in Outlook, Excel, browsers, native dialogs, IDEs — anywhere accessibility reaches.                                         |
-| ⚡ **Acts for you**           | Beyond chat: Mudrik can type, paste, click, press keyboard chords, and invoke accessibility actions.                                                                                                          |
-| 🦉 **Auto-Guide mode**       | Let Mudrik walk you through multi-step tasks. A friendly owl cursor appears on screen, points to each target, and shows a speech bubble with instructions. Toggle in ⚙ settings.                                |
-| 🖼️ **Area capture**         | For when you want Mudrik to focus on a specific area — or when UIA can't see something (charts, images) — drag a rectangle with `Ctrl+Space`. Mudrik captures the pixels *and* scans any UIA elements inside. |
-| 🔌 **Any LLM**               | 18 providers out of the box — Anthropic, OpenAI, Google, DeepSeek, OpenRouter, Ollama, and more. Paste your key in settings — no terminal auth dance.                                                         |
-| 🔒 **Sandboxed**             | The AI cannot run shell commands or write to your filesystem. It can read files inside your working directory and dispatch a fixed allow-list of UI actions. That's the whole capability surface.             |
+| 🎯 **Cursor-anchored**       | Panel opens opposite your cursor — what you're pointing at stays visible. No app-switching.                                                                                                                   |
+| 🪟 **Reads any Windows app** | Uses Windows UI Automation to pick up buttons, fields, text, menus. Works in browsers, Office, IDEs, native dialogs — anywhere accessibility reaches. Chromium apps get an auto-screenshot fallback.           |
+| ⚡ **Acts for you**           | Type, paste, click, invoke, press keyboard shortcuts — Mudrik can interact with any accessible element.                                                                                                        |
+| 🦉 **Auto-Guide**             | Mudrik becomes a teacher: an owl cursor appears on screen, points to each target with a speech bubble, and walks you step‑by‑step through multi‑step UI tasks. Toggle in ⚙ settings.                            |
+| 🖼️ **Area capture**          | Drag a rectangle with `Ctrl+Space` to give the AI a focused visual of a specific region — charts, images, or anything UIA can't describe.                                                                      |
+| 🔌 **Any LLM**               | 18 providers out of the box — Anthropic, OpenAI, Google, DeepSeek, OpenRouter, Ollama, and more. Paste your key in settings — no terminal auth dance.                                                           |
+| 🔒 **Sandboxed**             | No shell commands, no filesystem writes. The AI reads files in your working directory and dispatches an allow-listed set of UI actions. That's the whole capability surface.                                   |
 
 ## 🧠 How it works
 
 ```
- Alt+Space
-   ↓  global hotkey reads cursor pos (robotjs)
-   ↓  PowerShell UIA script → JSON description of the element
-   ↓  panel slides in opposite the cursor (target stays visible)
-   ↓  prompt streamed to `opencode run --agent readonly`
-   ↓  tokens render live; <!--ACTION:{...}--> markers parsed
-   ↓  actions execute via UIA or robotjs
+Alt+Space (pointer)
+  ↓  hotkey reads cursor position
+  ↓  PowerShell UIA script — JSON tree of the active window
+  ↓  Chromium/Electron? → auto-captures full-screen screenshot as fallback
+  ↓  Mudrik opens opposite your cursor, ready to chat
 
- Auto-Guide mode:
-   ↓  AI emits guide_offer → user accepts
-   ↓  panel hides, owl cursor appears with speech bubble
-   ↓  step-by-step: owl points → user clicks → AI advances
-   ↓  guide_complete → owl shows "Done!" → panel returns
+Ctrl+Space (area-select)
+  ↓  drag a rectangle on screen
+  ↓  region screenshot captured
+  ↓  Mudrik opens with a focused visual context
+
+Send prompt
+  ↓  streamed to `opencode run --agent readonly`
+  ↓  tokens render live; <!--ACTION:{...}--> markers parsed
+  ↓  actions execute via UIA or robotjs
+
+Auto-Guide mode (opt-in via ⚙)
+  ↓  AI emits guide_offer → user accepts
+  ↓  owl cursor appears with speech bubble, panel hides
+  ↓  owl points → user clicks → AI advances
+  ↓  guide_complete → "Done!" → panel returns
 ```
 
-Full architecture in **[CLAUDE.md](CLAUDE.md)**.
+Full architecture in **[AGENTS.md](AGENTS.md)**.
 
 ## 🔒 Privacy & Security
 
-Mudrik is designed for paranoid desktop use. The AI's capabilities are deliberately narrow:
+Mudrik runs the AI in a sandbox with deliberately narrow capabilities:
 
-| Capability                                        | Exposed to the model?        |
-| ------------------------------------------------- | ---------------------------- |
-| Shell / PowerShell exec                           | ❌ No                         |
-| Filesystem **write**                              | ❌ No                         |
-| Filesystem **read** (`read`/`grep`/`glob`/`list`) | ✅ Yes (within working dir)   |
-| Windows UI Automation                             | ✅ Yes (allow-listed actions) |
-| Keyboard / mouse                                  | ✅ Yes (UIA fallback)         |
-| Screen pixels                                     | 🖐️ Manual attach only       |
+| Capability                                        | Exposed to the model?              |
+| ------------------------------------------------- | ---------------------------------- |
+| Shell / PowerShell exec                           | ❌ No                              |
+| Filesystem **write**                              | ❌ No                              |
+| Filesystem **read** (`read`/`grep`/`glob`/`list`) | ✅ Yes (within working directory)  |
+| Windows UI Automation                             | ✅ Yes (pre-defined action set)    |
+| Keyboard / mouse                                  | ✅ Yes (when UIA can't reach a target) |
+| Screen pixels                                     | ✅ Auto on Chromium/Electron · 🖐️ Manual on native apps |
 
 Full threat model + reporting in **[SECURITY.md](SECURITY.md)**.
-
-## 🗺 Roadmap
-
-**v1.0.0 — Auto-Guide mode** ✓
-
-- [x] **Auto-Guide** — Multi-step walkthroughs with an owl cursor that points to each target and shows step-by-step instructions in a speech bubble
-- [x] **Coordinate grid overlay** — Numbered grid on screenshots for accurate AI positioning
-- [x] **High-DPI multi-monitor support** — Pixel-perfect coordinates on any display configuration
-
-**Next:**
-
-- [ ] Code signing (removes the SmartScreen warning on first launch)
-- [ ] Session picker — browse and resume previous conversations
-- [ ] Bundled OpenCode binary (drop the `npm i -g opencode-ai` step)
-- [ ] Workflow recording — replay a sequence of actions
-- [ ] Voice activation
-- [ ] macOS + Linux
-
-Have an idea? [Open an issue](https://github.com/abdallahmagdy15/mudrik/issues/new) or upvote an existing one.
 
 ## 👋 About
 
