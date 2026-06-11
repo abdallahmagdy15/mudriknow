@@ -76,6 +76,16 @@ Maintain a side section or dedicated file (`open-items.md`) to track future task
 - `npx tsc --noEmit -p .` — standalone typecheck. CI runs this **before** `npm run build`.
 - `npx vitest run <path>` — run a single test file (e.g. `src/main/action-executor.test.ts`).
 
+### Build prerequisites (Windows only)
+
+- **Node.js** — any recent LTS (20.x–24.x tested). `package-lock.json` was generated with a specific Node version; if `npm install` fails on native modules, remove `package-lock.json` and retry.
+- **Visual Studio "Desktop development with C++" workload** — required because `robotjs` and `koffi` are native C++ modules. `node-gyp` needs the VC++ toolset + Windows SDK. Without it, `npm install` will fail at the `robotjs` compile step with `Could not find any Visual Studio installation to use`.
+- **Do NOT use `npx electron .`** directly — it pulls the latest remote Electron version instead of the local `devDependency`. Always use `npm start` or `npm run build && electron .`.
+
+### Runtime dependency (not bundled)
+
+- **`opencode-ai` must be installed globally** — Mudrik spawns the `opencode` CLI binary at runtime. Install via `npm i -g opencode-ai`. The app searches `%APPDATA%/npm/node_modules/opencode-ai/bin/` for both `opencode.exe` (native, ≥1.15.x) and `opencode` (JS shim, ≤1.14.x).
+
 ## Architecture (the non-obvious parts)
 
 - **Windows-only, end-to-end**. UIA, PowerShell script embedding, robotjs, GDI+ capture, and `findOpenCodeBin` path resolution are all Windows-specific. Do not add `process.platform` branches unless you are also porting the PowerShell layer.

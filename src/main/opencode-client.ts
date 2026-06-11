@@ -410,54 +410,62 @@ export class OpenCodeClient {
   }
 
   private findOpenCodeBin(): string | null {
-    // opencode-ai ≤1.14.x ships a JS shim at bin/opencode (needs node).
-    // opencode-ai ≥1.15.x ships a native binary at bin/opencode.exe (spawn directly).
-    // We try both so Mudrik works regardless of which version is installed.
-    const candidates = process.platform === "win32"
-      ? ["opencode.exe", "opencode"]
-      : ["opencode"];
+    return findOpenCodeBin();
+  }
+}
 
-    const basePaths = [
-      path.join(os.homedir(), "AppData", "Roaming", "npm", "node_modules", "opencode-ai", "bin"),
-      path.join(os.homedir(), ".local", "share", "npm", "node_modules", "opencode-ai", "bin"),
-      path.join("/usr", "local", "lib", "node_modules", "opencode-ai", "bin"),
-    ];
+export function isNativeOpenCodeBin(bin: string): boolean {
+  return bin.endsWith(".exe");
+}
 
-    for (const base of basePaths) {
-      for (const name of candidates) {
-        const p = path.join(base, name);
-        if (fs.existsSync(p)) {
-          log(`Found opencode bin: ${p}`);
-          return p;
-        }
-      }
-    }
-
-    const npmGlobalPrefix = this.getNpmGlobalPrefix();
-    if (npmGlobalPrefix) {
-      const globalBase = path.join(npmGlobalPrefix, "node_modules", "opencode-ai", "bin");
-      for (const name of candidates) {
-        const p = path.join(globalBase, name);
-        if (fs.existsSync(p)) {
-          log(`Found opencode bin via npm prefix: ${p}`);
-          return p;
-        }
-      }
-    }
-
-    log("Could not find opencode binary in any known location");
+function getNpmGlobalPrefix(): string | null {
+  try {
+    const { execSync } = require("child_process");
+    const prefix = execSync("npm config get prefix", { encoding: "utf-8" }).trim();
+    log(`npm global prefix: ${prefix}`);
+    return prefix;
+  } catch {
+    log("Could not determine npm global prefix");
     return null;
   }
+}
 
-  private getNpmGlobalPrefix(): string | null {
-    try {
-      const { execSync } = require("child_process");
-      const prefix = execSync("npm config get prefix", { encoding: "utf-8" }).trim();
-      log(`npm global prefix: ${prefix}`);
-      return prefix;
-    } catch {
-      log("Could not determine npm global prefix");
-      return null;
+export function findOpenCodeBin(): string | null {
+  // opencode-ai ≤1.14.x ships a JS shim at bin/opencode (needs node).
+  // opencode-ai ≥1.15.x ships a native binary at bin/opencode.exe (spawn directly).
+  // We try both so Mudrik works regardless of which version is installed.
+  const candidates = process.platform === "win32"
+    ? ["opencode.exe", "opencode"]
+    : ["opencode"];
+
+  const basePaths = [
+    path.join(os.homedir(), "AppData", "Roaming", "npm", "node_modules", "opencode-ai", "bin"),
+    path.join(os.homedir(), ".local", "share", "npm", "node_modules", "opencode-ai", "bin"),
+    path.join("/usr", "local", "lib", "node_modules", "opencode-ai", "bin"),
+  ];
+
+  for (const base of basePaths) {
+    for (const name of candidates) {
+      const p = path.join(base, name);
+      if (fs.existsSync(p)) {
+        log(`Found opencode bin: ${p}`);
+        return p;
+      }
     }
   }
+
+  const npmGlobalPrefix = getNpmGlobalPrefix();
+  if (npmGlobalPrefix) {
+    const globalBase = path.join(npmGlobalPrefix, "node_modules", "opencode-ai", "bin");
+    for (const name of candidates) {
+      const p = path.join(globalBase, name);
+      if (fs.existsSync(p)) {
+        log(`Found opencode bin via npm prefix: ${p}`);
+        return p;
+      }
+    }
+  }
+
+  log("Could not find opencode binary in any known location");
+  return null;
 }
