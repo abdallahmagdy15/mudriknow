@@ -31,6 +31,7 @@ function makeDeps(overrides: Partial<GuideControllerDeps> = {}): GuideController
     hidePanel: vi.fn(),
     showPanel: vi.fn(),
     showPanelAndFocusInput: vi.fn(),
+    getCancelledMessage: vi.fn().mockReturnValue("Guide cancelled."),
     ...overrides,
   };
 }
@@ -130,7 +131,22 @@ describe("GuideController", () => {
       expect(deps.sendFollowUp).not.toHaveBeenCalled();
     });
 
-    it("user choice 'Start guide' from OFFER triggers AI follow-up requesting first step", async () => {
+    it("user choice 'Start guide' from OFFER with deferred first step executes it immediately without AI follow-up", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      await ctrl.handleAction(sampleStep as unknown as Action);
+      expect(ctrl.getPhase()).toBe("offer"); // still waiting for user accept
+      await ctrl.handleUserChoice("Start guide");
+      expect(deps.sendFollowUp).not.toHaveBeenCalled();
+      expect(ctrl.getPhase()).toBe("step-active");
+      expect(deps.overlay.show).toHaveBeenCalledWith(
+        sampleStep.target!.boundsHint!,
+        expect.any(Object),
+      );
+    });
+
+    it("user choice 'Start guide' from OFFER without deferred step falls back to AI follow-up", async () => {
       const deps = makeDeps();
       const ctrl = new GuideController(deps);
       await ctrl.handleAction(sampleOffer as unknown as Action);

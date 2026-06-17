@@ -732,6 +732,14 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         overlayMod.hideBubble();
       }
     },
+    getCancelledMessage: () => {
+      try {
+        const { t } = require("../shared/i18n") as typeof import("../shared/i18n");
+        return t(appConfig?.lang ?? "en", "guideCancelled");
+      } catch {
+        return "Guide cancelled.";
+      }
+    },
     resolveTargetBounds: async (target) => {
       // Dual-bounds system (2026-05-24):
       // - uiaBounds: AI copied from UIA candidate list (pixel-perfect)
@@ -1292,6 +1300,11 @@ contextBlock += `\n--- END CONTEXT ---\n`;
     // generic message on top of an already-specific one (e.g. "model name
     // is invalid, check ⚙ Settings"). Skip the duplicate.
     let errorEventSurfaced = false;
+    // Once the AI emits a guide_offer marker, the rest of the response is
+    // UI-driven (guide_step / options). Stop streaming preamble text into the
+    // chat so the user doesn't see flickering partial sentences before the
+    // guide UI takes over.
+    let guideOfferSeen = false;
     try {
       cycleTimer?.mark("prompt-built");
       armIdleTimer();
@@ -1303,6 +1316,24 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         }
         if (event.type === "error" && event.error?.message) {
           errorEventSurfaced = true;
+        }
+        // Detect guide_offer early so we can suppress its preamble text.
+        if (event.type === "text" && event.part?.text && !guideOfferSeen) {
+          const peek = event.part.text;
+          if (peek.includes('"type":"guide_offer"') || peek.includes("'type':'guide_offer'")) {
+            guideOfferSeen = true;
+            log("guide_offer detected in stream — suppressing further text tokens in chat");
+            win.webContents.send(IPC.STREAM_TEXT_RESET);
+            // Skip sending this token; the marker will be parsed at the end.
+            return;
+          }
+        }
+        if (guideOfferSeen && event.type === "text") {
+          // Still accumulate for final action parsing, but don't render.
+          if (event.part?.text) {
+            fullResponseText += event.part.text;
+          }
+          return;
         }
         handleOpenCodeEvent(event, win);
       }, imageFiles.length > 0 ? imageFiles : undefined);

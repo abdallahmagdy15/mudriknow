@@ -17,6 +17,8 @@ import { showElementHighlight, showAreaHighlight } from "./highlight";
 import { cleanupImage, captureAndOptimize } from "./vision";
 import { log, pruneOldLogs } from "./logger";
 
+let loadingOverlay: { show: () => void; hide: () => void } | null = null;
+
 app.commandLine.appendSwitch("enable-features", "BackDropFilter");
 
 import { showSplashScreen, closeSplashScreen } from "./splash/splash-window";
@@ -399,80 +401,127 @@ let lastCursorY: number | null = null;
 let activationSeq = 0;
 let lastShouldAutoScreenshot = false;
 
+function showLoadingOverlay(): void {
+  if (loadingOverlay) {
+    loadingOverlay.show();
+    return;
+  }
+  const { BrowserWindow, screen } = require("electron") as typeof import("electron");
+  const cursor = screen.getCursorScreenPoint();
+  const display = screen.getDisplayNearestPoint(cursor);
+  const sf = display.scaleFactor || 1;
+  const size = Math.round(120 / sf);
+  const win = new BrowserWindow({
+    width: size,
+    height: size,
+    x: Math.round(display.bounds.x + (display.bounds.width - size) / 2),
+    y: Math.round(display.bounds.y + (display.bounds.height - size) / 2),
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: false,
+    focusable: false,
+    hasShadow: false,
+    show: false,
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
+  });
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;padding:0;width:100vw;height:100vh;background:transparent;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ring{width:36px;height:36px;border:3px solid rgba(24,191,225,0.2);border-top-color:#18BFE1;border-radius:50%;animation:spin .8s linear infinite}
+.text{margin-top:10px;color:#18BFE1;font-family:-apple-system,Segoe UI,system-ui,sans-serif;font-size:13px;font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,0.5)}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style></head><body><div><div class="ring"></div><div class="text">Scanning screen…</div></div></body></html>`;
+  win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+  win.once("ready-to-show", () => win.show());
+  loadingOverlay = {
+    show: () => { if (!win.isDestroyed()) { win.showInactive(); win.moveTop(); } },
+    hide: () => { if (!win.isDestroyed()) win.hide(); },
+  };
+}
+
+function hideLoadingOverlay(): void {
+  loadingOverlay?.hide();
+}
+
 async function handlePointerActivate(cursorPos: { x: number; y: number }): Promise<void> {
   const myActivation = ++activationSeq;
   log(`Pointer hotkey at cursor pos: x=${cursorPos.x}, y=${cursorPos.y} (activation #${myActivation})`);
   lastCursorX = cursorPos.x;
   lastCursorY = cursorPos.y;
 
+  // Hide any existing panel immediately; show a centered spinner overlay
+  // while we capture context/screenshot. The panel itself is NOT shown
+  // until the data is ready -- this prevents the "open -> hide -> re-open"
+  // flash and the random highlight rectangle the user sees mid-capture.
+  if (mainWindow && mainWindow.isVisible()) {
+    mainWindow.hide();
+  }
+  showLoadingOverlay();
+
   let targetHwnd = 0;
   try {
-    if (mainWindow && mainWindow.isVisible()) {
-      mainWindow.hide();
-    }
     const { getActiveHwnd } = await import("./guide/active-window");
     targetHwnd = await getActiveHwnd();
     log(`Captured target HWND before panel show: ${targetHwnd}`);
   } catch (err: any) {
-    log(`HWND capture failed (${err?.message || err}) â€” proceeding without`);
+    log(`HWND capture failed (${err?.message || err}) -- proceeding without`);
   }
 
-  // Start UIA immediately. Target HWND is locked â€” panel visible/not doesn't matter.
-  const ctxPromise = readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
+  try {
+    const ctx = await readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
+    if (myActivation !== activationSeq) {
+      hideLoadingOverlay();
+      return;
+    }
 
-  {
-    showPanelWithLoading(cursorPos);
-    ctxPromise.then(async (ctx) => {
-      if (myActivation !== activationSeq) return;
-      const context: ContextPayload = { ...ctx, cursorPos };
-      setContext(context);
-      showElementHighlight(ctx.element.bounds);
+    const context: ContextPayload = { ...ctx, cursorPos };
+    setContext(context);
 
-      if (ctx.shouldAutoScreenshot) {
-        log(`Chromium/electron window detected â€” auto-capturing screenshot (UIA may miss web content)`);
-        try {
-          const wasVisible = mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible();
-          if (wasVisible && mainWindow) {
-            mainWindow.hide();
-            await new Promise((r) => setTimeout(r, 80));
-          }
-          const { screen: electronScreen } = require("electron") as typeof import("electron");
-          const display = electronScreen.getDisplayNearestPoint(cursorPos);
-          const sf = display.scaleFactor || 1;
-          const b = display.bounds;
-          const screenshotPath = await captureAndOptimize(
-            Math.round(b.x * sf), Math.round(b.y * sf),
-            Math.round((b.x + b.width) * sf), Math.round((b.y + b.height) * sf),
-            { noGrid: false },
-          );
-          if (wasVisible && mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.show();
-          }
-          if (screenshotPath) {
-            attachAutoScreenshot(screenshotPath);
-            setScreenshotMode("chromium-auto", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
-            context.hasScreenshot = true;
-            log(`Chromium screenshot attached: ${screenshotPath.slice(-40)} (screen ${Math.round(b.width * sf)}x${Math.round(b.height * sf)} physical @${sf}x)`);
-          } else {
-            log(`Chromium screenshot capture returned null`);
-          }
-        } catch (err: any) {
-          log(`Chromium screenshot fallback failed: ${err?.message || err}`);
-          if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
+    if (ctx.shouldAutoScreenshot) {
+      log(`Chromium/electron window detected -- auto-capturing screenshot (UIA may miss web content)`);
+      try {
+        const { screen: electronScreen } = require("electron") as typeof import("electron");
+        const display = electronScreen.getDisplayNearestPoint(cursorPos);
+        const sf = display.scaleFactor || 1;
+        const b = display.bounds;
+        const screenshotPath = await captureAndOptimize(
+          Math.round(b.x * sf), Math.round(b.y * sf),
+          Math.round((b.x + b.width) * sf), Math.round((b.y + b.height) * sf),
+          { noGrid: false },
+        );
+        if (screenshotPath) {
+          attachAutoScreenshot(screenshotPath);
+          setScreenshotMode("chromium-auto", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
+          context.hasScreenshot = true;
+          log(`Chromium screenshot attached: ${screenshotPath.slice(-40)} (screen ${Math.round(b.width * sf)}x${Math.round(b.height * sf)} physical @${sf}x)`);
+        } else {
+          log(`Chromium screenshot capture returned null`);
         }
-      } else {
-        resetScreenshotMode();
+      } catch (err: any) {
+        log(`Chromium screenshot fallback failed: ${err?.message || err}`);
       }
-      lastShouldAutoScreenshot = !!ctx.shouldAutoScreenshot;
+    } else {
+      resetScreenshotMode();
+    }
+    lastShouldAutoScreenshot = !!ctx.shouldAutoScreenshot;
 
-      updatePanelContext(context);
-    }).catch((err) => {
-      if (myActivation !== activationSeq) return;
-      log(`ERROR reading context: ${err.message}`);
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
-      }
-    });
+    hideLoadingOverlay();
+    showElementHighlight(ctx.element.bounds);
+    showPanel(context);
+  } catch (err: any) {
+    if (myActivation !== activationSeq) {
+      hideLoadingOverlay();
+      return;
+    }
+    log(`ERROR reading context: ${err.message}`);
+    hideLoadingOverlay();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
+    }
   }
 }
 
