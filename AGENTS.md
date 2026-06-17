@@ -147,8 +147,25 @@ Maintain a side section or dedicated file (`open-items.md`) to track future task
 ## Release & CI
 
 - `npm run check:no-env` is a leak guard. It scans `dist/` and `release/` for `.env` files and token-shaped strings (e.g., `OLLAMA_API_KEY`). It runs automatically before `npm run dist` and `npm run release`.
-- `.github/workflows/build.yml`: `npm ci` → `tsc --noEmit` → `npm run build` → `npm run check:no-env` → `electron-builder --win --dir`.
+- `.github/workflows/build.yml`: `npm install` → `tsc --noEmit` → `npm run build` → `npm run check:no-env` → `electron-builder --win --dir`.
 - `.github/workflows/release.yml`: same, plus `electron-builder --win --publish always` on `v*.*.*` tags.
+- **Both workflows pin `runs-on: windows-2022`** — do NOT switch back to `windows-latest`. The `windows-latest` image now ships VS 18 (preview) which breaks node-gyp's Visual Studio detection, causing `robotjs` native compilation to fail. `windows-2022` has VS 2022 only and compiles cleanly.
+
+### Version-bump checklist (when releasing a new version)
+
+When changing the version number, update **all** of these files:
+
+| File | What to change |
+|------|----------------|
+| `package.json` | `"version"` field |
+| `package-lock.json` | **Two** fields: top-level `"version"` and `packages[""].version` |
+| `CHANGELOG.md` | Add new `## [X.Y.Z] — YYYY-MM-DD` section at top + add compare link `[X.Y.Z]: ...compare/vPREV...vX.Y.Z` at the bottom |
+| `index.html` + `docs/index.html` (on `gh-pages` branch) | Download button label, e.g. `"Mudrik X.Y.Z installer (.exe)"` — update in **both** root `index.html` and `docs/index.html` |
+| Git tag `vX.Y.Z` | Create annotated tag and push — this triggers `release.yml` CI to build + publish the installer |
+
+**Do NOT** hardcode the version in `README.md` — it uses a dynamic GitHub release badge. Only the files above need manual updates.
+
+To release: commit the version bump on `master`, push, then `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`. The tag push triggers the release workflow.
 
 ## Private planning / development state (junctions to Mudrik-Plan)
 
