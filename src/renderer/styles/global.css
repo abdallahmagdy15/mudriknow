@@ -46,7 +46,17 @@ body {
   height: 100vh;
   padding: 10px;
   gap: 8px;
-  background: var(--bg-panel);
+  /* Solid panel base with two aurora gradient layers on top. The gradients
+     are deliberately low-opacity and large so they only tint the gaps
+     between solid surfaces (header, messages, input). No transparency,
+     no backdrop-filter, no pseudo-elements — the Electron window is
+     transparent and those all break rendering. See themes.css tokens. */
+  background:
+    radial-gradient(80% 60% at 20% 25%, var(--aurora-cyan), transparent 65%),
+    radial-gradient(70% 70% at 80% 80%, var(--aurora-gold), transparent 65%),
+    var(--bg-panel);
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+  animation: auroraShift var(--aurora-duration) ease-in-out infinite;
   overflow: hidden;
 }
 
@@ -274,7 +284,10 @@ body {
 .settings-panel {
   position: fixed;
   inset: 0;
-  background: var(--bg-overlay);
+  background:
+    radial-gradient(80% 70% at 20% 30%, var(--aurora-surface-cyan), transparent 70%),
+    radial-gradient(80% 80% at 85% 85%, var(--aurora-surface-gold), transparent 70%),
+    var(--bg-overlay);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -289,7 +302,9 @@ body {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: var(--bg-surface);
+  background:
+    radial-gradient(100% 100% at 50% 0%, var(--aurora-surface-cyan), transparent 70%),
+    var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   margin-bottom: 10px;
@@ -358,7 +373,10 @@ body {
 }
 
 .settings-section {
-  background: var(--bg-surface);
+  background:
+    radial-gradient(90% 60% at 80% 10%, var(--aurora-surface-cyan), transparent 70%),
+    radial-gradient(80% 80% at 10% 90%, var(--aurora-surface-gold), transparent 70%),
+    var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   margin-bottom: 8px;
@@ -903,7 +921,13 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 10px;
-  background: var(--bg-msg);
+  /* Surface stays opaque (transparent Electron window can't do real
+     translucency), but we tint it with the aurora hues so the background
+     appears to bleed through. */
+  background:
+    radial-gradient(100% 80% at 10% 20%, var(--aurora-surface-cyan), transparent 70%),
+    radial-gradient(90% 90% at 90% 80%, var(--aurora-surface-gold), transparent 70%),
+    var(--bg-msg);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   scroll-behavior: smooth;
@@ -915,9 +939,9 @@ body {
   position: sticky;
   top: -10px;
   display: block;
-  height: 24px;
-  margin: -10px -10px -14px -10px;
-  background: linear-gradient(to bottom, var(--bg-msg) 0%, var(--bg-msg) 50%, transparent 100%);
+  height: 16px;
+  margin: -10px -10px -6px -10px;
+  background: var(--messages-top-shadow);
   pointer-events: none;
   z-index: 1;
 }
@@ -1081,24 +1105,27 @@ body {
   line-height: 1.55;
   color: var(--text);
   transition: background 0.15s var(--ease-out);
-}
-
-.message:hover:not(.message-user) {
-  background: rgba(116, 153, 194, 0.04);
+  /* Shrink-wrap to the text content instead of spanning the full row,
+     so maximized panels don't show huge empty message boxes. */
+  width: fit-content;
+  max-width: 92%;
+  min-width: 120px;
 }
 
 .message-user {
+  margin-left: auto;
   background: var(--primary-faded);
   border: 1px solid var(--primary-glow);
 }
 
-.message-user .message-content {
-  color: var(--text);
-}
-
 .message-assistant {
+  margin-right: auto;
   background: var(--secondary-faded);
   border: 1px solid rgba(116, 153, 194, 0.10);
+}
+
+.message:hover:not(.message-user) {
+  background: rgba(116, 153, 194, 0.04);
 }
 
 .message-header {
@@ -1249,7 +1276,10 @@ body {
   position: relative;
   display: flex;
   align-items: stretch;
-  background: var(--bg-elevated);
+  background:
+    radial-gradient(80% 80% at 20% 80%, var(--aurora-surface-cyan), transparent 70%),
+    radial-gradient(70% 70% at 80% 20%, var(--aurora-surface-gold), transparent 70%),
+    var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   padding: 5px 5px 5px 10px;
@@ -1440,7 +1470,10 @@ body {
   flex-shrink: 0;
   padding: 14px;
   margin-bottom: 6px;
-  background: var(--bg-elevated);
+  background:
+    radial-gradient(80% 80% at 20% 80%, var(--aurora-surface-cyan), transparent 70%),
+    radial-gradient(70% 70% at 80% 20%, var(--aurora-surface-gold), transparent 70%),
+    var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   box-shadow: 0 -4px 20px rgba(12, 37, 48, 0.08);

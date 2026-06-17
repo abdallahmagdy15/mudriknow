@@ -40,6 +40,17 @@
   --success: #4a8f6b;
   --error: #c45a5a;
 
+  /* Aurora background — subtle, slow-moving gradient glow on the panel.
+     These are rendered as extra background layers ON TOP of the solid
+     --bg-panel fill, not as transparent overlays, because the Electron
+     window itself is transparent and backdrop-filter/translucency breaks. */
+  --aurora-cyan: rgba(116, 153, 194, 0.26);
+  --aurora-gold: rgba(242, 169, 58, 0.09);
+  --aurora-surface-cyan: rgba(116, 153, 194, 0.20);
+  --aurora-surface-gold: rgba(242, 169, 58, 0.07);
+  --messages-top-shadow: linear-gradient(to bottom, rgba(232, 238, 244, 0.98) 0%, rgba(232, 238, 244, 0.55) 60%, transparent 100%);
+  --aurora-duration: 24s;
+
   /* Radii */
   --radius: 12px;
   --radius-sm: 8px;
@@ -70,6 +81,13 @@
   --border-bright: rgba(90, 122, 156, 0.22);
   --success: #4a8b5f;
   --error: #b05050;
+
+  /* Dark mode aurora: very subtle so it doesn't fight the dark surfaces. */
+  --aurora-cyan: rgba(116, 153, 194, 0.10);
+  --aurora-gold: rgba(242, 169, 58, 0.06);
+  --aurora-surface-cyan: rgba(116, 153, 194, 0.09);
+  --aurora-surface-gold: rgba(242, 169, 58, 0.05);
+  --messages-top-shadow: linear-gradient(to bottom, rgba(13, 20, 28, 0.98) 0%, rgba(13, 20, 28, 0.55) 60%, transparent 100%);
 }
 
 /* ── Animations ── */
@@ -130,4 +148,18 @@
 @keyframes cursorPulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
+}
+
+/* ── Aurora drift ──
+   Very slow background-position shift of the gradient layers on .app.
+   No blur filters, no pseudo-elements, no transparency — just layered
+   radial gradients moving over the solid --bg-panel fill. Keeps text and
+   surfaces fully readable while giving the panel a subtle "live" pulse. */
+@keyframes auroraShift {
+  0%, 100% { background-position: 0% 0%, 100% 100%, 0 0; }
+  50% { background-position: 100% 100%, 0% 0%, 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app { animation: none !important; }
 }
