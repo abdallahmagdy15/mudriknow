@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Mudrik</title>
+  <style>
+    :root {
+      --cyan: #18BFE1;
+      --cyan-deep: #0E9AB8;
+      --cyan-glow: rgba(24, 191, 225, 0.35);
+      --gold: #F2A93A;
+      --body: #7499C2;
+      --ink: #2D4A63;
+      --bg: #0F1822;
+      --bg-card: rgba(18, 32, 42, 0.92);
+      --text: #E6F4F7;
+      --text-muted: #8FBFCD;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: transparent;
+      user-select: none;
+    }
+
+    .splash {
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 24px;
+      background: radial-gradient(140% 140% at 50% 0%, rgba(24, 191, 225, 0.12) 0%, transparent 55%),
+                  var(--bg-card);
+      border: 1px solid rgba(24, 191, 225, 0.25);
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
+                  0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+                  0 0 40px var(--cyan-glow);
+      backdrop-filter: blur(12px);
+      -webkit-app-region: no-drag;
+    }
+
+    .owl {
+      width: 88px; height: 88px;
+      margin-bottom: 14px;
+      filter: drop-shadow(0 6px 18px rgba(24, 191, 225, 0.22));
+      animation: bob 2.4s ease-in-out infinite;
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .wordmark {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .shortcuts {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .shortcut {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border-radius: 7px;
+      background: rgba(24, 191, 225, 0.1);
+      border: 1px solid rgba(24, 191, 225, 0.22);
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    }
+
+    .shortcut .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 6px var(--gold);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status .pulse {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #4ADE80;
+      box-shadow: 0 0 8px #4ADE80;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(0.85); }
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 14px;
+      font-size: 10px;
+      color: rgba(143, 191, 205, 0.55);
+      text-align: center;
+    }
+
+    /* Click-to-skip hint */
+    .skip-hint {
+      position: absolute;
+      bottom: 22px;
+      font-size: 10px;
+      color: rgba(143, 191, 205, 0.4);
+      opacity: 0;
+      animation: fadeHint 0.5s ease 1.2s forwards;
+    }
+
+    @keyframes fadeHint {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash" id="splash">
+    <!-- Inline SVG owl — same character palette as the panel mascot -->
+    <svg class="owl" viewBox="0 0 256 256" aria-hidden="true">
+      <ellipse cx="128" cy="246" rx="70" ry="4.5" fill="#2D4A63" opacity="0.18"/>
+      <g fill="#F2A93A" stroke="#2D4A63" stroke-width="2" stroke-linejoin="round">
+        <path d="M 100 234 Q 102 244 108 244 L 114 244 Q 118 244 116 238 Z"/>
+        <path d="M 118 234 Q 120 245 126 245 L 132 245 Q 136 244 134 238 Z"/>
+        <path d="M 138 234 Q 140 245 146 245 L 152 245 Q 156 244 154 238 Z"/>
+      </g>
+      <path fill="#7499C2" stroke="#2D4A63" stroke-width="4" stroke-linejoin="round"
+        d="M 128 86 C 74 86, 40 128, 40 172 C 40 218, 80 238, 128 238 C 176 238, 216 218, 216 172 C 216 128, 182 86, 128 86 Z"/>
+      <g>
+        <path fill="#4F7399" stroke="#2D4A63" stroke-width="3" stroke-linejoin="round"
+          d="M 52 148 C 40 180, 48 214, 74 226 L 92 222 L 88 150 Z"/>
+        <path fill="#7499C2" opacity="0.85" d="M 60 158 C 52 184, 58 210, 78 220 L 86 218 L 84 162 Z"/>
+      </g>
+      <g>
+        <path fill="#4F7399" stroke="#2D4A63" stroke-width="3" stroke-linejoin="round"
+          d="M 204 148 C 216 180, 208 214, 182 226 L 164 222 L 168 150 Z"/>
+        <path fill="#7499C2" opacity="0.85" d="M 196 158 C 204 184, 198 210, 178 220 L 170 218 L 172 162 Z"/>
+      </g>
+      <ellipse cx="128" cy="186" rx="46" ry="50" fill="#E8EEF5" stroke="#2D4A63" stroke-width="2"/>
+      <path d="M 116 198 Q 128 208 140 198" fill="none" stroke="#4F7399" stroke-width="2.2" stroke-linecap="round" opacity="0.6"/>
+      <g transform-origin="128px 100px" style="transform-box: fill-box;">
+        <path fill="#7499C2" stroke="#2D4A63" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"
+          d="M 54 108 C 54 80, 66 60, 82 50 C 72 40, 66 28, 72 20 C 82 26, 92 38, 100 46 C 110 40, 118 36, 128 36 C 138 36, 146 40, 156 46 C 164 38, 174 26, 184 20 C 190 28, 184 40, 174 50 C 190 60, 202 80, 202 108 L 54 108 Z"/>
+        <circle cx="100" cy="94" r="30" fill="#FFFFFF" stroke="#2D4A63" stroke-width="3"/>
+        <circle cx="156" cy="94" r="30" fill="#FFFFFF" stroke="#2D4A63" stroke-width="3"/>
+        <g>
+          <circle cx="100" cy="94" r="18" fill="#D99A1E"/>
+          <circle cx="100" cy="94" r="15" fill="#F2C94C"/>
+          <circle cx="100" cy="94" r="8" fill="#1C1C1C"/>
+          <circle cx="103" cy="90" r="3" fill="#FFFFFF"/>
+        </g>
+        <g>
+          <circle cx="156" cy="94" r="18" fill="#D99A1E"/>
+          <circle cx="156" cy="94" r="15" fill="#F2C94C"/>
+          <circle cx="156" cy="94" r="8" fill="#1C1C1C"/>
+          <circle cx="159" cy="90" r="3" fill="#FFFFFF"/>
+        </g>
+        <path fill="#F2A93A" stroke="#2D4A63" stroke-width="2.5" stroke-linejoin="round"
+          d="M 128 120 L 118 134 Q 128 140 138 134 Z"/>
+      </g>
+    </svg>
+
+    <div class="wordmark">Mudrik</div>
+    <div class="tagline" id="tagline">Running in the background. Call Mudrik any time with a shortcut.</div>
+
+    <div class="shortcuts" id="shortcuts">
+      <span class="shortcut"><span class="dot"></span>Alt+Space</span>
+      <span class="shortcut"><span class="dot"></span>Ctrl+Space</span>
+      <span class="shortcut"><span class="dot"></span>Alt+X</span>
+    </div>
+
+    <div class="status">
+      <span class="pulse"></span>
+      <span id="status-text">Ready</span>
+    </div>
+
+    <div class="skip-hint">Click to dismiss</div>
+  </div>
+
+  <script src="./splash-renderer.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Cursor calibration test window — opened from the tray menu.
+﻿// Cursor calibration test window â€” opened from the tray menu.
 //
 // Diagnostic tool: captures UIA from the foreground window using context-reader,
 // shows 50 random clickables. User picks a target and verifies the owl lands on it.
@@ -6,6 +6,8 @@
 import { BrowserWindow, ipcMain, screen } from "electron";
 import * as path from "path";
 import { log } from "../logger";
+import { showSplashScreen } from "../splash/splash-window";
+import { loadConfig } from "../config-store";
 import { showOverlay, hideOverlay } from "../guide/guide-overlay";
 import { readContextAtPoint, getCursorPos } from "../context-reader";
 import { getTimingHistory, clearTimingHistory } from "../debug-timing";
@@ -43,7 +45,7 @@ export function openCalibrateWindow(): void {
   win = new BrowserWindow({
     width: 560,
     height: 720,
-    title: "Mudrik — Cursor Calibration",
+    title: "Mudrik â€” Cursor Calibration",
     backgroundColor: "#0F1822",
     autoHideMenuBar: true,
     webPreferences: {
@@ -140,3 +142,23 @@ ipcMain.handle("calibrate-clear-timings", async () => {
   clearTimingHistory();
   return { ok: true };
 });
+
+// IPC: show the splash screen for quick UI iteration.
+ipcMain.handle("calibrate-show-splash", async () => {
+  try {
+    const cfg = loadConfig();
+    showSplashScreen({
+      pointer: cfg.hotkeyPointer,
+      area: cfg.hotkeyArea,
+      quick: cfg.hotkeyQuick,
+      lang: cfg.lang,
+      debug: true,
+    });
+    return { ok: true };
+  } catch (err: any) {
+    log("calibrate-show-splash failed: ");
+    return { ok: false, error: err?.message || String(err) };
+  }
+});
+
+export {};

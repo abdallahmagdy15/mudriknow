@@ -30,8 +30,9 @@ declare global {
       testTarget: (bounds: { x: number; y: number; width: number; height: number }) => Promise<{ ok: boolean; error?: string }>;
       getCursorPos: () => Promise<{ x: number; y: number }>;
       getTimings: () => Promise<TimingRecord[]>;
-      clearTimings: () => Promise<{ ok: boolean }>;
-    };
+    clearTimings: () => Promise<{ ok: boolean }>;
+    showSplash: () => Promise<{ ok: boolean }>;
+  };
   }
 }
 
@@ -97,6 +98,18 @@ function renderCandidates(c: Candidate[]) {
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 }
+
+const btnSplash = document.getElementById("btn-splash") as HTMLButtonElement;
+
+btnSplash.addEventListener("click", async () => {
+  btnSplash.disabled = true;
+  try {
+    await window.calibrate.showSplash();
+  } catch (e: any) {
+    setStatus(`Splash failed: ${e?.message || e}`, true);
+  }
+  setTimeout(() => { btnSplash.disabled = false; }, 1500);
+});
 
 btnCapture.addEventListener("click", async () => {
   const hideWaitMs = Math.max(100, Math.min(3000, Number(hideWaitInput.value) || 500));

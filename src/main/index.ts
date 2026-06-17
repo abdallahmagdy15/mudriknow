@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, dialog, nativeTheme } from "electron";
+﻿import { app, BrowserWindow, screen, dialog, nativeTheme } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
@@ -18,8 +18,11 @@ import { log, pruneOldLogs } from "./logger";
 
 app.commandLine.appendSwitch("enable-features", "BackDropFilter");
 
+import { showSplashScreen, closeSplashScreen } from "./splash/splash-window";
+
 let mainWindow: BrowserWindow | null = null;
 let config: Config = { ...DEFAULT_CONFIG };
+let splashShownForThisLaunch = false;
 
 const dwmapi = koffi.load("dwmapi.dll");
 const DwmSetWindowAttribute = dwmapi.func(
@@ -77,12 +80,12 @@ function calculatePanelPosition(cursorX: number, cursorY: number): { x: number; 
 
   let panelX: number;
   if (leftSpace >= rightSpace + BIAS) {
-    // Cursor far to the right → place panel on LEFT half, centered within it
+    // Cursor far to the right â†’ place panel on LEFT half, centered within it
     const leftHalfCenter = workArea.x + halfWidth / 2; // 25% across screen
     panelX = Math.round(leftHalfCenter - panelWidth / 2);
     log(`Panel placement: LEFT-HALF-CENTER (cursor-right, leftSpace=${Math.round(leftSpace)}, rightSpace=${Math.round(rightSpace)})`);
   } else {
-    // Cursor on left or middle → place panel on RIGHT half, centered within it
+    // Cursor on left or middle â†’ place panel on RIGHT half, centered within it
     const rightHalfCenter = workArea.x + halfWidth + halfWidth / 2; // 75% across screen
     panelX = Math.round(rightHalfCenter - panelWidth / 2);
     log(`Panel placement: RIGHT-HALF-CENTER (cursor-left, leftSpace=${Math.round(leftSpace)}, rightSpace=${Math.round(rightSpace)})`);
@@ -124,7 +127,7 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
     frame: false,
     ...(winIcon ? { icon: winIcon } : {}),
     // TRUE per-pixel transparency. All three of these must be set
-    // together on Windows — without them Electron draws a default
+    // together on Windows â€” without them Electron draws a default
     // opaque white/gray rectangle behind the CSS-rounded `.app`, which
     // is what produced the visible "rectangle behind the rounded
     // corners" bug:
@@ -142,7 +145,7 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
     alwaysOnTop: true,
     skipTaskbar: true,
     // User-resizable. A frameless resizable window has an invisible
-    // ~6px edge-resize gutter on all sides — settings items that sit
+    // ~6px edge-resize gutter on all sides â€” settings items that sit
     // close to the right edge used to accidentally trigger a native
     // edge-resize on long-click. We mitigate that with explicit
     // min/max dimensions below + the header is a drag region, so the
@@ -161,7 +164,7 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
   });
 
   // Persist the resized size on hide/close so it survives a relaunch.
-  // We persist only on hide/close — NOT on every `resize` event — to
+  // We persist only on hide/close â€” NOT on every `resize` event â€” to
   // avoid hammering the config file while the user drags a corner.
   // Position is NOT persisted; the panel is cursor-first and re-anchors
   // on every activation.
@@ -174,7 +177,7 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
   win.on("close", savePanelSizeOnHide);
 
   // Desktop-wide cursor polling for the owl mascot. Runs only while the
-  // panel is visible — ~33ms cadence (~30 Hz) is smooth enough for pupil
+  // panel is visible â€” ~33ms cadence (~30 Hz) is smooth enough for pupil
   // tracking and cheap enough not to notice. Using the Electron `screen`
   // API (not robotjs) so we don't pay a native-module call per tick.
   let cursorTimer: NodeJS.Timeout | null = null;
@@ -316,7 +319,7 @@ function showPanelWithLoading(cursorPos: { x: number; y: number }): void {
 
 function updatePanelContext(context: ContextPayload): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  log(`updatePanelContext: delivering real context — element "${context.element?.name}" type="${context.element?.type}"`);
+  log(`updatePanelContext: delivering real context â€” element "${context.element?.name}" type="${context.element?.type}"`);
   mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
   mainWindow.webContents.send(IPC.CONTEXT_READY, context);
   mainWindow.focus();
@@ -337,7 +340,7 @@ function hidePanel(): void {
 }
 
 function showExistingPanel(): void {
-  log("showExistingPanel called — re-showing with last context (no reset)");
+  log("showExistingPanel called â€” re-showing with last context (no reset)");
   if (!mainWindow) {
     log("No existing window, cannot re-show");
     return;
@@ -365,7 +368,7 @@ let lastCursorY: number | null = null;
 // Monotonically increasing activation id. Each hotkey press bumps it and
 // stamps the resulting context read; any .then that resolves for a superseded
 // id is dropped. Without this, a slow first UIA read can finish AFTER a
-// faster second read and overwrite the live context with stale data — the
+// faster second read and overwrite the live context with stale data â€” the
 // user sees the panel "stuck on" the previous element.
 let activationSeq = 0;
 let lastShouldAutoScreenshot = false;
@@ -385,10 +388,10 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
     targetHwnd = await getActiveHwnd();
     log(`Captured target HWND before panel show: ${targetHwnd}`);
   } catch (err: any) {
-    log(`HWND capture failed (${err?.message || err}) — proceeding without`);
+    log(`HWND capture failed (${err?.message || err}) â€” proceeding without`);
   }
 
-  // Start UIA immediately. Target HWND is locked — panel visible/not doesn't matter.
+  // Start UIA immediately. Target HWND is locked â€” panel visible/not doesn't matter.
   const ctxPromise = readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
 
   {
@@ -400,7 +403,7 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
       showElementHighlight(ctx.element.bounds);
 
       if (ctx.shouldAutoScreenshot) {
-        log(`Chromium/electron window detected — auto-capturing screenshot (UIA may miss web content)`);
+        log(`Chromium/electron window detected â€” auto-capturing screenshot (UIA may miss web content)`);
         try {
           const wasVisible = mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible();
           if (wasVisible && mainWindow) {
@@ -472,7 +475,7 @@ function handleQuickActivate(cursorPos: { x: number; y: number }): void {
 
 function handleAreaActivate(): void {
   const myActivation = ++activationSeq;
-  log(`Area hotkey triggered — starting area selection (activation #${myActivation})`);
+  log(`Area hotkey triggered â€” starting area selection (activation #${myActivation})`);
   hidePanel();
   startAreaSelection((rect) => {
     if (myActivation !== activationSeq) {
@@ -490,7 +493,7 @@ function handleAreaActivate(): void {
     showPanelWithLoading(cursorPos);
     scanArea(px1, py1, px2, py2).then(async ({ elements, imagePath }) => {
       if (myActivation !== activationSeq) {
-        log(`Area scan for #${myActivation} superseded by #${activationSeq} — discarding result`);
+        log(`Area scan for #${myActivation} superseded by #${activationSeq} â€” discarding result`);
         if (imagePath) cleanupImage(imagePath);
         return;
       }
@@ -504,7 +507,7 @@ function handleAreaActivate(): void {
 
       if (lastShouldAutoScreenshot) {
         try {
-          log(`Area selection on Chromium window — capturing full-screen screenshot alongside area image`);
+          log(`Area selection on Chromium window â€” capturing full-screen screenshot alongside area image`);
           const wasVisible = mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible();
           if (wasVisible && mainWindow) {
             mainWindow.hide();
@@ -575,7 +578,7 @@ async function maybeShowWelcome(): Promise<void> {
       detail:
         `Press ${config.hotkeyPointer} on any window to open the assistant for the UI element under your cursor.\n\n` +
         `Press ${config.hotkeyArea} to draw a rectangle and ask about that area.\n\n` +
-        `You can change the model, hotkeys, and startup behaviour from the ⚙ menu in the panel.`,
+        `You can change the model, hotkeys, and startup behaviour from the âš™ menu in the panel.`,
       buttons: ["Get started"],
       defaultId: 0,
       noLink: true,
@@ -612,6 +615,16 @@ app.whenReady().then(async () => {
   applyTheme(config.theme);
   applyLoginItemSetting(config.launchOnStartup);
 
+  if (!startedHidden && config.showSplashOnStartup) {
+    showSplashScreen({
+      pointer: config.hotkeyPointer,
+      area: config.hotkeyArea,
+      quick: config.hotkeyQuick,
+      lang: config.lang,
+    });
+    splashShownForThisLaunch = true;
+  }
+
   if (!startedHidden) {
     await maybeShowWelcome();
   }
@@ -620,7 +633,7 @@ app.whenReady().then(async () => {
     () => {
       const lastCtx = getLastContext();
       if (lastCtx && mainWindow) {
-        log("Show Panel from tray — re-showing with last context");
+        log("Show Panel from tray â€” re-showing with last context");
         showExistingPanel();
         return;
       }
@@ -628,7 +641,7 @@ app.whenReady().then(async () => {
       // display so the user can chat without a target element. Previously we
       // synthesized a fake "Test Element" context, which looked like a bug
       // to first-time users.
-      log("Show Panel from tray — no existing context, opening empty panel");
+      log("Show Panel from tray â€” no existing context, opening empty panel");
       const display = screen.getPrimaryDisplay();
       const emptyContext: ContextPayload = {
         element: {
@@ -683,6 +696,10 @@ app.whenReady().then(async () => {
     { pointer: config.hotkeyPointer, area: config.hotkeyArea, quick: config.hotkeyQuick }
   );
   log("Hotkey listener started");
+  // Keep the splash visible long enough for the user to read it, then close.
+  if (splashShownForThisLaunch) {
+    closeSplashScreen(3600);
+  }
 
   initUpdater();
   log("Updater initialized");

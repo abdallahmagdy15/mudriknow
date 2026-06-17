@@ -212,6 +212,7 @@ export function App() {
   }, [recentChatsOpen]);
   const [fontSize, setFontSize] = useState(14);
   const [restoreSessionOnActivate, setRestoreSessionOnActivate] = useState(true);
+  const [showSplashOnStartup, setShowSplashOnStartup] = useState(true);
   const [autoGuideEnabled, setAutoGuideEnabled] = useState(false);
   const [guideState, setGuideState] = useState<any | null>(null);
   // Mirror guideState into a ref so the main mount-effect's closures
@@ -410,6 +411,7 @@ if (!data?.hasImage) {
         setRestoreSessionOnActivate(cfg.restoreSessionOnActivate);
         restoreSessionRef.current = cfg.restoreSessionOnActivate;
       }
+      if (cfg?.showSplashOnStartup !== undefined) setShowSplashOnStartup(cfg.showSplashOnStartup);
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
       configLoadedRef.current = true;
     });
@@ -614,6 +616,12 @@ if (!data?.hasImage) {
     restoreSessionRef.current = newVal;
     window.hoverbuddy.setConfig({ restoreSessionOnActivate: newVal });
   }, [restoreSessionOnActivate]);
+
+  const handleToggleShowSplashOnStartup = useCallback(() => {
+    const newVal = !showSplashOnStartup;
+    setShowSplashOnStartup(newVal);
+    window.hoverbuddy.setConfig({ showSplashOnStartup: newVal });
+  }, [showSplashOnStartup]);
 
   const handleToggleAutoGuideEnabled = useCallback(() => {
     const newVal = !autoGuideEnabled;
@@ -1089,6 +1097,12 @@ if (!data?.hasImage) {
                 <label className="settings-toggle">
                   <span>{t("restoreChatOnPopup")}</span>
                   <div className={`toggle-switch ${restoreSessionOnActivate ? "on" : ""}`} onClick={handleToggleRestoreSession}>
+                    <div className="toggle-knob" />
+                  </div>
+                </label>
+                <label className="settings-toggle" title={t("showSplashOnStartupHint")}>
+                  <span>{t("showSplashOnStartup")}</span>
+                  <div className={`toggle-switch ${showSplashOnStartup ? "on" : ""}`} onClick={handleToggleShowSplashOnStartup}>
                     <div className="toggle-knob" />
                   </div>
                 </label>

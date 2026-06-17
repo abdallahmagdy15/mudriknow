@@ -25,6 +25,7 @@ module.exports = [
         patterns: [
           { from: "src/main/guide/guide-overlay.html", to: "guide-overlay.html" },
           { from: "src/main/calibrate/calibrate.html", to: "calibrate.html" },
+          { from: "src/main/splash/splash.html", to: "splash.html" },
           { from: "assets/owl-wing-pointer.png", to: "owl-wing-pointer.png" },
           { from: "assets/icon.png", to: "icon.png" },
         ],
@@ -117,6 +118,20 @@ module.exports = [
     resolve: { extensions: [".ts", ".js"] },
     output: {
       filename: "calibrate-renderer.js",
+      path: path.resolve(__dirname, "dist"),
+    },
+  },
+  {
+    mode: "production",
+    target: "web",
+    devtool: "source-map",
+    entry: "./src/main/splash/splash-renderer.ts",
+    module: {
+      rules: [{ test: /\.ts$/, use: "ts-loader", exclude: /node_modules/ }],
+    },
+    resolve: { extensions: [".ts", ".js"] },
+    output: {
+      filename: "splash-renderer.js",
       path: path.resolve(__dirname, "dist"),
     },
   },
