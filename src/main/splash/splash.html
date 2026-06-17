@@ -35,8 +35,16 @@
       align-items: center;
       justify-content: center;
       padding: 28px 24px;
-      background: radial-gradient(140% 140% at 50% 0%, rgba(24, 191, 225, 0.12) 0%, transparent 55%),
-                  var(--bg-card);
+      /* Existing card fill plus two slow aurora blobs layered on top.
+         Same conservative approach as the panel: solid base + gradients,
+         no transparency/backdrop-filter. */
+      background:
+        radial-gradient(80% 60% at 25% 30%, rgba(24, 191, 225, 0.10), transparent 65%),
+        radial-gradient(70% 70% at 75% 75%, rgba(242, 169, 58, 0.08), transparent 65%),
+        radial-gradient(140% 140% at 50% 0%, rgba(24, 191, 225, 0.12) 0%, transparent 55%),
+        var(--bg-card);
+      background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%;
+      animation: splashAuroraShift 26s ease-in-out infinite;
       border: 1px solid rgba(24, 191, 225, 0.25);
       border-radius: 20px;
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
@@ -44,6 +52,15 @@
                   0 0 40px var(--cyan-glow);
       backdrop-filter: blur(12px);
       -webkit-app-region: no-drag;
+    }
+
+    @keyframes splashAuroraShift {
+      0%, 100% { background-position: 0% 0%, 100% 100%, 50% 0%, 0 0; }
+      50% { background-position: 100% 100%, 0% 0%, 50% 0%, 0 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .splash { animation: none; }
     }
 
     .owl {
