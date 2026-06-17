@@ -4,6 +4,26 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] — 2026-06-17
+
+### Added
+- **Startup splash screen.** A lightweight owl-branded welcome overlay appears on launch with quick tips, keyboard shortcuts, and a ready indicator. Click anywhere (or wait ~3.6 s) to dismiss.
+- **"Show splash on startup" setting** in ⚙ Behavior — splash can be disabled entirely.
+- **Debug splash trigger** in the calibration window for fast UI iteration.
+- **Single-instance guard.** Launching a second Mudrik process now shows a native alert ("Mudrik is already running…") and exits instead of starting a duplicate instance.
+
+### Fixed
+- **Session cleanup with native `opencode.exe`.** Cleanup now spawns the detected native binary directly instead of routing through `node`, fixing the `MZx` stderr noise and occasional delete failures on `opencode-ai` ≥ 1.15.x.
+
+## [1.7.0] — 2026-06-11
+
+### Fixed
+- **"opencode not found" in Settings when opencode-ai >=1.15.x.** The model-validation path used a stale copy of `findOpenCodeBinPath()` that only searched for the JS shim (`opencode`), not the native binary (`opencode.exe`). Extracted a single shared `findOpenCodeBin()` function with comprehensive search paths and `isNativeOpenCodeBin()` helper; fixed all 5 call sites (`VALIDATE_MODEL`, `RESTORE_SESSION`, `GET_RECENT_CHATS`, `cleanupOldSessions`) to auto-detect native vs JS shim and invoke correctly.
+
+### Added
+- **Build prerequisites** documented in `AGENTS.md` (Node.js LTS 20-24, Visual Studio "Desktop development with C++" workload for `robotjs`/`koffi` native compilation).
+- **Runtime dependency** documented in `AGENTS.md` — `npm i -g opencode-ai` is required; the app searches `%APPDATA%/npm/node_modules/opencode-ai/bin/` for both `opencode.exe` and `opencode`.
+
 ## [1.6.0] — 2026-06-10
 
 ### Added
@@ -15,36 +35,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Website (`docs/`) refreshed** to match README: updated tagline, features, hotkeys (added Alt+X), privacy section. Removed vestigial "Reads files" card, "EN+AR" card, "How it works" code section, version badge, and "signed installer" claim. Nav trimmed to 4 links.
 
 ## [1.5.0] — 2026-06-04
-
-### Changed
-- **Image pipeline optimized for speed and token cost.** Screenshots now captured at max 1280px resolution (was full physical pixels), encoded directly as JPEG quality 85 (was PNG→JPEG two-pass), and grid overlay selectively disabled for area-selection images. ~3× fewer vision tokens on 1080p, up to 7× on 4K. Capture+optimize time cut by 300-600ms.
-
-## [1.4.0] — 2026-06-04
-
-### Fixed
-- **opencode-ai ≥1.15.x compatibility.** `opencode-ai` 1.15+ ships a native Windows binary (`opencode.exe`) instead of the old JS shim (`opencode`). Mudrik now searches for both and spawns correctly: `.exe` directly, JS shim via `node`. Fixes `spawn opencode ENOENT` on PCs with newer opencode-ai installs.
-
-## [1.3.0] — 2026-06-02
-
-### Changed
-- **Dropped XDG_DATA_HOME isolation.** Mudrik's opencode subprocesses no longer override `XDG_DATA_HOME`. Sessions, auth, and all opencode state now live at the platform default (`~/.local/share/opencode/` on Windows), the same location a standalone `opencode` CLI uses. `opencode session list` from any terminal now finds Mudrik's sessions — zero env-var setup. Old isolated data at `%APPDATA%\mudrik\opencode-data/` is auto-migrated to the default location on first launch, and the now-empty isolated dirs are cleaned up.
-- **API keys no longer mirrored to global auth.json.** The `syncOpenCodeAuth` → `writeOpenCodeAuth` rename restricts key writes to the default opencode auth store only. Keys pasted into Mudrik settings are no longer silently duplicated to the global `~/.local/share/opencode/auth.json`.
-- **Model validation errors improved.** Unknown providers and model IDs missing a `/` now produce clear, actionable error messages instead of the generic "not found" text.
-
-### Fixed
-- **Model row UI:** the edit-key button now shows a pen icon (`fa-pen`) instead of an ambiguous `×` that looked like a second delete button.
-- **Repo hygiene:** untracked `.impeccable/`, `.planning/`, and `.opencode/instructions.md` from the public repository. Moved the dev-only `oopif-diagnostic.ps1` to `scripts/diagnostics/`.
-
-## [1.7.0] — 2026-06-11
-
-### Fixed
-- **"opencode not found" in Settings when opencode-ai >=1.15.x.** The model-validation path used a stale copy of `findOpenCodeBinPath()` that only searched for the JS shim (`opencode`), not the native binary (`opencode.exe`). Extracted a single shared `findOpenCodeBin()` function with comprehensive search paths and `isNativeOpenCodeBin()` helper; fixed all 5 call sites (`VALIDATE_MODEL`, `RESTORE_SESSION`, `GET_RECENT_CHATS`, `cleanupOldSessions`) to auto-detect native vs JS shim and invoke correctly.
-
-### Added
-- **Build prerequisites** documented in `AGENTS.md` (Node.js LTS 20-24, Visual Studio "Desktop development with C++" workload for `robotjs`/`koffi` native compilation).
-- **Runtime dependency** documented in `AGENTS.md` — `npm i -g opencode-ai` is required; the app searches `%APPDATA%/npm/node_modules/opencode-ai/bin/` for both `opencode.exe` and `opencode`.
-
-## [1.0.0] — 2026-05-01
 
 ### Changed
 - **UIA context capture rewritten** — `context-reader.ts` PowerShell script (v22→v28):
@@ -123,6 +113,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.9.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.7.0...v1.9.0
 [1.7.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.4.0...v1.5.0

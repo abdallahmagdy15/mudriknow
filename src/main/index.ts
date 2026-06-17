@@ -21,6 +21,31 @@ app.commandLine.appendSwitch("enable-features", "BackDropFilter");
 
 import { showSplashScreen, closeSplashScreen } from "./splash/splash-window";
 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  let instanceDialogOpen = false;
+  app.on("second-instance", () => {
+    if (instanceDialogOpen) return;
+    instanceDialogOpen = true;
+    log("Second instance attempted — asking whether to close the running one");
+    const choice = dialog.showMessageBoxSync({
+      type: "info",
+      title: "Mudrik",
+      message:
+        "Mudrik is already running in the background. Use Alt+Space, Ctrl+Space, Alt+X, or the tray icon to open it. Do you want to close the running instance first?",
+      buttons: ["OK", "Close"],
+      defaultId: 1,
+      cancelId: 1,
+    });
+    instanceDialogOpen = false;
+    if (choice === 0) {
+      app.quit();
+    }
+  });
+}
+
 let mainWindow: BrowserWindow | null = null;
 let config: Config = { ...DEFAULT_CONFIG };
 let splashShownForThisLaunch = false;
@@ -662,6 +687,7 @@ function showStartupSplash(onClosed?: () => void): void {
 }
 
 app.whenReady().then(async () => {
+  if (!gotTheLock) return;
   log("App ready, initializing...");
 
   const startedHidden = process.argv.includes("--hidden");
