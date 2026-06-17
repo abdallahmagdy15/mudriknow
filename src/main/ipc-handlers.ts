@@ -1816,7 +1816,9 @@ function cleanupOldSessions(): void {
       log(`cleanupSessions: deleting ${toDelete.length} old sessions (keeping ${MAX_SESSIONS})`);
 
       for (const session of toDelete) {
-        const delProc = spawn("node", [opencodeBin, "session", "delete", session.id], { cwd, env, stdio: "pipe" });
+        const delCmd = isNative ? opencodeBin : "node";
+        const delArgs = isNative ? ["session", "delete", session.id] : [opencodeBin, "session", "delete", session.id];
+        const delProc = spawn(delCmd, delArgs, { cwd, env, stdio: "pipe" });
         let delStderr = "";
         delProc.stderr!.on("data", (d: Buffer) => { delStderr += d.toString(); });
         delProc.on("close", (code) => {
