@@ -110,6 +110,8 @@ export interface GuideControllerDeps {
       guessBounds?: { x: number; y: number; width: number; height: number };
     },
   ) => Promise<{ x: number; y: number; width: number; height: number } | null>;
+  /** Localized "Guide cancelled" string for the idle final message. */
+  getCancelledMessage?: () => string;
 }
 
 const STEP_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 min
@@ -121,6 +123,7 @@ export class GuideController {
     | { kind: "option"; choice: string }
     | null = null;
   private currentStep: GuideStepPayload | null = null;
+  private deferredFirstStep: GuideStepPayload | null = null;
   private inactivityTimer: NodeJS.Timeout | null = null;
   private processing: boolean = false;
   private runGeneration: number = 0;
@@ -139,6 +142,14 @@ export class GuideController {
         await this.handleOffer(action as unknown as GuideOfferPayload);
         return;
       case "guide_step":
+        // If we're still in the offer phase, the AI emitted the first step
+        // in the same response as the offer. Hold it locally so we can
+        // execute it instantly when the user accepts.
+        if (this.phase === "offer") {
+          this.deferredFirstStep = action as unknown as GuideStepPayload;
+          log("guide_step: deferred first step stored while in offer phase");
+          return;
+        }
         await this.handleStep(action as unknown as GuideStepPayload);
         return;
       case "guide_complete":
@@ -165,10 +176,13 @@ export class GuideController {
       return;
     }
     if (this.phase === "offer") {
-      // User accepted the offer → hide panel and show owl with thinking state
+      // User accepted the offer → hide panel and execute the first step
+      // immediately if the AI already provided it, otherwise fall back to
+      // the old capture+AI round-trip.
       this.deps.hidePanel();
       const cursor = this.deps.getCursorPos();
-      // Show thinking owl at cursor position with "Thinking..." bubble immediately
+      // Show thinking owl briefly so the overlay window appears; if we have a
+      // deferred first step we'll switch to pointing instantly.
       await this.deps.overlay.show(
         { x: cursor.x - 32, y: cursor.y - 32, width: 64, height: 64 },
         cursor,
@@ -176,6 +190,16 @@ export class GuideController {
       this.deps.overlay.setOwlMode?.("thinking");
       this.deps.onStateUpdate({ phase: "awaiting-ai", caption: "Thinking...", options: [] });
       this.transitionToAwaitingAI();
+
+      const deferred = this.deferredFirstStep;
+      if (deferred) {
+        log(`guide offer accepted: executing deferred first step ${deferred.stepIndex}`);
+        this.deferredFirstStep = null;
+        await this.handleStep(deferred);
+        return;
+      }
+
+      log("guide offer accepted: no deferred first step, falling back to AI follow-up");
       await this.deps.sendFollowUp({ kind: "option", choice: option });
       return;
     }
@@ -213,12 +237,14 @@ export class GuideController {
     this.clearInactivityTimer();
     this.processing = false;
     this.pendingAction = null;
+    this.deferredFirstStep = null;
     const wasActive = this.phase !== "offer";
     this.phase = "idle";
     this.currentStep = null;
+    const cancelledMessage = this.deps.getCancelledMessage?.() ?? "Guide cancelled.";
     this.deps.onStateUpdate({
       phase: "idle",
-      finalMessage: wasActive ? "Guide cancelled." : undefined,
+      finalMessage: cancelledMessage,
     });
     if (wasActive) {
       this.deps.showPanel();
@@ -243,6 +269,7 @@ export class GuideController {
       await this.cancel();
     }
     this.phase = "offer";
+    this.deferredFirstStep = null;
     this.deps.onStateUpdate({
       phase: "offer",
       summary: p.summary,
@@ -372,6 +399,7 @@ export class GuideController {
     this.clearInactivityTimer();
     this.phase = "idle";
     this.currentStep = null;
+    this.deferredFirstStep = null;
     this.pendingAction = null;
     this.processing = false;
     this.deps.onStateUpdate({ phase: "idle", finalMessage: p.summary });
@@ -388,6 +416,7 @@ export class GuideController {
     this.clearInactivityTimer();
     this.phase = "idle";
     this.currentStep = null;
+    this.deferredFirstStep = null;
     this.pendingAction = null;
     this.processing = false;
     this.deps.onStateUpdate({ phase: "idle", finalMessage: p.reason });

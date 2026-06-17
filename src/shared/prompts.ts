@@ -289,12 +289,17 @@ requires walking them through their CURRENT app, emit guide_offer and
 guide_step markers. Never both.
 
 ## CONTRACT
-Emit ONE guide marker per response. After the user acts, the Mudrik runtime captures
-the new screen state and sends it back; you decide the next marker from there.
+Emit ONE guide marker per response, EXCEPT for the very first turn: when you
+offer a guide, also emit the first guide_step in the SAME response as the
+guide_offer. The Mudrik runtime will hold that first step and execute it
+instantly when the user taps "Start guide", so the owl can point immediately
+without waiting for a second AI round-trip. After the user acts, the runtime
+captures the new screen state and sends it back; you decide the next marker
+from there.
 
 guide_offer — ALWAYS emit this first. Never go straight to guide_step.
 { "type":"guide_offer", "summary":"<plain language, under 15 words>",
-  "estSteps":<positive integer; aim for ≥2>, "options":["Cancel","Start guide"] }
+  "estSteps":<positive integer; aim for >=2>, "options":["Cancel","Start guide"] }
 
 guide_step — show one step.
 { "type":"guide_step", "caption":"<imperative, under 12 words>",
@@ -452,12 +457,25 @@ wrong is fine. Revise up or down between steps as you learn the path.
 User: "How do I export this as PDF with custom margins?"
 You (turn 1): <!--ACTION:{"type":"guide_offer","summary":"Export this workbook as
   PDF with custom margins","estSteps":5,"options":["Cancel","Start guide"]}-->
-[user taps Start; Mudrik sends new state]
-You (turn 2): <!--ACTION:{"type":"guide_step","caption":"Click the File menu",
+  <!--ACTION:{"type":"guide_step","caption":"Click the File menu",
   "target":{"selector":"File","automationId":"FileTab","uiaBounds":{"x":120,"y":40,"width":80,"height":30}},
   "options":["Cancel","I did it"],"trackable":true,"waitMs":800,
   "stepIndex":1,"estStepsLeft":4}-->
+[user taps Start; Mudrik shows step 1 immediately]
+You (turn 2): <!--ACTION:{"type":"guide_step","caption":"Click Export as PDF",
+  "target":{"selector":"Export as PDF","automationId":"exportPdfBtn","uiaBounds":{"x":240,"y":120,"width":110,"height":28}},
+  "options":["Cancel","I did it"],"trackable":true,"waitMs":800,
+  "stepIndex":2,"estStepsLeft":3}-->
 […continues until guide_complete]
+
+## SPEED-UP RULES
+- Be brief and direct. Guide mode is one small step at a time; do not
+  over-explain or overthink.
+- Trivially obvious action pairs may be combined into a single step, e.g.
+  "Right-click the file, then click Rename". Do NOT combine more than two
+  simple actions in one step.
+- The first guide_step MUST be emitted in the same response as the
+  guide_offer so the owl can start pointing as soon as the user accepts.
 
 ## NEGATIVE EXAMPLES — DO NOT use guide mode
 User: "click Save"
@@ -477,3 +495,4 @@ export function buildSystemPrompt(cfg: BuildPromptConfig): string {
   parts.push(cfg.autoGuideEnabled ? GUIDE_PROMPT_FULL : GUIDE_PROMPT_AWARE);
   return parts.filter(Boolean).join("\n\n");
 }
+
