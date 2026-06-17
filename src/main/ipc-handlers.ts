@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow, app } from "electron";
 import { Config, ContextPayload, IPC, Action, VisibleWindow } from "../shared/types";
-import { OpenCodeClient, OpenCodeEvent } from "./opencode-client";
+import { OpenCodeClient, OpenCodeEvent, findOpenCodeBin, isNativeOpenCodeBin } from "./opencode-client";
 import { buildSystemPrompt } from "../shared/prompts";
 import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames } from "../shared/providers";
 
@@ -873,14 +873,11 @@ export function registerIpcHandlers(
 
   ipcMain.handle(IPC.VALIDATE_MODEL, async (_e, modelId: string) => {
     try {
-      const opencodeBin = findOpenCodeBinPath();
+      const opencodeBin = findOpenCodeBin();
       if (!opencodeBin) return { valid: false, error: "opencode not found" };
-      const { execFile } = require("child_process");
       const cwd = appConfig.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      const raw = await new Promise<string>((res, rej) => {
-        execFile("node", [opencodeBin, "models"], { encoding: "utf-8", timeout: 30000, cwd, env, maxBuffer: 5*1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
-      });
+      const raw = await execOpenCode(opencodeBin, ["models"], { encoding: "utf-8", timeout: 30000, cwd, env, maxBuffer: 5*1024*1024 });
       const allModels = raw.trim().split("\n").map((l: string) => l.trim()).filter(Boolean);
       const match = allModels.find((m: string) => m.toLowerCase() === modelId.toLowerCase());
       if (match) {
@@ -1626,18 +1623,15 @@ contextBlock += `\n--- END CONTEXT ---\n`;
 
   ipcMain.handle(IPC.RESTORE_SESSION, async (_e, sessionId?: string) => {
     try {
-      const opencodeBin = findOpenCodeBinPath();
+      const opencodeBin = findOpenCodeBin();
       if (!opencodeBin) { log("restoreSession: bin not found"); return null; }
-      const { execFile } = require("child_process");
       const cwd = config.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
       let targetSessionId: string;
       if (sessionId) {
         targetSessionId = sessionId;
       } else {
-        const listRaw = await new Promise<string>((res, rej) => {
-          execFile("node", [opencodeBin, "session", "list", "--format", "json", "-n", "1"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
-        });
+        const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "1"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
         const sessions = JSON.parse(listRaw);
         if (!Array.isArray(sessions) || sessions.length === 0) { log("restoreSession: no sessions"); return null; }
         // Filter to sessions created from Mudrik's working directory. Without
@@ -1651,9 +1645,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         targetSessionId = ourSessions[0].id;
       }
       log(`restoreSession: target=${targetSessionId.slice(0, 30)}`);
-      const exportRaw = await new Promise<string>((res, rej) => {
-        execFile("node", [opencodeBin, "export", targetSessionId], { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 5*1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
-      });
+      const exportRaw = await execOpenCode(opencodeBin, ["export", targetSessionId], { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 5*1024*1024 });
       const jsonStart = exportRaw.indexOf("{");
       if (jsonStart < 0) { log("restoreSession: no json"); return null; }
       const data = JSON.parse(exportRaw.slice(jsonStart));
@@ -1760,14 +1752,11 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       return recentChatsCache;
     }
     try {
-      const opencodeBin = findOpenCodeBinPath();
+      const opencodeBin = findOpenCodeBin();
       if (!opencodeBin) { log("getRecentChats: bin not found"); return []; }
-      const { execFile } = require("child_process");
       const cwd = config.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      const listRaw = await new Promise<string>((res, rej) => {
-        execFile("node", [opencodeBin, "session", "list", "--format", "json", "-n", "5"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
-      });
+      const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "5"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
       const sessions = JSON.parse(listRaw);
       if (!Array.isArray(sessions) || sessions.length === 0) { log("getRecentChats: no sessions"); return []; }
       const ourSessions = sessions
@@ -1799,13 +1788,16 @@ contextBlock += `\n--- END CONTEXT ---\n`;
 const MAX_SESSIONS = 5;
 
 function cleanupOldSessions(): void {
-  const opencodeBin = findOpenCodeBinPath();
+  const opencodeBin = findOpenCodeBin();
   if (!opencodeBin) return;
   const { execFile } = require("child_process");
   const cwd = appConfig.workingDir || os.homedir();
   const env = buildCleanOpenCodeEnv(process.env, appConfig.apiKeys);
+  const isNative = isNativeOpenCodeBin(opencodeBin);
+  const execCmd = isNative ? opencodeBin : "node";
+  const execArgs = isNative ? ["session", "list", "--format", "json", "-n", "100"] : [opencodeBin, "session", "list", "--format", "json", "-n", "100"];
 
-  execFile("node", [opencodeBin, "session", "list", "--format", "json", "-n", "100"], { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 2*1024*1024 }, async (err: any, stdout: string) => {
+  execFile(execCmd, execArgs, { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 2*1024*1024 }, async (err: any, stdout: string) => {
     if (err) { log(`cleanupSessions list error: ${err.message}`); return; }
     try {
       const sessions = JSON.parse(stdout);
@@ -1888,16 +1880,14 @@ function cleanAssistantContent(text: string): string {
     .trim();
 }
 
-function findOpenCodeBinPath(): string | null {
-  const p = path.join(os.homedir(), "AppData", "Roaming", "npm", "node_modules", "opencode-ai", "bin", "opencode");
-  if (fs.existsSync(p)) return p;
-  try {
-    const { execSync } = require("child_process");
-    const prefix = execSync("npm config get prefix", { encoding: "utf-8" }).trim();
-    const gp = path.join(prefix, "node_modules", "opencode-ai", "bin", "opencode");
-    if (fs.existsSync(gp)) return gp;
-  } catch {}
-  return null;
+function execOpenCode(bin: string, cliArgs: string[], options: any): Promise<string> {
+  const { execFile } = require("child_process");
+  const isNative = isNativeOpenCodeBin(bin);
+  const cmd = isNative ? bin : "node";
+  const args = isNative ? cliArgs : [bin, ...cliArgs];
+  return new Promise<string>((res, rej) => {
+    execFile(cmd, args, options, (err: any, stdout: string) => err ? rej(err) : res(stdout));
+  });
 }
 
 function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {

@@ -46,6 +46,8 @@ From there: ask, translate, fix, summarize. Or tell it to **act**: type, paste, 
 
 **From source:** `git clone https://github.com/abdallahmagdy15/mudrik && cd mudrik && npm install && npm start`
 
+> **Windows build prerequisite:** `npm install` requires Visual Studio with the **"Desktop development with C++"** workload (for `robotjs` and `koffi` native compilation). Node.js ≥ 20 LTS recommended. See [`AGENTS.md`](AGENTS.md) for full details.
+
 ## ⌨️ Hotkeys
 
 Two global hotkeys put Mudrik in front of you. Both are rebindable from the ⚙ menu.

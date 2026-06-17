@@ -2,6 +2,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
+import { pathToFileURL } from "url";
 import * as koffi from "koffi";
 import { createTrayWithShow, destroyTray } from "./tray";
 import { Config, DEFAULT_CONFIG, ContextPayload, IPC } from "../shared/types";
@@ -590,6 +591,76 @@ async function maybeShowWelcome(): Promise<void> {
   saveConfig(config);
 }
 
+function showStartupSplash(onClosed?: () => void): void {
+  const iconCandidates = [
+    path.join(__dirname, "..", "assets", "icon.png"),
+    path.join(__dirname, "..", "..", "assets", "icon.png"),
+    path.join(app.getAppPath(), "assets", "icon.png"),
+  ];
+  const iconPath = iconCandidates.find((p) => {
+    try { fs.accessSync(p); return true; } catch { return false; }
+  });
+  const iconUrl = iconPath ? pathToFileURL(iconPath).href : "";
+
+  const display = screen.getPrimaryDisplay();
+  const w = 320;
+  const h = 200;
+  const x = Math.round(display.bounds.x + (display.bounds.width - w) / 2);
+  const y = Math.round(display.bounds.y + (display.bounds.height - h) / 2);
+
+  const html = `<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head><meta charset="UTF-8" />
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:transparent; }
+  body {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(15,23,42,0.94); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:#fff; user-select:none; -webkit-app-region:no-drag;
+    animation:fadeIn 0.4s ease; border-radius:12px; cursor:pointer;
+  }
+  img { width:64px; height:64px; margin-bottom:14px; }
+  .title { font-size:15px; font-weight:600; margin-bottom:4px; }
+  .hint { font-size:13px; color:rgba(255,255,255,0.65); }
+  .dismiss { margin-top:12px; font-size:11px; color:rgba(255,255,255,0.35); }
+  @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+</style></head>
+<body onclick="window.close()">
+  ${iconUrl ? `<img src="${iconUrl}" alt="Mudrik" />` : ''}
+  <div class="title">Mudrik is now running in your tray</div>
+  <div class="hint">Alt+Space to get started</div>
+  <div class="dismiss">Click to dismiss</div>
+</body></html>`;
+
+  const win = new BrowserWindow({
+    width: w, height: h, x, y,
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    hasShadow: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    focusable: false,
+    resizable: false,
+    show: false,
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
+  });
+
+  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+
+  const timer = setTimeout(() => {
+    try { if (!win.isDestroyed()) win.close(); } catch (e) { /* already closed */ }
+  }, 4000);
+
+  win.once("ready-to-show", () => win.show());
+
+  win.on("closed", () => {
+    clearTimeout(timer);
+    onClosed?.();
+  });
+}
+
 app.whenReady().then(async () => {
   log("App ready, initializing...");
 
@@ -625,8 +696,14 @@ app.whenReady().then(async () => {
     splashShownForThisLaunch = true;
   }
 
-  if (!startedHidden) {
+  // On first run the welcome dialog follows the splash; otherwise show it
+  // immediately on normal launches that didn't display a splash.
+  if (!startedHidden && !splashShownForThisLaunch) {
     await maybeShowWelcome();
+  } else if (firstRun && splashShownForThisLaunch) {
+    // Defer welcome until the splash auto-closes so the user isn't buried
+    // in stacked windows. We still mark it completed synchronously below.
+    setTimeout(() => void maybeShowWelcome(), 4000);
   }
 
   createTrayWithShow(
