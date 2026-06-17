@@ -4,6 +4,17 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] — 2026-06-18
+
+### Added
+- **Aurora-style UI background.** Subtle, slow-moving cyan/gold gradient layers behind the panel and splash screen, theme-aware for both light and dark modes.
+- **Surface aurora tint.** Messages, settings panel, settings sections, and chat input are softly tinted so the aurora background visually bleeds through without real translucency (which breaks the transparent Electron window).
+- **Theme-scrolled top shadow.** The messages container's top fade now uses the chat area's own main color for a softer blend in both themes.
+
+### Changed
+- **Message bubbles shrink to fit content** instead of spanning the full row width, preventing oversized empty boxes when the panel is maximized.
+- **Light-mode orange/gold aurora reduced** to keep the palette subtle on the light background.
+
 ## [1.9.0] — 2026-06-17
 
 ### Added
@@ -113,6 +124,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.9.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.7.0...v1.9.0
 [1.7.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.5.0...v1.6.0
