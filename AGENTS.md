@@ -90,12 +90,14 @@ Maintain a side section or dedicated file (`open-items.md`) to track future task
 
 - **Windows-only, end-to-end**. UIA, PowerShell script embedding, robotjs, GDI+ capture, and `findOpenCodeBin` path resolution are all Windows-specific. Do not add `process.platform` branches unless you are also porting the PowerShell layer.
 - **Electron tray app** (`src/main/index.ts`). The panel is a frameless, transparent `BrowserWindow`. `window-all-closed` is suppressed so the tray icon survives.
-- **Eight webpack bundles** (see `webpack.config.js`). The four "core" ones are:
+- **Single-instance lock** — `app.requestSingleInstanceLock()` runs before `whenReady()`. A second launch fails to acquire the lock, short-circuits init, shows a native alert ("Mudrik is already running…") offering to close the running instance, then quits. The first instance logs `second-instance` events.
+- **Startup splash** — optional owl-branded welcome overlay (`src/main/splash/`) shown on non-hidden launches when `Config.showSplashOnStartup` is true. Auto-dismisses after ~3.6 s or on click. Disabled on Windows auto-startup (`--hidden`). Has a debug trigger in the calibration window.
+- **Nine webpack bundles** (see `webpack.config.js`). The four "core" ones are:
   1. `main.js` (`src/main/index.ts`) — main process.
   2. `preload.js` (`src/preload.ts`) — bridges `ipcRenderer` to renderer as `window.hoverbuddy`.
   3. `area-preload.js` (`src/main/area-preload.ts`) — preload for the fullscreen area-selection overlay.
   4. `renderer.js` (`src/renderer/index.tsx`) — React UI of the panel.
-  Plus: guide-overlay preload/renderer, calibrate preload/renderer.
+  Plus: guide-overlay preload/renderer, calibrate preload/renderer, splash-renderer.
 - **`@shared/*` alias** maps to `src/shared/*`. The single source of truth for IPC event names, `ContextPayload`, `Action`, and `Config` types lives in `src/shared/types.ts`. When adding an IPC channel, add the name to the `IPC` object there, wire it in `src/preload.ts`, and handle it in `src/main/ipc-handlers.ts`.
 - **`robotjs` and `koffi` are externals** in the main bundle (native modules).
 - **`tsconfig.json` has `strict: true`** — typecheck failures are blocking in CI.
@@ -276,6 +278,23 @@ Test page with 7 iframes (srcdoc, local file, external domain, data:, javascript
 
 `config-store.ts#migrateLegacyConfig` runs once at startup to copy `%APPDATA%\hoverbuddy\` → `%APPDATA%\mudrik\` for users upgrading across the rebrand. `logger.ts` falls back to the legacy log dir until the migration runs. Do not rename the legacy paths until pre-rebrand installs are presumed extinct.
 
+### Startup sequence & single-instance guard
+
+The main process boot order in `src/main/index.ts`:
+
+1. **Single-instance lock** (`app.requestSingleInstanceLock()`) — runs *before* `whenReady()`. If the lock is not acquired (second launch), the app waits for `whenReady`, shows a native `dialog.showMessageBoxSync` alert ("Mudrik is already running… Use Alt+Space, Ctrl+Space, Alt+X, or the tray icon…"), then `app.quit()`. The first instance registers a `second-instance` handler that logs the event.
+2. **`app.whenReady()`** — the primary instance proceeds. If `!gotTheLock` (shouldn't happen in the primary instance, but defensive), it returns early.
+3. **Legacy config migration** → `loadConfig` → `ensureAgentInWorkingDir` → `pruneOldLogs(30d)` → `applyTheme` → `applyLoginItemSetting`.
+4. **Splash screen** — if `!startedHidden && config.showSplashOnStartup`, `showSplashScreen()` displays the owl-branded overlay. Auto-dismisses after ~3.6 s (`setTimeout` in `splash-window.ts`) or on click. The splash does **not** block app init — it's a fire-and-forget overlay.
+5. **First-run welcome dialog** (if `isFirstRun()`) — follows the splash.
+6. **Tray + hotkeys + panel** — normal init.
+
+The `--hidden` flag (set by Windows auto-startup) suppresses both the splash and the panel window. The splash is purely cosmetic; all functional init runs regardless.
+
+### Session cleanup
+
+`ipc-handlers.ts` deletes stale opencode sessions on startup via `cleanupOldSessions`. This spawns the detected opencode binary (`opencode.exe` directly for native, `node opencode` for the JS shim) — **not** through a `node` wrapper for the native binary. The previous implementation routed the native `.exe` through `node`, causing `MZx` garbage in stderr (the PE header bytes) and occasional delete failures. The fix in v1.9.0 spawns the native binary directly.
+
 ### Windows-only assumptions
 
 This codebase is not cross-platform. UIA, PowerShell script embedding, robotjs build, DPI-aware GDI capture, and `findOpenCodeBin` path resolution are all Windows-specific. Don't add `process.platform` branches unless you're also porting the PS layer.
@@ -289,7 +308,8 @@ This codebase is not cross-platform. UIA, PowerShell script embedding, robotjs b
 | `src/shared/providers.ts` | Provider→env-var mapping; `buildCleanOpenCodeEnv` (minimal env to avoid Bun segfaults) |
 | `src/preload.ts` | `ipcRenderer` bridge exposed as `window.hoverbuddy` |
 | `src/main/ipc-handlers.ts` | All IPC wiring, context formatting, auto-guide lazy init |
-| `src/main/index.ts` | Main entry; window lifecycle, hotkey wiring, tray |
+| `src/main/index.ts` | Main entry; single-instance lock, splash, window lifecycle, hotkey wiring, tray |
 | `src/main/opencode-client.ts` | Spawns and streams from the `opencode` CLI binary |
 | `src/main/action-executor.ts` | Marker parsing, validation, thin dispatcher |
 | `src/main/config-store.ts` | Config persistence, legacy migration, agent-file provisioning |
+| `src/main/splash/splash-window.ts` | Splash screen window lifecycle (create, auto-dismiss, close) |
