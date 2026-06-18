@@ -6,7 +6,7 @@ import { pathToFileURL } from "url";
 import * as koffi from "koffi";
 import { createTrayWithShow, destroyTray } from "./tray";
 import { Config, DEFAULT_CONFIG, ContextPayload, IPC } from "../shared/types";
-import { registerIpcHandlers, setContext, setAreaContext, getLastContext, patchConfigPersistOnly, attachAutoScreenshot, setScreenshotMode, resetScreenshotMode } from "./ipc-handlers";
+import { registerIpcHandlers, setContext, setAreaContext, getLastContext, patchConfigPersistOnly, attachAutoScreenshot, setScreenshotMode } from "./ipc-handlers";
 import { startHotkeyListener, stopHotkeyListener, applyHotkeys } from "./hotkey";
 import { loadConfig, saveConfig, isFirstRun, ensureAgentInWorkingDir, migrateLegacyConfig } from "./config-store";
 import { initUpdater, stopUpdater } from "./updater";
@@ -17,11 +17,10 @@ import { showElementHighlight, showAreaHighlight } from "./highlight";
 import { cleanupImage, captureAndOptimize } from "./vision";
 import { log, pruneOldLogs } from "./logger";
 
-let loadingOverlay: { show: () => void; hide: () => void } | null = null;
-
 app.commandLine.appendSwitch("enable-features", "BackDropFilter");
 
 import { showSplashScreen, closeSplashScreen } from "./splash/splash-window";
+import { showCaptureScreen, hideCaptureScreen } from "./guide/guide-overlay";
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -396,55 +395,16 @@ let lastCursorY: number | null = null;
 // Monotonically increasing activation id. Each hotkey press bumps it and
 // stamps the resulting context read; any .then that resolves for a superseded
 // id is dropped. Without this, a slow first UIA read can finish AFTER a
-// faster second read and overwrite the live context with stale data â€” the
+// faster second read and overwrite the live context with stale data — the
 // user sees the panel "stuck on" the previous element.
 let activationSeq = 0;
-let lastShouldAutoScreenshot = false;
 
-function showLoadingOverlay(): void {
-  if (loadingOverlay) {
-    loadingOverlay.show();
-    return;
-  }
-  const { BrowserWindow, screen } = require("electron") as typeof import("electron");
-  const cursor = screen.getCursorScreenPoint();
-  const display = screen.getDisplayNearestPoint(cursor);
-  const sf = display.scaleFactor || 1;
-  const size = Math.round(120 / sf);
-  const win = new BrowserWindow({
-    width: size,
-    height: size,
-    x: Math.round(display.bounds.x + (display.bounds.width - size) / 2),
-    y: Math.round(display.bounds.y + (display.bounds.height - size) / 2),
-    frame: false,
-    transparent: true,
-    backgroundColor: "#00000000",
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    movable: false,
-    focusable: false,
-    hasShadow: false,
-    show: false,
-    webPreferences: { nodeIntegration: false, contextIsolation: true },
-  });
-  const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
-html,body{margin:0;padding:0;width:100vw;height:100vh;background:transparent;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.ring{width:36px;height:36px;border:3px solid rgba(24,191,225,0.2);border-top-color:#18BFE1;border-radius:50%;animation:spin .8s linear infinite}
-.text{margin-top:10px;color:#18BFE1;font-family:-apple-system,Segoe UI,system-ui,sans-serif;font-size:13px;font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,0.5)}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style></head><body><div><div class="ring"></div><div class="text">Scanning screen…</div></div></body></html>`;
-  win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
-  win.once("ready-to-show", () => win.show());
-  loadingOverlay = {
-    show: () => { if (!win.isDestroyed()) { win.showInactive(); win.moveTop(); } },
-    hide: () => { if (!win.isDestroyed()) win.hide(); },
-  };
+function showCaptureOverlay(): void {
+  showCaptureScreen();
 }
 
-function hideLoadingOverlay(): void {
-  loadingOverlay?.hide();
+function hideCaptureOverlay(): void {
+  hideCaptureScreen();
 }
 
 async function handlePointerActivate(cursorPos: { x: number; y: number }): Promise<void> {
@@ -453,14 +413,14 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
   lastCursorX = cursorPos.x;
   lastCursorY = cursorPos.y;
 
-  // Hide any existing panel immediately; show a centered spinner overlay
-  // while we capture context/screenshot. The panel itself is NOT shown
-  // until the data is ready -- this prevents the "open -> hide -> re-open"
-  // flash and the random highlight rectangle the user sees mid-capture.
+  // Hide any existing panel immediately; show a semi-transparent capture badge
+  // near the cursor while we capture context/screenshot. The panel itself is
+  // NOT shown until the data is ready — this prevents the "open -> hide ->
+  // re-open" flash and the random highlight rectangle the user sees mid-capture.
   if (mainWindow && mainWindow.isVisible()) {
     mainWindow.hide();
   }
-  showLoadingOverlay();
+  showCaptureOverlay();
 
   let targetHwnd = 0;
   try {
@@ -471,18 +431,17 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
     log(`HWND capture failed (${err?.message || err}) -- proceeding without`);
   }
 
-  try {
-    const ctx = await readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
-    if (myActivation !== activationSeq) {
-      hideLoadingOverlay();
-      return;
-    }
+    try {
+      const ctx = await readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
+      if (myActivation !== activationSeq) {
+        hideCaptureOverlay();
+        return;
+      }
 
-    const context: ContextPayload = { ...ctx, cursorPos };
-    setContext(context);
+      const context: ContextPayload = { ...ctx, cursorPos, source: "pointer" };
+      setContext(context);
 
-    if (ctx.shouldAutoScreenshot) {
-      log(`Chromium/electron window detected -- auto-capturing screenshot (UIA may miss web content)`);
+      log("Pointer hotkey — always capturing full-screen screenshot with grid");
       try {
         const { screen: electronScreen } = require("electron") as typeof import("electron");
         const display = electronScreen.getDisplayNearestPoint(cursorPos);
@@ -495,30 +454,27 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
         );
         if (screenshotPath) {
           attachAutoScreenshot(screenshotPath);
-          setScreenshotMode("chromium-auto", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
+          setScreenshotMode("manual", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
           context.hasScreenshot = true;
-          log(`Chromium screenshot attached: ${screenshotPath.slice(-40)} (screen ${Math.round(b.width * sf)}x${Math.round(b.height * sf)} physical @${sf}x)`);
+          context.imagePath = screenshotPath;
+          log(`Pointer screenshot attached: ${screenshotPath.slice(-40)} (screen ${Math.round(b.width * sf)}x${Math.round(b.height * sf)} physical @${sf}x)`);
         } else {
-          log(`Chromium screenshot capture returned null`);
+          log(`Pointer screenshot capture returned null`);
         }
       } catch (err: any) {
-        log(`Chromium screenshot fallback failed: ${err?.message || err}`);
+        log(`Pointer screenshot capture failed: ${err?.message || err}`);
       }
-    } else {
-      resetScreenshotMode();
-    }
-    lastShouldAutoScreenshot = !!ctx.shouldAutoScreenshot;
 
-    hideLoadingOverlay();
-    showElementHighlight(ctx.element.bounds);
-    showPanel(context);
-  } catch (err: any) {
+      hideCaptureOverlay();
+      showElementHighlight(ctx.element.bounds);
+      showPanel(context);
+    } catch (err: any) {
     if (myActivation !== activationSeq) {
-      hideLoadingOverlay();
+      hideCaptureOverlay();
       return;
     }
     log(`ERROR reading context: ${err.message}`);
-    hideLoadingOverlay();
+    hideCaptureOverlay();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
     }
@@ -539,6 +495,7 @@ function handleQuickActivate(cursorPos: { x: number; y: number }): void {
       children: [],
     },
     surrounding: [],
+    source: "quick",
     cursorPos: {
       x: Math.round(display.bounds.x + display.bounds.width / 2),
       y: Math.round(display.bounds.y + display.bounds.height / 2),
@@ -580,37 +537,8 @@ function handleAreaActivate(): void {
       const sf = display.scaleFactor || 1;
       const b = display.bounds;
 
-      if (lastShouldAutoScreenshot) {
-        try {
-          log(`Area selection on Chromium window â€” capturing full-screen screenshot alongside area image`);
-          const wasVisible = mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible();
-          if (wasVisible && mainWindow) {
-            mainWindow.hide();
-            await new Promise((r) => setTimeout(r, 80));
-          }
-          const fullScreenshotPath = await captureAndOptimize(
-            Math.round(b.x * sf), Math.round(b.y * sf),
-            Math.round((b.x + b.width) * sf), Math.round((b.y + b.height) * sf),
-            { noGrid: true },
-          );
-          if (wasVisible && mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.show();
-          }
-          if (fullScreenshotPath) {
-            attachAutoScreenshot(fullScreenshotPath);
-            log(`Area+Chromium: full-screen screenshot attached: ${fullScreenshotPath.slice(-40)}`);
-          }
-          setScreenshotMode("area-chromium", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
-        } catch (err: any) {
-          log(`Area+Chromium full-screen capture failed: ${err?.message || err}`);
-          setScreenshotMode("area", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
-          if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
-        }
-      } else {
-        setScreenshotMode("area", { physicalWidth: Math.round(b.width * sf), physicalHeight: Math.round(b.height * sf), scaleFactor: sf });
-      }
-
       const context = setAreaContext(elements, rect, cursorPos, imagePath);
+      context.source = "area";
       updatePanelContext(context);
     }).catch((err) => {
       log(`ERROR scanning area: ${err.message}`);
@@ -761,7 +689,7 @@ app.whenReady().then(async () => {
   applyTheme(config.theme);
   applyLoginItemSetting(config.launchOnStartup);
 
-  if (!startedHidden && config.showSplashOnStartup) {
+  if (!startedHidden) {
     showSplashScreen({
       pointer: config.hotkeyPointer,
       area: config.hotkeyArea,
@@ -804,6 +732,7 @@ app.whenReady().then(async () => {
           children: [],
         },
         surrounding: [],
+        source: "quick",
         cursorPos: {
           x: Math.round(display.workAreaSize.width / 2),
           y: Math.round(display.workAreaSize.height / 2),

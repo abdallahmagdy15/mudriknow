@@ -189,35 +189,88 @@
       0%, 100% { transform: translateY(0); }
       50%      { transform: translateY(-4px); }
     }
-    .loading {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      pointer-events: none;
-      user-select: none;
-    }
-    .loading.active { display: block; }
-    .loading-ring {
-      width: 36px;
-      height: 36px;
-      border: 3px solid rgba(24, 191, 225, 0.2);
-      border-top-color: #18BFE1;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 10px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .loading-text {
+        .loading-text {
       color: #18BFE1;
       font-family: -apple-system, Segoe UI, system-ui, sans-serif;
       font-size: 14px;
       font-weight: 500;
       text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    /* --- Capture screen overlay (camera focus frame) --- */
+    .capture-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(0.5px);
+      -webkit-backdrop-filter: blur(0.5px);
+      pointer-events: none;
+      user-select: none;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .capture-screen.active {
+      display: flex;
+      opacity: 1;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .capture-frame {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      animation: framePulse 1.8s ease-in-out infinite;
+    }
+
+    /* Camera-style corner brackets only */
+    .capture-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 2px;
+      background:
+        linear-gradient(to right, rgba(255,255,255,0.85) 28px, transparent 28px) top left no-repeat,
+        linear-gradient(to bottom, rgba(255,255,255,0.85) 28px, transparent 28px) top left no-repeat,
+        linear-gradient(to left, rgba(255,255,255,0.85) 28px, transparent 28px) top right no-repeat,
+        linear-gradient(to bottom, rgba(255,255,255,0.85) 28px, transparent 28px) top right no-repeat,
+        linear-gradient(to right, rgba(255,255,255,0.85) 28px, transparent 28px) bottom left no-repeat,
+        linear-gradient(to top, rgba(255,255,255,0.85) 28px, transparent 28px) bottom left no-repeat,
+        linear-gradient(to left, rgba(255,255,255,0.85) 28px, transparent 28px) bottom right no-repeat,
+        linear-gradient(to top, rgba(255,255,255,0.85) 28px, transparent 28px) bottom right no-repeat;
+      background-size: 28px 2px, 2px 28px, 28px 2px, 2px 28px, 28px 2px, 2px 28px, 28px 2px, 2px 28px;
+      animation: frameFlash 1.8s ease-in-out infinite;
+    }
+
+    /* Center focus ring */
+    .capture-focus-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 56px;
+      height: 56px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), inset 0 0 8px rgba(255, 255, 255, 0.15);
+      animation: ringPulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes framePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.92; }
+    }
+
+    @keyframes frameFlash {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 0.95; }
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      50% { transform: translate(-50%, -50%) scale(1.08); opacity: 0.95; }
     }
   </style>
 </head>
@@ -237,6 +290,12 @@
   <div id="loading" class="loading">
     <div class="loading-ring"></div>
     <div class="loading-text">Scanning screen…</div>
+  </div>
+
+  <div id="capture-screen" class="capture-screen">
+    <div class="capture-frame">
+      <div class="capture-focus-ring"></div>
+    </div>
   </div>
   <script src="./guide-overlay-renderer.js"></script>
 </body>

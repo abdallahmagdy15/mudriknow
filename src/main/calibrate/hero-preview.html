@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Mudrik Hero Preview</title>
+  <style>
+    :root {
+      --cyan: #18BFE1;
+      --gold: #F2A93A;
+      --bg: #0F1822;
+      --panel: #1C2A3A;
+      --border: #2D4A63;
+      --text: #E6F4F7;
+      --muted: #8FBFCD;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 13px; line-height: 1.4;
+      height: 100vh; overflow: hidden;
+    }
+    .wrap { display: flex; flex-direction: column; height: 100vh; padding: 16px; gap: 12px; }
+    header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    h1 { font-size: 15px; margin: 0; color: var(--cyan); letter-spacing: 0.4px; }
+    .sub { font-size: 11px; color: var(--muted); margin: 0; }
+    .tabs { display: flex; gap: 6px; }
+    .tab {
+      padding: 6px 12px; font-size: 12px; font-family: inherit;
+      background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer;
+    }
+    .tab.active { color: var(--bg); background: var(--cyan); border-color: var(--cyan); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    .stage {
+      flex: 1; display: flex; gap: 16px; min-height: 0;
+    }
+    .canvas {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 12px;
+      position: relative; overflow: hidden;
+    }
+    .canvas.panel {
+      background: radial-gradient(120% 120% at 50% 0%, rgba(24,191,225,0.08) 0%, transparent 55%), var(--panel);
+    }
+    .canvas.dark { background: #050A10; }
+    .canvas.light { background: #F4F8FB; }
+    .canvas.cyan { background: var(--cyan); }
+    .canvas.white { background: #FFFFFF; }
+    .canvas.black { background: #000000; }
+
+    .hero-img {
+      object-fit: contain;
+      transition: width 0.2s, height 0.2s;
+    }
+
+    .owl-box {
+      width: 256px; height: 256px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .owl-box svg { width: 100%; height: 100%; }
+
+    .label-chip {
+      position: absolute; top: 10px; left: 10px;
+      padding: 4px 8px; border-radius: 4px;
+      background: rgba(15, 24, 34, 0.7); color: var(--muted);
+      font-size: 11px; border: 1px solid var(--border);
+    }
+
+    .sidebar {
+      width: 220px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+    }
+    .card h2 { font-size: 12px; margin: 0 0 8px; color: var(--cyan); }
+    .sizes { display: flex; flex-direction: column; gap: 6px; }
+    .size-btn {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 10px; font-size: 12px; font-family: inherit;
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; text-align: left;
+    }
+    .size-btn:hover { background: rgba(24,191,225,0.08); }
+    .size-btn.active { border-color: var(--cyan); background: rgba(24,191,225,0.12); }
+    .size-btn .dim { color: var(--muted); font-size: 11px; }
+
+    .bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .bg-btn {
+      aspect-ratio: 1;
+      border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+    }
+    .bg-btn.active { outline: 2px solid var(--cyan); outline-offset: 1px; }
+    .bg-btn.panel { background: var(--panel); }
+    .bg-btn.dark { background: #050A10; }
+    .bg-btn.light { background: #F4F8FB; }
+    .bg-btn.cyan { background: var(--cyan); }
+    .bg-btn.white { background: #FFFFFF; }
+    .bg-btn.black { background: #000000; }
+
+    .meta {
+      margin-top: auto; font-size: 11px; color: var(--muted);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .meta code { color: var(--gold); font-family: ui-monospace, Consolas, monospace; }
+
+    .preview-badge {
+      position: absolute; bottom: 10px; right: 10px;
+      font-size: 10px; color: var(--muted); opacity: 0.6;
+    }
+
+    .note {
+      font-size: 11px; color: var(--gold); border: 1px dashed rgba(242,169,58,0.4);
+      padding: 8px; border-radius: 6px; background: rgba(242,169,58,0.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Mudrik Hero Preview</h1>
+        <p class="sub">Evaluate the mascot at real asset sizes and backgrounds.</p>
+      </div>
+      <div class="tabs" style="margin-left:auto">
+        <button class="tab active" data-asset="mascot">Static PNG</button>
+        <button class="tab" data-asset="live">Live Owl (current)</button>
+        <button class="tab" data-asset="experimental">Live Owl (exp-1)</button>
+        <button class="tab" data-asset="gemini">Live Owl (exp-2 Gemini)</button>
+      </div>
+    </header>
+
+    <div class="stage">
+      <div class="canvas panel" id="canvas">
+        <span class="label-chip" id="chip">Static PNG · 256×256</span>
+        <img class="hero-img" id="hero-img" src="./mascot.png" width="256" height="256" alt="Mudrik hero" />
+        <div class="owl-box" id="owl-box" style="display:none"></div>
+        <div class="preview-badge" id="badge">256 × 256 · mascot.png</div>
+      </div>
+
+      <div class="sidebar">
+        <div class="card">
+          <h2>Asset size</h2>
+          <div class="sizes" id="sizes">
+            <button class="size-btn active" data-w="256" data-h="256">Splash / Logo <span class="dim">256×256</span></button>
+            <button class="size-btn" data-w="128" data-h="128">App icon <span class="dim">128×128</span></button>
+            <button class="size-btn" data-w="64" data-h="64">Settings <span class="dim">64×64</span></button>
+            <button class="size-btn" data-w="32" data-h="32">Tray <span class="dim">32×32</span></button>
+            <button class="size-btn" data-w="16" data-h="16">Micro <span class="dim">16×16</span></button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Background</h2>
+          <div class="bg-grid" id="bg-grid">
+            <button class="bg-btn panel active" data-bg="panel" title="Mudrik panel"></button>
+            <button class="bg-btn dark" data-bg="dark" title="Dark"></button>
+            <button class="bg-btn light" data-bg="light" title="Light"></button>
+            <button class="bg-btn cyan" data-bg="cyan" title="Brand cyan"></button>
+            <button class="bg-btn white" data-bg="white" title="White"></button>
+            <button class="bg-btn black" data-bg="black" title="Black"></button>
+          </div>
+        </div>
+
+        <div class="note">
+          Compare <b>Current</b> (panel owl clone), <b>Exp-1</b> (my 3 tweaks), and <b>Exp-2 Gemini</b> (Gemini's shapes).
+          Once a direction is approved, port changes to <code>OwlMascot.tsx</code> and delete this preview module.
+        </div>
+
+        <div class="meta">
+          <span>Replace <code>assets/mascot.png</code> to preview a new static hero.</span>
+          <span>Approve the experimental look, then port changes to <code>OwlMascot.tsx</code>.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./owl-preview.js"></script>
+  <script>
+    (function () {
+      const assets = {
+        mascot: "./mascot.png",
+        icon: "./icon.png",
+        "owl-wing-pointer": "./owl-wing-pointer.png",
+      };
+      const defaultSizes = {
+        mascot: { w: 256, h: 256 },
+        icon: { w: 128, h: 128 },
+        "owl-wing-pointer": { w: 128, h: 128 },
+      };
+
+      const img = document.getElementById("hero-img");
+      const owlBox = document.getElementById("owl-box");
+      const canvas = document.getElementById("canvas");
+      const badge = document.getElementById("badge");
+      const chip = document.getElementById("chip");
+      const sizeButtons = document.querySelectorAll(".size-btn");
+      const bgButtons = document.querySelectorAll(".bg-btn");
+      const tabs = document.querySelectorAll(".tab");
+
+      let currentAsset = "mascot";
+      let currentSize = { w: 256, h: 256 };
+      let activeOwl = null; // { destroy } from the preview module
+
+      function teardownOwl() {
+        if (activeOwl && activeOwl.destroy) activeOwl.destroy();
+        activeOwl = null;
+      }
+
+      function update() {
+        teardownOwl();
+        const isStatic = currentAsset === "mascot" || currentAsset === "icon" || currentAsset === "owl-wing-pointer";
+        if (isStatic) {
+          img.style.display = "";
+          owlBox.style.display = "none";
+          img.src = assets[currentAsset] || assets.mascot;
+          img.width = currentSize.w;
+          img.height = currentSize.h;
+          badge.textContent = currentSize.w + " × " + currentSize.h + " · " + (assets[currentAsset] || assets.mascot).replace("./", "");
+          chip.textContent = "Static PNG · " + currentSize.w + "×" + currentSize.h;
+        } else {
+          img.style.display = "none";
+          owlBox.style.display = "";
+          owlBox.style.width = currentSize.w + "px";
+          owlBox.style.height = currentSize.h + "px";
+          owlBox.innerHTML = "";
+          badge.textContent = currentSize.w + " × " + currentSize.h + " · live SVG";
+          chip.textContent = currentAsset === "experimental"
+            ? "Live Owl (exp-1)"
+            : currentAsset === "gemini"
+            ? "Live Owl (exp-2 Gemini)"
+            : "Live Owl (current)";
+          if (currentAsset === "experimental") {
+            activeOwl = window.MudrikOwlPreview.experimental(owlBox);
+          } else if (currentAsset === "gemini") {
+            activeOwl = window.MudrikOwlPreview.gemini(owlBox);
+          } else {
+            activeOwl = window.MudrikOwlPreview.current(owlBox);
+          }
+        }
+      }
+
+      function updateSizeButtons() {
+        sizeButtons.forEach((btn) => {
+          const w = Number(btn.dataset.w);
+          btn.classList.toggle("active", w === currentSize.w);
+        });
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          currentAsset = tab.dataset.asset;
+          if (currentAsset === "mascot" || currentAsset === "icon" || currentAsset === "owl-wing-pointer") {
+            currentSize = { w: defaultSizes[currentAsset].w, h: defaultSizes[currentAsset].h };
+          } else {
+            currentSize = { w: 256, h: 256 };
+          }
+          updateSizeButtons();
+          update();
+        });
+      });
+
+      sizeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentSize = { w: Number(btn.dataset.w), h: Number(btn.dataset.h) };
+          updateSizeButtons();
+          update();
+        });
+      });
+
+      bgButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          bgButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          canvas.className = "canvas " + btn.dataset.bg;
+        });
+      });
+
+      window.addEventListener("beforeunload", teardownOwl);
+      update();
+    })();
+  </script>
+</body>
+</html>

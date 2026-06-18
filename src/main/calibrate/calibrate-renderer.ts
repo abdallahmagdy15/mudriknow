@@ -32,6 +32,7 @@ declare global {
       getTimings: () => Promise<TimingRecord[]>;
     clearTimings: () => Promise<{ ok: boolean }>;
     showSplash: () => Promise<{ ok: boolean }>;
+    showHero: () => Promise<{ ok: boolean }>;
   };
   }
 }
@@ -109,6 +110,18 @@ btnSplash.addEventListener("click", async () => {
     setStatus(`Splash failed: ${e?.message || e}`, true);
   }
   setTimeout(() => { btnSplash.disabled = false; }, 1500);
+});
+
+const btnHero = document.getElementById("btn-hero") as HTMLButtonElement;
+
+btnHero.addEventListener("click", async () => {
+  btnHero.disabled = true;
+  try {
+    await window.calibrate.showHero();
+  } catch (e: any) {
+    setStatus(`Hero preview failed: ${e?.message || e}`, true);
+  }
+  setTimeout(() => { btnHero.disabled = false; }, 1500);
 });
 
 btnCapture.addEventListener("click", async () => {

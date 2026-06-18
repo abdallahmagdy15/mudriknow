@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { ContextPreview } from "./components/ContextPreview";
 import { OwlMascot, OwlState } from "./components/OwlMascot";
 import { ChatInput } from "./components/ChatInput";
@@ -30,6 +30,9 @@ declare global {
       onFocusInput: (cb: () => void) => void;
       attachScreenshot: () => void;
       removeScreenshot: () => void;
+      captureContext: () => void;
+      releaseContext: () => void;
+      onContextCaptured: (cb: (data: { captured: boolean }) => void) => void;
       onScreenshotAttached: (cb: (data: { attached: boolean; hasImage: boolean }) => void) => void;
       getConfig: () => Promise<any>;
       setConfig: (config: any) => Promise<any>;
@@ -115,6 +118,8 @@ export function App() {
   const [currentResponse, setCurrentResponse] = useState("");
   const [actionResults, setActionResults] = useState<ActionResultEntry[]>([]);
   const [screenshotAttached, setScreenshotAttached] = useState(false);
+  const [contextCaptured, setContextCaptured] = useState(false);
+  const [contextSource, setContextSource] = useState<ContextPayload["source"]>(undefined);
   // Per-chip copied flag keyed by "<messageKey>::<segmentIndex>" so that
   // clicking one chip never highlights other chips that happen to have the
   // same text content. Cleared after 1.5s.
@@ -212,7 +217,6 @@ export function App() {
   }, [recentChatsOpen]);
   const [fontSize, setFontSize] = useState(14);
   const [restoreSessionOnActivate, setRestoreSessionOnActivate] = useState(true);
-  const [showSplashOnStartup, setShowSplashOnStartup] = useState(true);
   const [autoGuideEnabled, setAutoGuideEnabled] = useState(false);
   const [guideState, setGuideState] = useState<any | null>(null);
   // Mirror guideState into a ref so the main mount-effect's closures
@@ -224,6 +228,7 @@ export function App() {
   const configLoadedRef = useRef(false);
   const chatInputRef = useRef<{ focus: () => void }>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const quickChatDismissedRef = useRef(false);
   // Last prompt the user sent — powers the Retry button on error. Stored in a
   // ref (not state) because it never needs to trigger a re-render on its own.
   const lastPromptRef = useRef<string>("");
@@ -240,7 +245,7 @@ export function App() {
     });
 
     window.hoverbuddy.onContext((data) => {
-      console.log(`[RENDERER] onContext: element type="${data.element?.type}" name="${data.element?.name}"`);
+      console.log(`[RENDERER] onContext: element type="${data.element?.type}" name="${data.element?.name}" source="${data.source}"`);
       // During an active guide, the panel may be re-shown by the main process
       // (e.g. step_finish auto-show). Treat that as a no-op for chat state —
       // the user is mid-walkthrough and resetting messages/streaming would
@@ -251,6 +256,8 @@ export function App() {
         return;
       }
       setContext(data);
+      setContextSource(data.source);
+      setContextCaptured(data.source !== "quick" && data.element?.type !== "none");
       setActionResults([]);
       setCurrentResponse("");
       setStreaming(false);
@@ -333,6 +340,14 @@ if (!data?.hasImage) {
       setScreenshotAttached(data.attached && data.hasImage);
     });
 
+    window.hoverbuddy.onContextCaptured((data) => {
+      console.log(`[RENDERER] Context captured: ${data.captured}`);
+      setContextCaptured(data.captured);
+      if (data.captured) {
+        setContextSource("pointer");
+      }
+    });
+
     window.hoverbuddy.onSessionHistory((historyMessages: { role: string; content: string }[]) => {
       console.log(`[RENDERER] Session history: ${historyMessages.length} messages`);
       setRestoringSession(false);
@@ -411,7 +426,9 @@ if (!data?.hasImage) {
         setRestoreSessionOnActivate(cfg.restoreSessionOnActivate);
         restoreSessionRef.current = cfg.restoreSessionOnActivate;
       }
-      if (cfg?.showSplashOnStartup !== undefined) setShowSplashOnStartup(cfg.showSplashOnStartup);
+      if (cfg?.showSplashOnStartup !== undefined) {
+        // Legacy config field — no longer used; ignore.
+      }
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
       configLoadedRef.current = true;
     });
@@ -424,6 +441,26 @@ if (!data?.hasImage) {
     const clamped = Math.max(11, Math.min(20, Math.round(fontSize)));
     document.documentElement.style.setProperty("--font-size-base", `${clamped}px`);
   }, [fontSize]);
+
+  // Show Quick Chat hint when no context is captured and the user hasn't
+  // sent a message or captured context yet.
+  const hasSentMessageInQuickChat = quickChatDismissedRef.current || messages.length > 0;
+  const showQuickChatHint = (contextSource === "quick" || !contextCaptured) && !screenshotAttached && !hasSentMessageInQuickChat;
+
+  // Header status label: Quick chat when no context, Watching when idle with
+  // context, Thinking/Replying when the AI is working.
+  const statusLabel = useMemo(() => {
+    if (streaming) return t("thinking").replace("...", "");
+    if (currentResponse) return "Replying";
+    if (contextSource === "quick" || !contextCaptured) return t("quickChatMode");
+    return "Watching";
+  }, [streaming, currentResponse, contextSource, contextCaptured, t]);
+
+  const statusPillClass = useMemo(() => {
+    if (streaming || currentResponse) return "status-pill status-pill-active";
+    if (contextSource === "quick" || !contextCaptured) return "status-pill status-pill-muted";
+    return "status-pill";
+  }, [streaming, currentResponse, contextSource, contextCaptured]);
 
   const handleSetFontSize = useCallback((size: number) => {
     const clamped = Math.max(11, Math.min(20, Math.round(size)));
@@ -471,6 +508,7 @@ if (!data?.hasImage) {
     }
     lastPromptRef.current = prompt;
     setMessages((prev) => [...prev, { role: "user" as const, content: prompt, toolUses: [], screenshotAttached: screenshotAttached, timestamp: Date.now() }]);
+    quickChatDismissedRef.current = true;
     setCurrentResponse("");
     setError(null);
     setStreaming(true);
@@ -518,6 +556,21 @@ if (!data?.hasImage) {
     setError(null);
     setActionResults([]);
     setStreaming(false);
+  }, []);
+
+  const handleCaptureContext = useCallback(() => {
+    console.log("[RENDERER] Capture context clicked");
+    quickChatDismissedRef.current = false;
+    window.hoverbuddy.captureContext();
+  }, []);
+
+  const handleReleaseContext = useCallback(() => {
+    console.log("[RENDERER] Release context clicked");
+    quickChatDismissedRef.current = false;
+    window.hoverbuddy.releaseContext();
+    setContextCaptured(false);
+    setContextSource(undefined);
+    setScreenshotAttached(false);
   }, []);
 
   const handleStopResponse = useCallback(() => {
@@ -616,12 +669,6 @@ if (!data?.hasImage) {
     restoreSessionRef.current = newVal;
     window.hoverbuddy.setConfig({ restoreSessionOnActivate: newVal });
   }, [restoreSessionOnActivate]);
-
-  const handleToggleShowSplashOnStartup = useCallback(() => {
-    const newVal = !showSplashOnStartup;
-    setShowSplashOnStartup(newVal);
-    window.hoverbuddy.setConfig({ showSplashOnStartup: newVal });
-  }, [showSplashOnStartup]);
 
   const handleToggleAutoGuideEnabled = useCallback(() => {
     const newVal = !autoGuideEnabled;
@@ -777,6 +824,14 @@ if (!data?.hasImage) {
     });
   }, [handleCopyChip]);
 
+  // Reset quick-chat dismissal on fresh activation so the hint shows again
+  // when the panel opens in quick-chat mode.
+  useEffect(() => {
+    if (contextSource === "quick" && !contextCaptured) {
+      quickChatDismissedRef.current = false;
+    }
+  }, [contextSource, contextCaptured]);
+
   return (
     <div className="app" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="app-header">
@@ -786,9 +841,9 @@ if (!data?.hasImage) {
             size={32}
           />
           <span className="app-title">{t("appTitle")}</span>
-          <span className="status-pill">
+          <span className={statusPillClass}>
             <span className="dot"></span>
-            {streaming ? "Thinking" : "Watching"}
+            {statusLabel}
           </span>
         </div>
         <div className="header-actions">
@@ -1100,12 +1155,6 @@ if (!data?.hasImage) {
                     <div className="toggle-knob" />
                   </div>
                 </label>
-                <label className="settings-toggle" title={t("showSplashOnStartupHint")}>
-                  <span>{t("showSplashOnStartup")}</span>
-                  <div className={`toggle-switch ${showSplashOnStartup ? "on" : ""}`} onClick={handleToggleShowSplashOnStartup}>
-                    <div className="toggle-knob" />
-                  </div>
-                </label>
               </div>
             )}
           </div>
@@ -1114,14 +1163,20 @@ if (!data?.hasImage) {
       )}
 {/* Context preview hidden from end users — the LLM receives it
            internally but the UI doesn't need to show the raw element data. */}
-      {!screenshotAttached ? (
-        <button className="btn-attach-screenshot" onClick={handleAttachScreenshot} disabled={streaming}>
-          <i className="fa-solid fa-image"></i> {t("attachScreenshot")}
+      {!contextCaptured ? (
+        <button className="btn-capture-context" onClick={handleCaptureContext} disabled={streaming || contextLoading}>
+          <i className="fa-solid fa-crosshairs"></i> {t("captureContext")}
         </button>
       ) : (
-        <div className="screenshot-badge">
-          <i className="fa-solid fa-image"></i> {t("screenshotAttached")}
-          <button className="screenshot-badge-x" onClick={handleRemoveScreenshot} title={t("removeScreenshot")}><i className="fa-solid fa-xmark"></i></button>
+        <div className="context-captured-badge">
+          <i className="fa-solid fa-crosshairs"></i> {t("contextCaptured")}
+          <button className="context-captured-x" onClick={handleReleaseContext} title={t("releaseContext")}><i className="fa-solid fa-xmark"></i></button>
+        </div>
+      )}
+      {showQuickChatHint && (
+        <div className="quick-chat-hint">
+          <i className="fa-solid fa-circle-info"></i>
+          <span><strong>{t("quickChatMode")}</strong> — {t("quickChatHint")}</span>
         </div>
       )}
       <div className="messages">

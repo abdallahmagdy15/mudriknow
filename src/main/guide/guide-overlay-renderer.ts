@@ -24,6 +24,8 @@ declare global {
       onHide: (h: () => void) => void;
       onLoadingShow: (h: (payload: { text?: string }) => void) => void;
       onLoadingHide: (h: () => void) => void;
+      onCaptureShow: (h: () => void) => void;
+      onCaptureHide: (h: () => void) => void;
       onBubbleShow: (h: (payload: BubblePayload) => void) => void;
       onBubbleHide: (h: () => void) => void;
       onBubbleFade: (h: (payload: { opacity: number }) => void) => void;
@@ -256,6 +258,18 @@ const observer = new MutationObserver(() => {
   }
 });
 observer.observe(owl, { attributes: true, attributeFilter: ["style"] });
+
+// --- Capture screen overlay ---
+
+const captureScreen = document.getElementById("capture-screen") as HTMLDivElement;
+
+window.guideOverlay?.onCaptureShow(() => {
+  captureScreen.classList.add("active");
+});
+
+window.guideOverlay?.onCaptureHide(() => {
+  captureScreen.classList.remove("active");
+});
 
 // --- Loading spinner (existing) ---
 

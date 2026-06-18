@@ -173,6 +173,23 @@ export function hideOverlayLoading(): void {
   overlayWin.hide();
 }
 
+export function showCaptureScreen(): void {
+  (async () => {
+    if (!overlayWin || overlayWin.isDestroyed()) {
+      overlayWin = await createOverlayWindow();
+    }
+    overlayWin.webContents.send("guide-overlay-capture-show");
+    overlayWin.showInactive();
+    overlayWin.moveTop();
+  })();
+}
+
+export function hideCaptureScreen(): void {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.webContents.send("guide-overlay-capture-hide");
+  overlayWin.hide();
+}
+
 export function destroyOverlay(): void {
   if (!overlayWin || overlayWin.isDestroyed()) return;
   overlayWin.destroy();

@@ -53,6 +53,10 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
     ipcRenderer.on("focus-input", () => cb()),
   attachScreenshot: () => ipcRenderer.send("attach-screenshot"),
   removeScreenshot: () => ipcRenderer.send("remove-screenshot"),
+  captureContext: () => ipcRenderer.send("capture-context"),
+  releaseContext: () => ipcRenderer.send("release-context"),
+  onContextCaptured: (cb: (data: { captured: boolean }) => void) =>
+    ipcRenderer.on("context-captured", (_e, data) => cb(data)),
   onScreenshotAttached: (cb: (data: { attached: boolean; hasImage: boolean }) => void) =>
     ipcRenderer.on("attach-screenshot", (_e, data) => cb(data)),
   getConfig: () => ipcRenderer.invoke("get-config"),

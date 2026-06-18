@@ -4,6 +4,20 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-06-18
+
+### Added
+- **Capture Context button.** A single button replaces the old Attach Screenshot action: it always captures both the UIA element tree at the cursor and a full-screen screenshot with a coordinate grid, covering Chromium/File Explorer/PDF edge cases uniformly. A badge shows when context is captured; an X button releases it.
+- **Cinematic capture overlay.** Alt+Space and manual capture now show a lightweight full-screen camera-focus overlay (corner brackets + pulsing focus ring) instead of a panel flash, so capture feels deliberate and polished.
+- **Quick Chat mode hint.** When the panel opens without context (Alt+X or tray), a concise dismissible hint tells the user they're in quick-chat mode; the header status pill reflects `Quick chat`, `Watching`, `Thinking`, or `Replying`.
+- **Calibration hero preview.** A dev-only window for evaluating the owl mascot at real sizes (logo, splash, tray, pointer) before exporting assets.
+
+### Changed
+- **Splash screen is always shown on startup.** The user-facing "Show splash on startup" setting has been removed; the splash is now mandatory.
+
+### Fixed
+- **Release context no longer wipes the current chat.** Clicking the X beside Capture Context used to reset the opencode session and clear all visible messages, starting a brand-new chat. It now only clears the captured-context badge and screenshot while preserving the conversation — the next message continues the existing session as a normal follow-up.
+
 ## [1.10.0] - 2026-06-18
 
 ### Added
@@ -135,6 +149,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.11.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.7.0...v1.9.0

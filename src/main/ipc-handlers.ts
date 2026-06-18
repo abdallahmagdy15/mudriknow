@@ -1525,6 +1525,129 @@ contextBlock += `\n--- END CONTEXT ---\n`;
     }
   });
 
+  ipcMain.on(IPC.CAPTURE_CONTEXT, async () => {
+    const win = getPanelWindow();
+    const sendStatus = (captured: boolean) => {
+      if (win && !win.isDestroyed()) {
+        win.webContents.send(IPC.CONTEXT_CAPTURED, { captured });
+      }
+    };
+
+    log("CAPTURE_CONTEXT — reading UIA context + full screenshot at cursor");
+    try {
+      const { screen: electronScreen } = require("electron");
+      const cursor = electronScreen.getCursorScreenPoint();
+      const display = electronScreen.getDisplayNearestPoint(cursor);
+      const sf = display.scaleFactor || 1;
+      const b = display.bounds;
+
+      const panelWasVisible = !!(win && !win.isDestroyed() && win.isVisible());
+      if (panelWasVisible && win) {
+        win.hide();
+        await new Promise((r) => setTimeout(r, 80));
+      }
+
+      // Show cinematic capture overlay while we capture
+      import("./guide/guide-overlay").then((overlayMod) => {
+        overlayMod.showCaptureScreen();
+      });
+
+      // Read UIA context at the current cursor position
+      const { readContextAtPoint } = await import("./context-reader");
+      const ctx = await readContextAtPoint(cursor.x, cursor.y);
+
+      // Always capture a full-screen screenshot with grid overlay
+      const x1 = Math.round(b.x * sf);
+      const y1 = Math.round(b.y * sf);
+      const x2 = Math.round((b.x + b.width) * sf);
+      const y2 = Math.round((b.y + b.height) * sf);
+      const imagePath = await captureAndOptimize(x1, y1, x2, y2, { noGrid: false });
+
+      import("./guide/guide-overlay").then((overlayMod) => {
+        overlayMod.hideCaptureScreen();
+      });
+
+      if (!imagePath) {
+        log("CAPTURE_CONTEXT — screenshot capture returned null");
+        sendStatus(false);
+        if (panelWasVisible && win && !win.isDestroyed()) win.show();
+        return;
+      }
+
+      // Build context payload, including the cursor position as metadata
+      const context: ContextPayload = {
+        element: ctx.element,
+        surrounding: ctx.surrounding,
+        cursorPos: cursor,
+        imagePath,
+        hasScreenshot: true,
+        source: "pointer",
+        windowInfo: ctx.windowInfo,
+        windowTree: ctx.windowTree,
+        visibleWindows: ctx.visibleWindows,
+      };
+
+      setContext(context);
+      setScreenshotMode("manual", {
+        physicalWidth: Math.round(b.width * sf),
+        physicalHeight: Math.round(b.height * sf),
+        scaleFactor: sf,
+      });
+      attachScreenshotNext = true;
+      log(`CAPTURE_CONTEXT — done: ${imagePath.slice(-40)}`);
+
+      sendStatus(true);
+
+      // Re-show the panel. We intentionally do NOT send CONTEXT_READY here:
+      // that event carries fresh-activation semantics in the renderer (it resets
+      // streaming/currentResponse and may call restoreSession). Manual context
+      // capture is just a context refresh for the next message; the renderer
+      // learns about it via CONTEXT_CAPTURED.
+      if (panelWasVisible && win && !win.isDestroyed()) {
+        win.show();
+        win.focus();
+        win.moveTop();
+      }
+    } catch (err: any) {
+      import("./guide/guide-overlay").then((overlayMod) => {
+        overlayMod.hideCaptureScreen();
+      });
+      log(`CAPTURE_CONTEXT FAILED: ${err.message}`);
+      sendStatus(false);
+      if (win && !win.isDestroyed() && !win.isVisible()) {
+        win.show();
+      }
+    }
+  });
+
+  ipcMain.on(IPC.RELEASE_CONTEXT, () => {
+    log("RELEASE_CONTEXT — clearing captured context + screenshot (keeping current chat session)");
+    if (currentContext?.imagePath) {
+      cleanupImage(currentContext.imagePath);
+    }
+    if (areaImagePath) {
+      cleanupImage(areaImagePath);
+      areaImagePath = "";
+    }
+    currentContext = null;
+    lastContext = null;
+    lastContextHash = "";
+    isAreaContext = false;
+    areaElements = [];
+    areaRect = null;
+    attachScreenshotNext = false;
+    screenshotMode = "none";
+    screenInfo = null;
+    // Keep the chat session alive: do NOT resetSession or flip
+    // hasSentFirstMessage. The next message continues the existing
+    // conversation as a follow-up (no context attached).
+    contextNeedsSending = false;
+    const win = getPanelWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send(IPC.CONTEXT_CAPTURED, { captured: false });
+    }
+  });
+
   ipcMain.on(IPC.ATTACH_SCREENSHOT, async () => {
     const win = getPanelWindow();
     const sendStatus = (attached: boolean, hasImage: boolean) => {
@@ -1562,16 +1685,16 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         await new Promise((r) => setTimeout(r, 80));
       }
 
-      // Show overlay loading spinner so the user knows a screenshot is being taken
+      // Show cinematic capture overlay
       import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.showOverlayLoading("Capturing screenshot…");
+        overlayMod.showCaptureScreen();
       });
 
       const imagePath = await captureAndOptimize(x1, y1, x2, y2, { noGrid: false });
 
       // Hide overlay, re-show panel
       import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.hideOverlayLoading();
+        overlayMod.hideCaptureScreen();
       });
       if (panelWasVisible && win && !win.isDestroyed()) {
         win.show();

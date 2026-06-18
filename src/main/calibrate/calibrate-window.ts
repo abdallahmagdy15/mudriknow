@@ -12,6 +12,8 @@ import { showOverlay, hideOverlay } from "../guide/guide-overlay";
 import { readContextAtPoint, getCursorPos } from "../context-reader";
 import { getTimingHistory, clearTimingHistory } from "../debug-timing";
 
+let heroWindow: BrowserWindow | null = null;
+
 const CLICKABLE_TYPES = new Set([
   "ControlType.Button","ControlType.MenuItem","ControlType.ListItem",
   "ControlType.Edit","ControlType.Hyperlink","ControlType.CheckBox",
@@ -157,6 +159,38 @@ ipcMain.handle("calibrate-show-splash", async () => {
     return { ok: true };
   } catch (err: any) {
     log("calibrate-show-splash failed: ");
+    return { ok: false, error: err?.message || String(err) };
+  }
+});
+
+// IPC: open a dev-only hero preview window so the mascot can be evaluated
+// at real sizes (logo, splash, tray, pointer) before exporting assets.
+ipcMain.handle("calibrate-show-hero", async () => {
+  try {
+    if (heroWindow && !heroWindow.isDestroyed()) {
+      heroWindow.show();
+      heroWindow.focus();
+      return { ok: true };
+    }
+
+    heroWindow = new BrowserWindow({
+      width: 720,
+      height: 520,
+      title: "Mudrik Hero Preview",
+      backgroundColor: "#0F1822",
+      autoHideMenuBar: true,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
+    });
+
+    heroWindow.loadFile(path.join(__dirname, "hero-preview.html"));
+    heroWindow.on("closed", () => { heroWindow = null; });
+    log("hero preview window opened");
+    return { ok: true };
+  } catch (err: any) {
+    log("calibrate-show-hero failed: " + (err?.message || String(err)));
     return { ok: false, error: err?.message || String(err) };
   }
 });

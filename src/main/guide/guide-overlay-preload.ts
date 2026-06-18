@@ -16,6 +16,12 @@ contextBridge.exposeInMainWorld("guideOverlay", {
   onLoadingHide: (handler: () => void) => {
     ipcRenderer.on("guide-overlay-loading-hide", () => handler());
   },
+  onCaptureShow: (handler: () => void) => {
+    ipcRenderer.on("guide-overlay-capture-show", () => handler());
+  },
+  onCaptureHide: (handler: () => void) => {
+    ipcRenderer.on("guide-overlay-capture-hide", () => handler());
+  },
   onBubbleShow: (handler: (payload: { caption: string; options: string[]; theme: string }) => void) => {
     ipcRenderer.on("guide-overlay-bubble-show", (_event, payload) => handler(payload));
   },

@@ -12,4 +12,5 @@ contextBridge.exposeInMainWorld("calibrate", {
   }>>,
   clearTimings: () => ipcRenderer.invoke("calibrate-clear-timings") as Promise<{ ok: boolean }>,
   showSplash: () => ipcRenderer.invoke("calibrate-show-splash") as Promise<{ ok: boolean }>,
+  showHero: () => ipcRenderer.invoke("calibrate-show-hero") as Promise<{ ok: boolean }>,
 });
