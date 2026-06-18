@@ -4,6 +4,17 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-06-18
+
+### Added
+- **Instant first step in Auto-Guide.** The AI now emits the first guide_step together with guide_offer in a single response; Mudrik executes it immediately when the user taps Start guide, removing the previous capture + AI round-trip delay.
+- **Guide prompt speed-up rules.** Guide mode now instructs the AI to be brief, avoid overthinking, and combine up to two trivially obvious actions into one step (e.g. right-click the file, then click Rename).
+- **Localized guide cancellation message.** Guide cancelled. / تم إلغاء الإرشاد. is shown in the chat when the user cancels a guide.
+
+### Changed
+- **Pointer hotkey UX.** Alt+Space now shows only a centered Scanning screen spinner overlay while UIA and screenshot capture run; the full panel appears only once the context is ready. This removes the visible panel open-hide-reopen flash and the random highlight rectangle during capture.
+- **Suppress guide preamble text.** Once a guide_offer marker is detected in the streamed response, preamble text is no longer rendered as chat bubbles; the guide UI takes over cleanly.
+
 ## [1.9.1] — 2026-06-18
 
 ### Added
@@ -124,6 +135,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.10.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.7.0...v1.9.0
 [1.7.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.6.0...v1.7.0
@@ -133,3 +145,4 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.3.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.0.0...v1.3.0
 [1.0.0]: https://github.com/abdallahmagdy15/mudrik/compare/v0.9.0...v1.0.0
 [0.9.0]: https://github.com/abdallahmagdy15/mudrik/releases/tag/v0.9.0
+
