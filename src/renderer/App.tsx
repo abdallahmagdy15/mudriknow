@@ -229,6 +229,7 @@ export function App() {
   const chatInputRef = useRef<{ focus: () => void }>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const quickChatDismissedRef = useRef(false);
+  const [quickChatDismissed, setQuickChatDismissed] = useState(false);
   // Last prompt the user sent — powers the Retry button on error. Stored in a
   // ref (not state) because it never needs to trigger a re-render on its own.
   const lastPromptRef = useRef<string>("");
@@ -444,7 +445,7 @@ if (!data?.hasImage) {
 
   // Show Quick Chat hint when no context is captured and the user hasn't
   // sent a message or captured context yet.
-  const hasSentMessageInQuickChat = quickChatDismissedRef.current || messages.length > 0;
+  const hasSentMessageInQuickChat = quickChatDismissedRef.current || quickChatDismissed || messages.length > 0;
   const showQuickChatHint = (contextSource === "quick" || !contextCaptured) && !screenshotAttached && !hasSentMessageInQuickChat;
 
   // Header status label: Quick chat when no context, Watching when idle with
@@ -1173,13 +1174,14 @@ if (!data?.hasImage) {
           <button className="context-captured-x" onClick={handleReleaseContext} title={t("releaseContext")}><i className="fa-solid fa-xmark"></i></button>
         </div>
       )}
-      {showQuickChatHint && (
-        <div className="quick-chat-hint">
-          <i className="fa-solid fa-circle-info"></i>
-          <span><strong>{t("quickChatMode")}</strong> — {t("quickChatHint")}</span>
-        </div>
-      )}
       <div className="messages">
+        {showQuickChatHint && (
+          <div className="quick-chat-hint">
+            <i className="fa-solid fa-circle-info"></i>
+            <span><strong>{t("quickChatMode")}</strong> — {t("quickChatHint")}</span>
+            <button className="quick-chat-hint-x" onClick={() => { quickChatDismissedRef.current = true; setQuickChatDismissed(true); }} title={t("cancel")}><i className="fa-solid fa-xmark"></i></button>
+          </div>
+        )}
         {restoringSession && (
           <div className="session-restoring">{t("loadingHistory")}</div>
         )}

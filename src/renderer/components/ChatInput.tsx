@@ -30,6 +30,17 @@ export const ChatInput = forwardRef<{ focus: () => void }, Props>(({ onSubmit, d
     }
   };
 
+  // Auto-resize: start at 2 rows, expand when content exceeds ~2 lines,
+  // cap at 5 lines via CSS max-height (scroll kicks in beyond that).
+  const autoResize = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(autoResize, [text]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
