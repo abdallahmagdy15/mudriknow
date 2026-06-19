@@ -4,6 +4,32 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-06-19
+
+### Added
+- **Auto-expanding chat input.** The chat input grows from 2 lines to a maximum of 5 lines as the user types, then scrolls internally beyond that — no more truncated multi-line prompts.
+- **Quick-chat hint overlay with dismiss.** The quick-chat mode hint now appears as an overlay at the top of the messages container with a dismiss X button, instead of a separate banner below the header.
+- **Debug screenshot persistence.** In debug mode (non-packaged builds), every captured screenshot is copied to `%TEMP%/hoverbuddy/debug-screenshots/` with a timestamp and grid/nogrid tag, and the path is logged — so you can verify grid accuracy.
+
+### Changed
+- **Larger default panel.** Panel width increased from 35% to 38% of the work area, height from 69% to 74% — more room for conversation and options.
+- **Thinking/Replying status color.** Replaced the cyan status pill with a warm cream tone (`#8B6F3E`) that harmonizes with the app's gold/orange theme.
+- **Guide bubble primary button.** Replaced the hard-to-read orange gradient + white text with a subtle orange-tinted background + dark amber text for clear contrast.
+- **Capture/Release buttons.** Capture Context button and captured badge now share consistent height and styling. The release X is now a visible bordered chip with red tint and hover state.
+- **Primary color slightly darker.** `--primary` and `--beak` darkened from `#F2A93A` to `#E89423` for better contrast against faded orange backgrounds.
+- **Cancel button distinct red.** Guide mode Cancel button now uses clear red (`#dc2626`) instead of the dusty rose that looked orange like the Start Guide button.
+
+### Fixed
+- **Guide mode broken since v1.10.0.** The `guide_offer` marker chunk was dropped from `fullResponseText` during streaming detection, so `parseActionsFromResponse` never saw it — no guide offer, no owl cursor, no walkthrough. Fixed by accumulating the chunk before returning.
+- **Grid lines washed out by capture overlay.** The cinematic capture overlay's dim was visible in the screenshot, hiding the grid lines. Fixed by hiding the overlay before screenshot capture with an 80ms delay. Grid line alpha also bumped from 50 to 95 for better contrast.
+- **Release context wiped the chat.** Clicking the X beside Capture Context reset the opencode session and cleared all messages. Now it only clears the badge/screenshot; the conversation continues as a normal follow-up.
+- **"Scanning" top bar in guide mode.** Removed a dead loading bar element that was always visible due to missing CSS.
+- **Cancel button text matching.** Guide options no longer rely on fragile text matching for Cancel — the runtime injects a localized Cancel button based on the user's language (en/ar), and the AI is instructed not to include it.
+- **"Something else" redundancy.** Removed the "Something else" injected option — the user can type custom text directly in the chat input, making the button redundant.
+- **Panel shown during guide walkthrough.** Restored correct behavior: the panel stays hidden during guide steps (owl bubble shows options); it only reappears on cancel/complete.
+- **Prompt stale references.** Fixed "Attach Screenshot button" → "Capture Context", "blue owl" → "gold/orange owl", stale `boundsHint` → `uiaBounds`/`guessBounds`, and screenshot availability description.
+- **Non-multimodal model detection.** Prompt now instructs the AI to tell the user to switch to a multimodal model if it can't see images.
+
 ## [1.11.0] - 2026-06-18
 
 ### Added
@@ -149,6 +175,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.0...v1.9.1
