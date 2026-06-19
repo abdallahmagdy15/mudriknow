@@ -694,15 +694,17 @@ app.whenReady().then(async () => {
   applyTheme(config.theme);
   applyLoginItemSetting(config.launchOnStartup);
 
-  if (!startedHidden) {
-    showSplashScreen({
-      pointer: config.hotkeyPointer,
-      area: config.hotkeyArea,
-      quick: config.hotkeyQuick,
-      lang: config.lang,
-    });
-    splashShownForThisLaunch = true;
-  }
+  // Always show the splash on every launch — including Windows auto-startup
+  // (--hidden). The --hidden flag only suppresses the panel window, not the
+  // splash. Without this, Windows startup shows a bare Electron taskbar
+  // icon with no visual feedback to the user.
+  showSplashScreen({
+    pointer: config.hotkeyPointer,
+    area: config.hotkeyArea,
+    quick: config.hotkeyQuick,
+    lang: config.lang,
+  });
+  splashShownForThisLaunch = true;
 
   // On first run the welcome dialog follows the splash; otherwise show it
   // immediately on normal launches that didn't display a splash.
