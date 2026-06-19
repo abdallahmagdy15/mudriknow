@@ -2,10 +2,11 @@ import { exec } from "child_process";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
+import { getIsDebug } from "./debug-timing";
 
 const log = (msg: string) => console.log(`[VISION] ${msg}`);
 
-const CAPTURE_SCRIPT_NAME = "hoverbuddy-capture-v5.ps1";
+const CAPTURE_SCRIPT_NAME = "hoverbuddy-capture-v6.ps1";
 const RESIZE_SCRIPT_NAME = "hoverbuddy-resize-v3.ps1";
 const MAX_IMAGE_BYTES = 200 * 1024;
 const HARD_IMAGE_CAP_BYTES = 1024 * 1024;
@@ -61,7 +62,7 @@ function getCaptureScriptContent(): string {
   lines.push("        $g3 = [System.Drawing.Graphics]::FromImage($bmp)");
   lines.push("        $cellW = [Math]::Max(60, [int][Math]::Round($newW / 25))");
   lines.push("        $cellH = [Math]::Max(60, [int][Math]::Round($newH / 25))");
-  lines.push("        $gridPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(50, 180, 180, 180), 1)");
+  lines.push("        $gridPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(95, 200, 200, 200), 1)");
   lines.push("        for ($x = $cellW; $x -lt $newW; $x += $cellW) { $g3.DrawLine($gridPen, $x, 0, $x, $newH) }");
   lines.push("        for ($y = $cellH; $y -lt $newH; $y += $cellH) { $g3.DrawLine($gridPen, 0, $y, $newW, $y) }");
   lines.push("        $gridPen.Dispose()");
@@ -324,6 +325,7 @@ export async function captureAndOptimize(
         log(`Image too large, discarded`);
         return null;
       }
+      persistDebugScreenshot(result, opts);
       return result;
     } catch (err: any) {
       log(`Image optimization failed: ${err.message}`);
@@ -333,6 +335,7 @@ export async function captureAndOptimize(
         try { fs.unlinkSync(imagePath); } catch { /* ignore */ }
         return null;
       }
+      persistDebugScreenshot(imagePath, opts);
       return imagePath;
     }
   } catch (err: any) {
@@ -347,4 +350,21 @@ export function cleanupImage(imagePath: string): void {
       fs.unlinkSync(imagePath);
     }
   } catch { /* ignore */ }
+}
+
+function persistDebugScreenshot(imagePath: string, opts?: { noGrid?: boolean }): void {
+  if (!getIsDebug()) return;
+  try {
+    if (!fs.existsSync(imagePath)) return;
+    const debugDir = path.join(os.tmpdir(), "hoverbuddy", "debug-screenshots");
+    if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const tag = opts?.noGrid ? "nogrid" : "grid";
+    const ext = path.extname(imagePath) || ".jpg";
+    const dest = path.join(debugDir, `shot-${ts}-${tag}${ext}`);
+    fs.copyFileSync(imagePath, dest);
+    log(`DEBUG screenshot persisted: ${dest}`);
+  } catch (err: any) {
+    log(`DEBUG screenshot persist failed: ${err.message}`);
+  }
 }

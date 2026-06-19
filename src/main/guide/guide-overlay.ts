@@ -156,23 +156,6 @@ export function setOwlMode(mode: "pointing" | "thinking"): void {
   overlayWin.webContents.send("guide-overlay-owl-mode", { mode });
 }
 
-export function showOverlayLoading(text?: string): void {
-  (async () => {
-    if (!overlayWin || overlayWin.isDestroyed()) {
-      overlayWin = await createOverlayWindow();
-    }
-    overlayWin.webContents.send("guide-overlay-loading-show", { text });
-    overlayWin.showInactive();
-    overlayWin.moveTop();
-  })();
-}
-
-export function hideOverlayLoading(): void {
-  if (!overlayWin || overlayWin.isDestroyed()) return;
-  overlayWin.webContents.send("guide-overlay-loading-hide");
-  overlayWin.hide();
-}
-
 export function showCaptureScreen(): void {
   (async () => {
     if (!overlayWin || overlayWin.isDestroyed()) {

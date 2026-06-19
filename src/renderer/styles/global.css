@@ -116,15 +116,15 @@ body {
 }
 
 .status-pill.status-pill-active {
-  background: rgba(24, 191, 225, 0.12);
-  color: #18BFE1;
-  border-color: rgba(24, 191, 225, 0.35);
+  background: rgba(180, 154, 95, 0.14);
+  color: #8B6F3E;
+  border-color: rgba(180, 154, 95, 0.3);
 }
 
 .status-pill.status-pill-muted {
-  background: rgba(242, 169, 58, 0.1);
-  color: #F2A93A;
-  border-color: rgba(242, 169, 58, 0.25);
+  background: rgba(232, 148, 35, 0.1);
+  color: #E89423;
+  border-color: rgba(232, 148, 35, 0.25);
 }
 
 .status-pill .dot {
@@ -136,11 +136,11 @@ body {
 }
 
 .status-pill.status-pill-active .dot {
-  background: #18BFE1;
+  background: #8B6F3E;
 }
 
 .status-pill.status-pill-muted .dot {
-  background: #F2A93A;
+  background: #E89423;
 }
 
 .header-actions {
@@ -1196,7 +1196,7 @@ body {
 
 .loading-text {
   font-size: 11px;
-  color: var(--cyan);
+  color: #8B6F3E;
   font-weight: 500;
   letter-spacing: 0.5px;
   animation: cursorPulse 2s ease-in-out infinite;
@@ -1661,13 +1661,13 @@ body {
 }
 
 .option-btn.cancel {
-  background: rgba(196, 90, 90, 0.06);
-  color: var(--error);
-  border: 1px solid rgba(196, 90, 90, 0.18);
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .option-btn.cancel:hover {
-  background: rgba(196, 90, 90, 0.12);
+  background: rgba(220, 38, 38, 0.18);
 }
 
 .option-btn.cancel:active {

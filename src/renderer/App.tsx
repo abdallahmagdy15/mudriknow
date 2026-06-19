@@ -1261,8 +1261,10 @@ if (!data?.hasImage) {
             stepIndex={guideState.stepIndex}
             estStepsLeft={guideState.estStepsLeft}
             options={guideState.options}
+            cancelIndex={guideState.cancelIndex}
             onChoose={(opt) => {
-              if (opt !== "Cancel") {
+              const isCancel = guideState.cancelIndex !== undefined && opt === guideState.options[guideState.cancelIndex];
+              if (!isCancel) {
                 setMessages((prev) => [...prev, { role: "user", content: opt, toolUses: [], timestamp: Date.now() }]);
                 setStreaming(true);
               }

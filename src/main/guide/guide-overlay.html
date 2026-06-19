@@ -96,9 +96,13 @@
     }
 
     .guide-bubble-btn.primary {
-      background: linear-gradient(135deg, #F2A93A, #F2C94C);
-      color: white;
-      box-shadow: 0 2px 8px rgba(242, 169, 58, 0.3);
+      background: rgba(242, 169, 58, 0.18);
+      color: #C7841E;
+      border: 1px solid rgba(242, 169, 58, 0.35);
+      box-shadow: 0 2px 6px rgba(242, 169, 58, 0.15);
+    }
+    .guide-bubble-btn.primary:hover {
+      background: rgba(242, 169, 58, 0.28);
     }
     .guide-bubble-btn.secondary {
       background: transparent;
@@ -202,7 +206,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.18);
+      background: rgba(0, 0, 0, 0.28);
       backdrop-filter: blur(0.5px);
       -webkit-backdrop-filter: blur(0.5px);
       pointer-events: none;
@@ -285,11 +289,6 @@
     <div class="guide-bubble-loading" id="bubble-loading" style="display:none;">
       <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
     </div>
-  </div>
-
-  <div id="loading" class="loading">
-    <div class="loading-ring"></div>
-    <div class="loading-text">Scanning screen…</div>
   </div>
 
   <div id="capture-screen" class="capture-screen">

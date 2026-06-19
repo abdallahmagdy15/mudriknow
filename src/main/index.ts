@@ -447,6 +447,12 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
         const display = electronScreen.getDisplayNearestPoint(cursorPos);
         const sf = display.scaleFactor || 1;
         const b = display.bounds;
+        // Hide the capture overlay BEFORE the screenshot so its dim/frame
+        // don't appear in the captured image and wash out the grid lines.
+        hideCaptureOverlay();
+        // Brief delay to let the overlay window actually hide before GDI
+        // captures the screen.
+        await new Promise((r) => setTimeout(r, 80));
         const screenshotPath = await captureAndOptimize(
           Math.round(b.x * sf), Math.round(b.y * sf),
           Math.round((b.x + b.width) * sf), Math.round((b.y + b.height) * sf),
@@ -465,7 +471,6 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
         log(`Pointer screenshot capture failed: ${err?.message || err}`);
       }
 
-      hideCaptureOverlay();
       showElementHighlight(ctx.element.bounds);
       showPanel(context);
     } catch (err: any) {

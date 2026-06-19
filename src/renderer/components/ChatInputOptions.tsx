@@ -5,6 +5,8 @@ interface Props {
   stepIndex?: number;
   estStepsLeft?: number;
   options: string[];
+  /** Index of the Cancel option — styled red regardless of text. */
+  cancelIndex?: number;
   onChoose: (option: string) => void;
 }
 
@@ -19,16 +21,14 @@ export const ChatInputOptions: React.FC<Props> = ({
   stepIndex,
   estStepsLeft,
   options,
+  cancelIndex,
   onChoose,
 }) => {
   const layout = layoutFor(options.length);
-  const ordered = React.useMemo(() => {
-    // System options (Cancel, Something else) always go at the end
-    const systemOpts = ["Cancel", "Something else"];
-    const aiOpts = options.filter((o) => !systemOpts.includes(o));
-    const presentSystem = systemOpts.filter((o) => options.includes(o));
-    return [...aiOpts, ...presentSystem];
-  }, [options]);
+  // The controller sends options in final order: AI options first, then
+  // localized Cancel, then localized Something else. No reordering needed.
+  // cancelIndex identifies the Cancel button for red styling; the option
+  // right after it (if any) is Something else → secondary styling.
   return (
     <div className={`chat-input-options ${layout}`}>
       {caption && (
@@ -42,13 +42,12 @@ export const ChatInputOptions: React.FC<Props> = ({
         </div>
       )}
       <div className="options-bar">
-        {ordered.map((opt, i) => {
-          const isCancel = opt === "Cancel";
-          const isSomethingElse = opt === "Something else";
+        {options.map((opt, i) => {
+          const isCancel = i === cancelIndex;
           return (
             <button
               key={i}
-              className={`option-btn ${isCancel ? "cancel" : isSomethingElse ? "secondary" : "ok"}`}
+              className={`option-btn ${isCancel ? "cancel" : "ok"}`}
               onClick={() => onChoose(opt)}
             >
               {opt}

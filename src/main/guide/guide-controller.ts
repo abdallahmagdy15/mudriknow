@@ -18,9 +18,9 @@ import { screen } from "electron";
 import { log } from "../logger";
 
 /** System-injected options that always appear in guide mode regardless of what
- *  the AI sends. Cancel aborts the guide; Something else opens the panel so
- *  the user can type a custom message. */
-const SYSTEM_OPTIONS = ["Cancel", "Something else"];
+ *  the AI sends. The runtime injects localized versions based on the user's
+ *  language setting — the AI is instructed NOT to include these. */
+const SYSTEM_OPTION_KEYS = ["cancel", "somethingElse"] as const;
 
 function boundsHintToPhysical(bounds: { x: number; y: number; width: number; height: number }): { x: number; y: number; width: number; height: number } {
   // The AI's boundsHint is in logical (DIP) pixels because the candidates
@@ -48,6 +48,10 @@ export interface GuideStateUpdate {
   phase: GuidePhase;
   caption?: string;
   options?: string[];
+  /** Index of the Cancel option in `options` — the renderer uses this to
+   *  apply the cancel styling instead of text-matching "Cancel" (which
+   *  breaks when the AI localizes the option text). */
+  cancelIndex?: number;
   stepIndex?: number;
   estStepsLeft?: number;
   /** For phase==="offer": the summary describing what the guide will do. */
@@ -112,6 +116,11 @@ export interface GuideControllerDeps {
   ) => Promise<{ x: number; y: number; width: number; height: number } | null>;
   /** Localized "Guide cancelled" string for the idle final message. */
   getCancelledMessage?: () => string;
+  /** Returns localized labels for the two system-injected options
+   *  (cancel + somethingElse) based on the user's language setting.
+   *  The AI is instructed NOT to include these — the runtime injects
+   *  them so they're always correct regardless of AI localization. */
+  getOptionLabels?: () => { cancel: string; somethingElse: string };
 }
 
 const STEP_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 min
@@ -127,6 +136,10 @@ export class GuideController {
   private inactivityTimer: NodeJS.Timeout | null = null;
   private processing: boolean = false;
   private runGeneration: number = 0;
+  /** The actual text of the Cancel option in the current state's options
+   *  array. May be localized (e.g. "إلغاء") when the AI translates it.
+   *  handleUserChoice matches against this instead of hardcoding "Cancel". */
+  private cancelOptionText: string | null = null;
 
   constructor(private deps: GuideControllerDeps) {}
 
@@ -164,15 +177,19 @@ export class GuideController {
     }
   }
 
-  /** Renderer reports the user tapped a button in the chat-input options bar. */
+  /** Returns the localized Cancel label.
+   *  Falls back to English if the dep isn't wired. */
+  private getCancelLabel(): string {
+    return this.deps.getOptionLabels?.().cancel ?? "Cancel";
+  }
+
+  /** Renderer reports the user tapped a button in the chat-input options bar,
+   *  or typed a custom message in the chat input during a guide step. */
   async handleUserChoice(option: string): Promise<void> {
-    if (option === "Cancel") {
+    // Match cancel by stored text (may be localized) OR the literal "Cancel"
+    // (sent by the Escape key handler which doesn't know the localized text).
+    if (option === "Cancel" || (this.cancelOptionText !== null && option === this.cancelOptionText)) {
       await this.cancel();
-      return;
-    }
-    if (option === "Something else") {
-      // Open panel so user can type a custom message; guide stays active
-      this.deps.showPanelAndFocusInput();
       return;
     }
     if (this.phase === "offer") {
@@ -212,8 +229,10 @@ export class GuideController {
         this.handleComplete({ type: "guide_complete", summary: option });
         return;
       }
-      // Otherwise the user is signalling progress mid-walkthrough — record
-      // and advance, the next guide_* marker arrives via handleAction().
+      // Otherwise the user is signalling progress mid-walkthrough — either
+      // by tapping an option button or by typing custom text in the chat
+      // input. Record and advance; the next guide_* marker arrives via
+      // handleAction().
       this.recordPendingAction({ kind: "option", choice: option });
       void this.advanceFromStep();
       return;
@@ -238,6 +257,7 @@ export class GuideController {
     this.processing = false;
     this.pendingAction = null;
     this.deferredFirstStep = null;
+    this.cancelOptionText = null;
     const wasActive = this.phase !== "offer";
     this.phase = "idle";
     this.currentStep = null;
@@ -270,10 +290,20 @@ export class GuideController {
     }
     this.phase = "offer";
     this.deferredFirstStep = null;
+    // The AI is instructed NOT to include Cancel — the runtime injects a
+    // localized version based on the user's language. "Something else" is
+    // NOT injected: the user can type custom text directly in the chat
+    // input during any guide step, so a dedicated button is redundant.
+    const cancelLabel = this.getCancelLabel();
+    const aiOptions = p.options;
+    const mergedOptions = [...aiOptions, cancelLabel];
+    const cancelIdx = aiOptions.length;
+    this.cancelOptionText = cancelLabel;
     this.deps.onStateUpdate({
       phase: "offer",
       summary: p.summary,
-      options: p.options,
+      options: mergedOptions,
+      cancelIndex: cancelIdx,
       estStepsLeft: estSteps,
     });
   }
@@ -293,16 +323,21 @@ export class GuideController {
     this.pendingAction = null;
     this.processing = false;
 
-    // Inject system options (Cancel + Something else) into the AI's option list.
-    // These are always available regardless of what the AI sends.
-    const aiOptions = p.options.filter((o) => !SYSTEM_OPTIONS.includes(o));
-    const mergedOptions = [...aiOptions, ...SYSTEM_OPTIONS];
+    // Inject localized Cancel. The AI is instructed NOT to include it.
+    // "Something else" is NOT injected — the user can type custom text
+    // directly in the chat input, so a dedicated button is redundant.
+    const cancelLabel = this.getCancelLabel();
+    const aiOptions = p.options;
+    const mergedOptions = [...aiOptions, cancelLabel];
+    const cancelIdx = aiOptions.length;
+    this.cancelOptionText = cancelLabel;
 
     // Push the step UI to the renderer
     this.deps.onStateUpdate({
       phase: "step-active",
       caption: p.caption,
       options: mergedOptions,
+      cancelIndex: cancelIdx,
       stepIndex: p.stepIndex,
       estStepsLeft: p.estStepsLeft,
     });

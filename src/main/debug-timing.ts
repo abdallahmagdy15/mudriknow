@@ -6,6 +6,10 @@ try {
   // vitest / non-electron env — keep debug on
 }
 
+export function getIsDebug(): boolean {
+  return isDebug;
+}
+
 let tSeq = 0;
 
 export interface TimingRecord {

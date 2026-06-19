@@ -740,6 +740,15 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         return "Guide cancelled.";
       }
     },
+    getOptionLabels: () => {
+      try {
+        const { t } = require("../shared/i18n") as typeof import("../shared/i18n");
+        const lang = appConfig?.lang ?? "en";
+        return { cancel: t(lang, "cancel"), somethingElse: t(lang, "somethingElse") };
+      } catch {
+        return { cancel: "Cancel", somethingElse: "Something else" };
+      }
+    },
     resolveTargetBounds: async (target) => {
       // Dual-bounds system (2026-05-24):
       // - uiaBounds: AI copied from UIA candidate list (pixel-perfect)
@@ -1324,7 +1333,9 @@ contextBlock += `\n--- END CONTEXT ---\n`;
             guideOfferSeen = true;
             log("guide_offer detected in stream — suppressing further text tokens in chat");
             win.webContents.send(IPC.STREAM_TEXT_RESET);
-            // Skip sending this token; the marker will be parsed at the end.
+            // Accumulate this chunk so parseActionsFromResponse sees the marker,
+            // but skip handleOpenCodeEvent so the preamble isn't rendered.
+            fullResponseText += peek;
             return;
           }
         }
@@ -1547,14 +1558,18 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         await new Promise((r) => setTimeout(r, 80));
       }
 
-      // Show cinematic capture overlay while we capture
-      import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.showCaptureScreen();
-      });
+      // Show cinematic capture overlay while we capture UIA
+      const overlayMod = await import("./guide/guide-overlay");
+      overlayMod.showCaptureScreen();
 
       // Read UIA context at the current cursor position
       const { readContextAtPoint } = await import("./context-reader");
       const ctx = await readContextAtPoint(cursor.x, cursor.y);
+
+      // Hide overlay BEFORE screenshot so its dim/frame don't appear in
+      // the captured image and wash out the grid lines.
+      overlayMod.hideCaptureScreen();
+      await new Promise((r) => setTimeout(r, 80));
 
       // Always capture a full-screen screenshot with grid overlay
       const x1 = Math.round(b.x * sf);
@@ -1562,10 +1577,6 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       const x2 = Math.round((b.x + b.width) * sf);
       const y2 = Math.round((b.y + b.height) * sf);
       const imagePath = await captureAndOptimize(x1, y1, x2, y2, { noGrid: false });
-
-      import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.hideCaptureScreen();
-      });
 
       if (!imagePath) {
         log("CAPTURE_CONTEXT — screenshot capture returned null");
@@ -1685,17 +1696,11 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         await new Promise((r) => setTimeout(r, 80));
       }
 
-      // Show cinematic capture overlay
-      import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.showCaptureScreen();
-      });
-
+      // No capture overlay here — the panel is already hidden and the
+      // overlay would wash out the grid lines in the screenshot.
       const imagePath = await captureAndOptimize(x1, y1, x2, y2, { noGrid: false });
 
-      // Hide overlay, re-show panel
-      import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.hideCaptureScreen();
-      });
+      // Re-show panel
       if (panelWasVisible && win && !win.isDestroyed()) {
         win.show();
       }

@@ -9,14 +9,14 @@
   --cyan: #7499C2;
   --cyan-light: #9DB8D6;
   --gold: #F2C94C;
-  --beak: #F2A93A;
+  --beak: #E89423;
   --ink: #0C2530;
 
   /* Primary (Orange) & Secondary (Blue) Color System */
-  --primary: #F2A93A;
+  --primary: #E89423;
   --primary-light: #F2C94C;
-  --primary-faded: rgba(242, 169, 58, 0.15);
-  --primary-glow: rgba(242, 169, 58, 0.25);
+  --primary-faded: rgba(232, 148, 35, 0.15);
+  --primary-glow: rgba(232, 148, 35, 0.25);
   --secondary: #7499C2;
   --secondary-light: #9DB8D6;
   --secondary-deep: #4F7399;
@@ -45,9 +45,9 @@
      --bg-panel fill, not as transparent overlays, because the Electron
      window itself is transparent and backdrop-filter/translucency breaks. */
   --aurora-cyan: rgba(116, 153, 194, 0.26);
-  --aurora-gold: rgba(242, 169, 58, 0.09);
+  --aurora-gold: rgba(232, 148, 35, 0.09);
   --aurora-surface-cyan: rgba(116, 153, 194, 0.20);
-  --aurora-surface-gold: rgba(242, 169, 58, 0.07);
+  --aurora-surface-gold: rgba(232, 148, 35, 0.07);
   --messages-top-shadow: linear-gradient(to bottom, rgba(232, 238, 244, 0.98) 0%, rgba(232, 238, 244, 0.55) 60%, transparent 100%);
   --aurora-duration: 24s;
 
@@ -84,9 +84,9 @@
 
   /* Dark mode aurora: very subtle so it doesn't fight the dark surfaces. */
   --aurora-cyan: rgba(116, 153, 194, 0.10);
-  --aurora-gold: rgba(242, 169, 58, 0.06);
+  --aurora-gold: rgba(232, 148, 35, 0.06);
   --aurora-surface-cyan: rgba(116, 153, 194, 0.09);
-  --aurora-surface-gold: rgba(242, 169, 58, 0.05);
+  --aurora-surface-gold: rgba(232, 148, 35, 0.05);
   --messages-top-shadow: linear-gradient(to bottom, rgba(13, 20, 28, 0.98) 0%, rgba(13, 20, 28, 0.55) 60%, transparent 100%);
 }
 

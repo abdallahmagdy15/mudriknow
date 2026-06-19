@@ -22,8 +22,6 @@ declare global {
     guideOverlay?: {
       onShow: (h: (p: ShowPayload) => void) => void;
       onHide: (h: () => void) => void;
-      onLoadingShow: (h: (payload: { text?: string }) => void) => void;
-      onLoadingHide: (h: () => void) => void;
       onCaptureShow: (h: () => void) => void;
       onCaptureHide: (h: () => void) => void;
       onBubbleShow: (h: (payload: BubblePayload) => void) => void;
@@ -269,21 +267,6 @@ window.guideOverlay?.onCaptureShow(() => {
 
 window.guideOverlay?.onCaptureHide(() => {
   captureScreen.classList.remove("active");
-});
-
-// --- Loading spinner (existing) ---
-
-const loading = document.getElementById("loading") as HTMLDivElement;
-
-window.guideOverlay?.onLoadingShow((payload) => {
-  const textEl = loading.querySelector(".loading-text") as HTMLElement;
-  if (payload.text) textEl.textContent = payload.text;
-  else textEl.textContent = "Scanning screen…";
-  loading.classList.add("active");
-});
-
-window.guideOverlay?.onLoadingHide(() => {
-  loading.classList.remove("active");
 });
 
 export {};

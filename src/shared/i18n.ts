@@ -61,6 +61,7 @@ const en = {
   restoreChat: "Restore chat",
   noRecentChats: "No recent chats",
   guideCancelled: "Guide cancelled.",
+  somethingElse: "Something else",
 };
 
 const ar: Record<Key, string> = {
@@ -123,6 +124,7 @@ const ar: Record<Key, string> = {
   restoreChat: "استعادة المحادثة",
   noRecentChats: "لا توجد محادثات أخيرة",
   guideCancelled: "تم إلغاء الإرشاد.",
+  somethingElse: "شيء آخر",
 };
 
 const strings: Record<Lang, Record<Key, string>> = { en, ar };
