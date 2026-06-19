@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.1] - 2026-06-19
+
+### Fixed
+- **Splash screen not showing on Windows startup.** The splash was skipped when `--hidden` was passed (Windows auto-startup), leaving a bare Electron taskbar icon with no visual feedback. Now the splash shows on every launch regardless of `--hidden` — the flag only suppresses the panel window, not the splash.
+
 ## [1.12.0] - 2026-06-19
 
 ### Added
@@ -175,6 +180,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.1...v1.10.0
