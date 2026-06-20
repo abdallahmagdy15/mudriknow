@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.2] - 2026-06-20
+
+### Fixed
+- **Web search never worked.** `websearch` was listed as allowed in the agent sandbox, the runtime kill-switch allowlist, and the system prompt — but OpenCode only registers its built-in `websearch` tool when the provider is `opencode/*` OR the `OPENCODE_ENABLE_EXA` environment variable is truthy. Mudrik spawns arbitrary providers (Anthropic, OpenAI, Kimi, DeepSeek, …) and never set that env var, so the tool was absent from the agent's tool map. The model honestly told users "I can't search the web" even though every other layer permitted it. `webfetch` was unaffected (needs no flag). Fixed by setting `OPENCODE_ENABLE_EXA=1` in `buildCleanOpenCodeEnv` (`src/shared/providers.ts`), which is the single env-builder used by all five OpenCode spawn sites. No API key required (Exa hosted MCP). Added a regression test in `src/shared/providers.test.ts`.
+
 ## [1.12.1] - 2026-06-19
 
 ### Fixed
@@ -180,6 +185,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.10.0...v1.11.0
