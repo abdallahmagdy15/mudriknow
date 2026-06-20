@@ -164,5 +164,12 @@ export function buildCleanOpenCodeEnv(
       if (!out[envName]) out[envName] = key;
     }
   }
+  // 4. Enable OpenCode's built-in `websearch` tool. OpenCode only registers
+  //    websearch when the provider is `opencode/*` OR this env var is truthy.
+  //    Mudrik spawns arbitrary providers, so without this the tool is absent
+  //    and the model honestly tells the user it can't search — even though
+  //    readonly.md, the system prompt, and the runtime allowlist all permit
+  //    it. No API key needed (Exa hosted MCP). webfetch needs no such flag.
+  out.OPENCODE_ENABLE_EXA = "1";
   return out;
 }

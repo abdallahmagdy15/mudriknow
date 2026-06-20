@@ -140,6 +140,7 @@ Maintain a side section or dedicated file (`open-items.md`) to track future task
 - `--continue` or `--session <id>` is used for continuity. `resetSession()` clears the ID so the next send starts fresh. `setRestoredSession(id)` re-attaches.
 - `activeProcess` tracks the current child so `STOP_RESPONSE` can `SIGKILL` it mid-stream.
 - `findOpenCodeBin` resolves the CLI binary from known npm global paths. This is Windows-specific.
+- **`websearch` needs `OPENCODE_ENABLE_EXA=1`** in the spawn env. OpenCode only registers the built-in `websearch` tool when the provider is `opencode/*` OR this env var is truthy; `webfetch` needs no flag. `buildCleanOpenCodeEnv` in `src/shared/providers.ts` sets it for every spawn. Without it the tool is absent from the agent's tool map, so the model honestly tells the user it can't search — even though `readonly.md`, the system prompt, and the runtime allowlist all permit it. No API key required (Exa hosted MCP). Do not remove this line.
 
 ## Context & image lifecycle
 

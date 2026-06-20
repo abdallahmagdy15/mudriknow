@@ -21,7 +21,7 @@ AI's map of hidden knowledge in this repo. Before acting on any task, read this 
 
 - `src/shared/types.ts` | Single source of truth for IPC names, `ActionType`, `Config`, `ContextPayload` | Read when adding IPC channels or modifying action types.
 - `src/shared/prompts.ts` | `SYSTEM_PROMPT` template; `buildSystemPrompt()` composes BASE + ACTION + GUIDE blocks | Read when modifying AI behavior or prompt structure.
-- `src/shared/providers.ts` | Provider→env-var mapping; `buildCleanOpenCodeEnv` | Read when adding/modifying LLM providers.
+- `src/shared/providers.ts` | Provider→env-var mapping; `buildCleanOpenCodeEnv` (also sets `OPENCODE_ENABLE_EXA=1` so OpenCode registers the built-in `websearch` tool) | Read when adding/modifying LLM providers or anything affecting the OpenCode spawn env.
 - `webpack.config.js` | Eight webpack bundles (main, preload, area-preload, renderer, guide-overlay, calibrate) | Read when modifying build config or adding new entry points.
 
 ## UIA & context capture (core feature)
@@ -76,6 +76,7 @@ AI's map of hidden knowledge in this repo. Before acting on any task, read this 
 ## Tests
 
 - `src/shared/prompts.test.ts` | 21 tests for prompt generation | Read when modifying prompts.
+- `src/shared/providers.test.ts` | 8 tests for `buildCleanOpenCodeEnv` (incl. `OPENCODE_ENABLE_EXA` regression) + provider helpers | Read when modifying the OpenCode spawn env or provider mapping.
 - `src/main/action-executor.test.ts` | 17 tests for action parsing | Read when modifying action parsing.
 - `src/main/guide/guide-controller.test.ts` | 20 tests for guide controller | Read when modifying guide logic.
 
