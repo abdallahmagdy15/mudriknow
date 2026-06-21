@@ -1,9 +1,10 @@
-﻿import { app, BrowserWindow, screen, dialog, nativeTheme } from "electron";
+﻿import { app, BrowserWindow, screen, dialog, nativeTheme, powerMonitor } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
 import { pathToFileURL } from "url";
 import * as koffi from "koffi";
+import { execFileSync } from "child_process";
 import { createTrayWithShow, destroyTray } from "./tray";
 import { Config, DEFAULT_CONFIG, ContextPayload, IPC } from "../shared/types";
 import { registerIpcHandlers, setContext, setAreaContext, getLastContext, patchConfigPersistOnly, attachAutoScreenshot, setScreenshotMode } from "./ipc-handlers";
@@ -78,6 +79,77 @@ function applyAcrylic(win: BrowserWindow): void {
   } catch (e: any) {
     log(`setBackgroundMaterial failed: ${e.message}`);
   }
+}
+
+// Detect whether the native acrylic blur is likely to actually render.
+// Windows disables acrylic transparently (without an error from
+// setBackgroundMaterial) in several cases:
+//   - Settings → Personalization → Colors → "Transparency effects" OFF
+//     (writes HKCU\...\Personalize\EnableTransparency = 0)
+//   - Battery saver active (DWM suppresses blur at runtime)
+//   - High-contrast accessibility mode
+//   - RDP / VM sessions (no DWM composition)
+// When any of these are true, our translucent --bg-panel (rgba 0.60)
+// has nothing behind it and looks broken. We push the active state to
+// the renderer, which toggles data-acrylic="off" and falls back to the
+// pre-1.12.5 opaque --bg-panel.
+//
+// Battery saver is detected via powerMonitor's low-power signal: when
+// the OS reports low battery, Windows has already throttled transparency.
+// Plain "on battery" is intentionally NOT treated as acrylic-off — most
+// laptops render acrylic fine unplugged until saver kicks in.
+function isAcrylicLikelyActive(): boolean {
+  try {
+    if (nativeTheme.shouldUseHighContrastColors) {
+      log("Acrylic disabled: high-contrast color scheme active");
+      return false;
+    }
+  } catch {
+    // nativeTheme not ready yet — skip this check.
+  }
+
+  // Battery saver / low-power: Windows throttles DWM effects here.
+  try {
+    if (powerMonitor.onBatteryPower) {
+      log("Acrylic disabled: on battery power (saver may suppress blur)");
+      return false;
+    }
+  } catch {
+    // powerMonitor not ready yet — skip this check.
+  }
+
+  // Read the user's Transparency Effects setting from the registry.
+  // This is the most reliable signal: it reflects what Settings UI shows
+  // and is what Windows itself consults when composing the desktop.
+  try {
+    const out = execFileSync(
+      "reg",
+      [
+        "query",
+        "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        "/v",
+        "EnableTransparency",
+      ],
+      { encoding: "utf-8", timeout: 2000, windowsHide: true }
+    ).toString();
+    const m = out.match(/EnableTransparency\s+REG_DWORD\s+0x([0-9a-fA-F]+)/);
+    if (m && parseInt(m[1], 16) === 0) {
+      log("Acrylic disabled: EnableTransparency=0 (user/system setting)");
+      return false;
+    }
+  } catch (e: any) {
+    // Registry read failed (e.g. WINE, locked-down environment). Don't
+    // assume acrylic is off — let the user see for themselves.
+    log(`Acrylic detection: registry read failed (${e.message}), assuming on`);
+  }
+
+  return true;
+}
+
+function pushAcrylicState(win: BrowserWindow): void {
+  if (win.isDestroyed()) return;
+  const active = isAcrylicLikelyActive();
+  win.webContents.send(IPC.ACRYLIC_STATE, { active });
 }
 
 function calculatePanelPosition(cursorX: number, cursorY: number): { x: number; y: number; width: number; height: number } {
@@ -292,6 +364,7 @@ function showPanel(context: ContextPayload): void {
   mainWindow.show();
   applyAcrylic(mainWindow);
   applyRoundedCorners(mainWindow);
+  pushAcrylicState(mainWindow);
   mainWindow.focus();
   mainWindow.moveTop();
 
@@ -340,6 +413,7 @@ function showPanelWithLoading(cursorPos: { x: number; y: number }): void {
   mainWindow.show();
   applyAcrylic(mainWindow);
   applyRoundedCorners(mainWindow);
+  pushAcrylicState(mainWindow);
   mainWindow.focus();
   mainWindow.moveTop();
 }
@@ -693,6 +767,20 @@ app.whenReady().then(async () => {
 
   applyTheme(config.theme);
   applyLoginItemSetting(config.launchOnStartup);
+
+  // Re-push acrylic state when the OS-level inputs change while the panel
+  // is open: power-source transitions (AC ↔ battery) and high-contrast
+  // toggle both flip whether Windows will render our acrylic blur. We
+  // don't have a native event for the EnableTransparency registry value,
+  // so that one is only re-evaluated on the next panel show.
+  const onPowerChange = () => {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+      pushAcrylicState(mainWindow);
+    }
+  };
+  powerMonitor.on("on-battery", onPowerChange);
+  powerMonitor.on("on-ac", onPowerChange);
+  nativeTheme.on("updated", onPowerChange);
 
   // Always show the splash on every launch — including Windows auto-startup
   // (--hidden). The --hidden flag only suppresses the panel window, not the

@@ -250,6 +250,7 @@ export const IPC = {
   CONTEXT_LOADING: "context-loading",
   GET_RECENT_CHATS: "get-recent-chats",
   TOGGLE_MAXIMIZE: "toggle-maximize",
+  ACRYLIC_STATE: "acrylic-state",
 } as const;
 
 export interface RecentChat {

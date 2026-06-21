@@ -66,6 +66,21 @@
   --font-size-base: 14px;
 }
 
+/* Acrylic fallback: when Windows disables transparency effects (Settings →
+   Personalization → Colors → Transparency effects OFF, battery saver,
+   high-contrast mode, RDP/VM), the native acrylic blur behind our
+   translucent --bg-panel vanishes and the panel would look broken
+   (see-through to whatever is behind the window, or solid black). Main
+   process detects this and toggles data-acrylic="off" on <html>; we
+   swap --bg-panel back to its pre-1.12.5 opaque value so the panel
+   looks clean. Aurora gradients keep working on the opaque base. */
+[data-acrylic="off"] {
+  --bg-panel: #f0f4f8;
+}
+[data-theme="dark"][data-acrylic="off"] {
+  --bg-panel: #111820;
+}
+
 [data-theme="dark"] {
   --bg-page: #0a0e14;
   --bg-panel: rgba(17, 24, 32, 0.60);

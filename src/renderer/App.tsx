@@ -47,6 +47,7 @@ declare global {
       guideUserChoice: (option: string) => void;
       hidePanel: () => void;
       onGuideStateUpdate: (cb: (state: any) => void) => void;
+      onAcrylicState: (cb: (data: { active: boolean }) => void) => void;
     };
   }
 }
@@ -186,6 +187,23 @@ export function App() {
       return () => mq.removeEventListener("change", handler);
     }
   }, [theme]);
+
+  // Acrylic state: when Windows disables transparency effects (manual
+  // toggle, battery saver, high-contrast mode, RDP/VM), the native acrylic
+  // blur behind our translucent --bg-panel disappears and the panel looks
+  // broken (solid black or see-through). Main process detects this and
+  // pushes the active state; we reflect it as data-acrylic on <html> so
+  // themes.css can swap --bg-panel back to opaque. Default is "on" until
+  // we hear otherwise, so first paint matches the v1.12.5 frosted look.
+  useEffect(() => {
+    window.hoverbuddy.onAcrylicState((data) => {
+      if (data.active) {
+        document.documentElement.removeAttribute("data-acrylic");
+      } else {
+        document.documentElement.setAttribute("data-acrylic", "off");
+      }
+    });
+  }, []);
 
   // Close settings dropdown on click outside. Mousedown (not click) so we
   // intercept before any focus shift that could swallow a click on the
