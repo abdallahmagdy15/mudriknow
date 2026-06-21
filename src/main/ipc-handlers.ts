@@ -658,11 +658,17 @@ async function initGuideControllerIfNeeded(): Promise<void> {
       // Stream tokens to the renderer for visibility; accumulate the response
       // text; parse + dispatch guide markers when the subprocess exits.
       let buffer = "";
+      let receivedAnyText = false;
+      let errorSurfaced = false;
       try {
         await client.sendMessage(prompt, (event) => {
           handleOpenCodeEvent(event, win);
           if (event.type === "text" && event.part?.text) {
+            receivedAnyText = true;
             buffer += event.part.text;
+          }
+          if (event.type === "error" && event.error?.message) {
+            errorSurfaced = true;
           }
         }, imagePath ? [imagePath] : undefined);
       } finally {
@@ -678,12 +684,46 @@ async function initGuideControllerIfNeeded(): Promise<void> {
           const guideTypes = new Set(["guide_offer","guide_step","guide_complete","guide_abort"]);
           const guideActions = actions.filter((action) => guideTypes.has(action.type));
           if (guideActions.length === 0) {
-            log("guide follow-up: AI responded but no guide markers found — session may have ended unexpectedly");
-            // If the AI didn't emit any guide markers, show the response text to the user
-            // and clear the guide state so the panel shows normally
             const m = await import("./guide/guide-controller");
-            if (m.isControllerInitialized()) {
-              await m.getController().cancel();
+            const ctrl = m.isControllerInitialized() ? m.getController() : null;
+            const trimmedBuffer = buffer.trim();
+            if (!receivedAnyText || trimmedBuffer.length === 0) {
+              // OpenCode exited without producing text (silent failure) or only
+              // emitted an error. Don't kill the guide — the user can Retry and
+              // continue the same walkthrough because the controller stays in
+              // awaiting-ai and the next guide_step will be accepted.
+              log("guide follow-up: no text received — keeping guide alive for retry");
+              if (ctrl) {
+                try {
+                  const { t } = require("../shared/i18n") as typeof import("../shared/i18n");
+                  const lang = appConfig?.lang ?? "en";
+                  ctrl.setAwaitingAICaption(t(lang, "guideNoResponse"));
+                } catch {
+                  ctrl.setAwaitingAICaption("AI didn't respond — tap Retry to continue the guide.");
+                }
+              }
+            } else {
+              // The AI genuinely replied without guide markers. Show the real
+              // reply instead of injecting a fake "Guide cancelled" message.
+              // Reset the streamed text first so STREAM_DONE doesn't duplicate it.
+              log("guide follow-up: AI responded but no guide markers found — ending guide with reply text");
+              if (win && !win.isDestroyed()) {
+                win.webContents.send(IPC.STREAM_TEXT_RESET);
+              }
+              const replyText = extractGuideReplyText(trimmedBuffer);
+              if (ctrl) {
+                if (replyText) {
+                  ctrl.endWithReply(replyText);
+                } else {
+                  try {
+                    const { t } = require("../shared/i18n") as typeof import("../shared/i18n");
+                    const lang = appConfig?.lang ?? "en";
+                    ctrl.endWithReply(t(lang, "guideEnded"));
+                  } catch {
+                    ctrl.endWithReply("Guide ended.");
+                  }
+                }
+              }
             }
           } else {
             for (const action of guideActions) {
@@ -2039,6 +2079,13 @@ function cleanAssistantContent(text: string): string {
     .replace(/<skill[\s\S]*?<\/skill>/gi, "")
     .replace(/\[skill\][\s\S]*?\[\/skill\]/gi, "")
     .trim();
+}
+
+/** Extracts the human-readable reply from an AI response that contained no
+ *  guide markers. Removes action markers, filters tool artifacts the same way
+ *  the streaming path does, and strips prompt-injection noise. */
+function extractGuideReplyText(text: string): string {
+  return cleanAssistantContent(filterToolArtifactLines(text.replace(/<!--ACTION:[\s\S]*?-->/g, ""))).trim();
 }
 
 function execOpenCode(bin: string, cliArgs: string[], options: any): Promise<string> {

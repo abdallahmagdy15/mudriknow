@@ -414,5 +414,62 @@ describe("GuideController", () => {
         }),
       );
     });
+
+    it("endWithReply() closes the guide with the AI's actual reply instead of 'Guide cancelled'", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      await ctrl.handleUserChoice("Start guide");
+      await ctrl.handleAction(sampleStep as unknown as Action);
+
+      ctrl.endWithReply("The AI's actual reply.");
+      expect(ctrl.getPhase()).toBe("idle");
+      expect(deps.overlay.hide).toHaveBeenCalled();
+      expect(deps.showPanel).toHaveBeenCalled();
+      expect(deps.onStateUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ phase: "idle", finalMessage: "The AI's actual reply." }),
+      );
+    });
+
+    it("endWithReply() is a no-op when already idle", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      ctrl.endWithReply("Should not appear.");
+      expect(ctrl.getPhase()).toBe("idle");
+      expect(deps.overlay.hide).not.toHaveBeenCalled();
+      expect(deps.showPanel).not.toHaveBeenCalled();
+      expect(deps.onStateUpdate).not.toHaveBeenCalled();
+    });
+
+    it("setAwaitingAICaption() updates the caption only in awaiting-ai phase", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      await ctrl.handleUserChoice("Start guide");
+      await ctrl.handleAction(sampleStep as unknown as Action);
+
+      // Move into awaiting-ai by choosing an option and draining timers
+      await ctrl.handleUserChoice("I did it");
+      await vi.advanceTimersByTimeAsync(sampleStep.waitMs + 50);
+      expect(ctrl.getPhase()).toBe("awaiting-ai");
+
+      ctrl.setAwaitingAICaption("AI didn't respond — tap Retry.");
+      expect(deps.onStateUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ phase: "awaiting-ai", caption: "AI didn't respond — tap Retry.", options: [] }),
+      );
+    });
+
+    it("setAwaitingAICaption() is a no-op outside awaiting-ai phase", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      // Phase is offer, not awaiting-ai
+      expect(ctrl.getPhase()).toBe("offer");
+
+      ctrl.setAwaitingAICaption("Should not appear.");
+      expect(deps.onStateUpdate).not.toHaveBeenCalledWith(
+        expect.objectContaining({ phase: "awaiting-ai" }),
+      );
+    });
   });
 });

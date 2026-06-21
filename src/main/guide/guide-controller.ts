@@ -271,6 +271,37 @@ export class GuideController {
     }
   }
 
+  /** End the guide gracefully with the AI's actual reply text. Used when the
+   *  AI responded to a follow-up without emitting guide markers — we show the
+   *  real reply instead of injecting a misleading "Guide cancelled" message. */
+  endWithReply(replyText: string): void {
+    if (this.phase === "idle") return;
+    this.runGeneration += 1;
+    this.deps.overlay.hide();
+    this.clearInactivityTimer();
+    this.processing = false;
+    this.pendingAction = null;
+    this.deferredFirstStep = null;
+    this.cancelOptionText = null;
+    const wasActive = this.phase !== "offer";
+    this.phase = "idle";
+    this.currentStep = null;
+    this.deps.onStateUpdate({
+      phase: "idle",
+      finalMessage: replyText,
+    });
+    if (wasActive) {
+      this.deps.showPanel();
+    }
+  }
+
+  /** Update the caption shown while waiting for the AI. Used to surface a
+   *  transient failure without killing the guide, so the user can retry. */
+  setAwaitingAICaption(caption: string): void {
+    if (this.phase !== "awaiting-ai") return;
+    this.deps.onStateUpdate({ phase: "awaiting-ai", caption, options: [] });
+  }
+
   // ---------- private state-machine methods ----------
 
   private async handleOffer(p: GuideOfferPayload): Promise<void> {

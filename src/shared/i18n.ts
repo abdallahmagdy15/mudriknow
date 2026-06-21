@@ -61,6 +61,8 @@ const en = {
   restoreChat: "Restore chat",
   noRecentChats: "No recent chats",
   guideCancelled: "Guide cancelled.",
+  guideNoResponse: "AI didn't respond — tap Retry to continue the guide.",
+  guideEnded: "Guide ended.",
   somethingElse: "Something else",
 };
 
@@ -124,6 +126,8 @@ const ar: Record<Key, string> = {
   restoreChat: "استعادة المحادثة",
   noRecentChats: "لا توجد محادثات أخيرة",
   guideCancelled: "تم إلغاء الإرشاد.",
+  guideNoResponse: "لم يستجب الذكاء الاصطناعي — اضغط إعادة المحاولة لمواصلة الإرشاد.",
+  guideEnded: "انتهى الإرشاد.",
   somethingElse: "شيء آخر",
 };
 
