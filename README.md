@@ -40,7 +40,7 @@ From there: ask, translate, fix, summarize. Or tell it to **act**: type, paste, 
    npm i -g opencode-ai
    ```
 3. Download the latest `.exe` from [Releases](https://github.com/abdallahmagdy15/mudrik/releases) and run it.
-4. Launch → ⚙ → **Model** → pick or type a `provider/model`. Mudrik will prompt for an API key if needed. No terminal.
+4. **Configure your AI model.** Launch Mudrik → click **⚙** → **API Keys** → paste a provider API key (Anthropic, OpenAI, Kimi, DeepSeek, …), then pick a model from the dropdown. Prefer the terminal? Run `opencode auth login` to use OpenCode-hosted models — no API key needed.
 
 > Installer is **unsigned** — SmartScreen will warn on first launch. *More info → Run anyway*.
 
