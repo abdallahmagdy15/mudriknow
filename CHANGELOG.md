@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.6] - 2026-06-21
+
+### Fixed
+- **Acrylic fallback when Windows disables transparency.** When the OS disables the native acrylic blur (manual "Transparency effects" toggle off, battery saver, high-contrast mode, or RDP/VM sessions), the v1.12.5 translucent panel had nothing behind it and looked broken — see-through to windows behind, or solid black. Mudrik now detects the active state via the `EnableTransparency` registry value, `powerMonitor.onBatteryPower`, and `nativeTheme.shouldUseHighContrastColors`, and falls back to the pre-1.12.5 opaque background automatically. Detection runs on every panel show and on live power-source / contrast changes, so the panel always looks intentional.
+
 ## [1.12.5] - 2026-06-21
 
 ### Added
@@ -204,6 +209,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.6]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.5...v1.12.6
 [1.12.5]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.4...v1.12.5
 [1.12.4]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.3...v1.12.4
 [1.12.3]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.2...v1.12.3
