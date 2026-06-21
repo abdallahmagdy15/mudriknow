@@ -46,11 +46,11 @@ body {
   height: 100vh;
   padding: 10px;
   gap: 8px;
-  /* Solid panel base with two aurora gradient layers on top. The gradients
-     are deliberately low-opacity and large so they only tint the gaps
-     between solid surfaces (header, messages, input). No transparency,
-     no backdrop-filter, no pseudo-elements — the Electron window is
-     transparent and those all break rendering. See themes.css tokens. */
+  /* Translucent panel base with two aurora gradient layers on top. The
+      gradients are deliberately low-opacity and large so they only tint
+      the gaps between solid surfaces (header, messages, input). The base
+      layer (--bg-panel) is translucent so native Windows acrylic blur
+      shows through. See themes.css tokens. */
   background:
     radial-gradient(80% 60% at 20% 25%, var(--aurora-cyan), transparent 65%),
     radial-gradient(70% 70% at 80% 80%, var(--aurora-gold), transparent 65%),

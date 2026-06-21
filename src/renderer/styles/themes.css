@@ -25,7 +25,7 @@
 
   /* Light Theme (default) */
   --bg-page: #141a24;
-  --bg-panel: #f0f4f8;
+  --bg-panel: rgba(240, 244, 248, 0.60);
   --bg-overlay: #f5f8fb;
   --bg-surface: #e8eef4;
   --bg-inset: #dde5ee;
@@ -41,9 +41,10 @@
   --error: #c45a5a;
 
   /* Aurora background — subtle, slow-moving gradient glow on the panel.
-     These are rendered as extra background layers ON TOP of the solid
-     --bg-panel fill, not as transparent overlays, because the Electron
-     window itself is transparent and backdrop-filter/translucency breaks. */
+      Rendered as extra background layers ON TOP of the translucent
+      --bg-panel fill. The Electron window is transparent and the main
+      process applies native Windows acrylic blur via setBackgroundMaterial;
+      --bg-panel is translucent so that blur shows through. */
   --aurora-cyan: rgba(116, 153, 194, 0.26);
   --aurora-gold: rgba(232, 148, 35, 0.09);
   --aurora-surface-cyan: rgba(116, 153, 194, 0.20);
@@ -67,7 +68,7 @@
 
 [data-theme="dark"] {
   --bg-page: #0a0e14;
-  --bg-panel: #111820;
+  --bg-panel: rgba(17, 24, 32, 0.60);
   --bg-overlay: #141d28;
   --bg-surface: #1a2530;
   --bg-inset: #0a1118;
