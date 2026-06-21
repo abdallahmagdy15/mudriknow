@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.3] - 2026-06-21
+
+### Fixed
+- **Guide mode killed on transient OpenCode failures.** When a guide follow-up triggered a silent provider failure (OpenCode exited with no text), Mudrik injected "Guide cancelled." and destroyed the active guide. The real AI reply then arrived on Retry, but `guide_step` was rejected because the guide was already dead. `sendFollowUp()` in `src/main/ipc-handlers.ts` now distinguishes empty/failed responses from genuine replies: silent failures keep the guide alive in `awaiting-ai` so Retry continues the walkthrough; replies without guide markers end the guide gracefully using the actual AI text instead of the fake cancellation message. Added `endWithReply()` and `setAwaitingAICaption()` to `GuideController`, plus localized strings in `src/shared/i18n.ts`.
+
 ## [1.12.2] - 2026-06-20
 
 ### Fixed
@@ -185,6 +190,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.3]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.2...v1.12.3
 [1.12.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.11.0...v1.12.0
