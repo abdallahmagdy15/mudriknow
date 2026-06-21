@@ -1160,6 +1160,7 @@ if (!data?.hasImage) {
       ) : (
         <div className="context-captured-badge">
           <i className="fa-solid fa-crosshairs"></i> {t("contextCaptured")}
+          <button className="context-captured-recapture" onClick={handleCaptureContext} title={t("recaptureContext")}><i className="fa-solid fa-arrows-rotate"></i></button>
           <button className="context-captured-x" onClick={handleReleaseContext} title={t("releaseContext")}><i className="fa-solid fa-xmark"></i></button>
         </div>
       )}
