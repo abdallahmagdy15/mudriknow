@@ -392,7 +392,7 @@ section.tight { padding: 52px 0; }
 /* ============ Install ============ */
 .install-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 18px;
   margin-top: 8px;
 }
@@ -436,9 +436,9 @@ section.tight { padding: 52px 0; }
   position: relative;
   background: #0C2530;
   color: #DCE9F2;
-  font: 500 13.5px/1.55 ui-monospace, "Cascadia Code", "Consolas", "SF Mono", Menlo, monospace;
+  font: 500 12.5px/1.55 ui-monospace, "Cascadia Code", "Consolas", "SF Mono", Menlo, monospace;
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
+  padding: 12px 14px;
   overflow-x: auto;
   border: 1px solid rgba(116,153,194,0.2);
 }
