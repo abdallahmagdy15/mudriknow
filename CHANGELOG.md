@@ -4,6 +4,14 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.5] - 2026-06-21
+
+### Added
+- **Recapture button on the captured-context badge.** When context is already captured, a refresh button (↻) now sits beside the release X. Clicking it re-runs the full capture flow (UIA scan + screenshot with grid) in place — no need to release and recapture. Blue-tinted to distinguish from the red release button. Reuses the existing `capture-context` IPC; `setContext()` cleans up the previous screenshot automatically.
+
+### Changed
+- **Translucent panel with native acrylic blur.** Restored the v0.9.0 frosted-glass look: `--bg-panel` is now translucent (60% opaque) in both light and dark themes, so the native Windows acrylic blur — already wired up via `setBackgroundMaterial("acrylic")` but visually inert since the v1.11 aurora redesign — shows through the panel's padding and gaps. Content areas (header, messages, input) remain opaque, creating a floating-cards-on-glass effect. Aurora gradient layers preserved on top. Two stale CSS comments that incorrectly claimed translucency "breaks rendering" have been corrected.
+
 ## [1.12.4] - 2026-06-21
 
 ### Changed
@@ -196,6 +204,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.5]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.4...v1.12.5
 [1.12.4]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.3...v1.12.4
 [1.12.3]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.2...v1.12.3
 [1.12.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.1...v1.12.2
