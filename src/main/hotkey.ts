@@ -94,22 +94,13 @@ function registerPointer(accelerator: string): boolean {
   }
 }
 
-function registerArea(accelerator: string): boolean {
-  log(`Registering area shortcut: ${accelerator}`);
-  try {
-    const ok = globalShortcut.register(accelerator, () => {
-      const now = Date.now();
-      if (now - lastAreaTime < DEBOUNCE_MS) return;
-      lastAreaTime = now;
-      log(`Area hotkey triggered!`);
-      activeCallbacks?.onAreaActivate();
-    });
-    if (!ok) log(`ERROR: Failed to register ${accelerator} — may already be in use`);
-    return ok;
-  } catch (e: any) {
-    log(`ERROR: Failed to register ${accelerator}: ${e.message}`);
-    return false;
-  }
+function registerArea(_accelerator: string): boolean {
+  // Area Capture is temporarily disabled for a future redesign.
+  // The core logic (area-selector.ts, area-scanner.ts, setAreaContext) is
+  // kept on disk but unreachable while the hotkey is not registered.
+  // TODO: re-enable after the enhanced area-capture experience lands.
+  log("Area hotkey registration skipped — feature disabled for redesign");
+  return true;
 }
 
 function registerQuick(accelerator: string): boolean {

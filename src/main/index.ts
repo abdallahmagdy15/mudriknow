@@ -585,7 +585,7 @@ async function maybeShowWelcome(): Promise<void> {
       message: "Mudrik runs from the system tray.",
       detail:
         `Press ${config.hotkeyPointer} on any window to open the assistant for the UI element under your cursor.\n\n` +
-        `Press ${config.hotkeyArea} to draw a rectangle and ask about that area.\n\n` +
+        `Press ${config.hotkeyQuick} for quick chat — instant AI without screen capture.\n\n` +
         `You can change the model, hotkeys, and startup behaviour from the âš™ menu in the panel.`,
       buttons: ["Get started"],
       defaultId: 0,
@@ -700,7 +700,7 @@ app.whenReady().then(async () => {
   // icon with no visual feedback to the user.
   showSplashScreen({
     pointer: config.hotkeyPointer,
-    area: config.hotkeyArea,
+    // area omitted — Area Capture is disabled for redesign
     quick: config.hotkeyQuick,
     lang: config.lang,
   });

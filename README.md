@@ -55,19 +55,18 @@ Two global hotkeys put Mudrik in front of you. Both are rebindable from the ⚙ 
 | Shortcut     | What happens |
 | ------------ | ------------ |
 | `Alt+Space`  | Scans the window's UI tree at your cursor. Mudrik opens opposite your cursor, ready to help. |
-| `Ctrl+Space` | Drag to select a screen region. Gives the AI a focused view of exactly what you want it to see. |
-| `Esc`        | Cancel: stops streaming, exits area-select, or closes the panel. |
+| `Alt+X`      | Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness. |
+| `Esc`        | Cancel: stops streaming or closes the panel. |
 | `Enter`      | Send prompt. `Shift+Enter` for newline. |
 
 ## 🛠 Features
 
 | <br />                       | <br />                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🎯 **Cursor-anchored**       | Panel opens opposite your cursor — what you're pointing at stays visible. No app-switching.                                                                                                                   |
 | 🪟 **Reads any Windows app** | Uses Windows UI Automation to pick up buttons, fields, text, menus. Works in browsers, Office, IDEs, native dialogs — anywhere accessibility reaches. Chromium apps get an auto-screenshot fallback.           |
 | ⚡ **Acts for you**           | Type, paste, click, invoke, press keyboard shortcuts — Mudrik can interact with any accessible element.                                                                                                        |
 | 🦉 **Auto-Guide**             | Mudrik becomes a teacher: an owl cursor appears on screen, points to each target with a speech bubble, and walks you step‑by‑step through multi‑step UI tasks. Toggle in ⚙ settings.                            |
-| 🖼️ **Area capture**          | Drag a rectangle with `Ctrl+Space` to give the AI a focused visual of a specific region — charts, images, or anything UIA can't describe.                                                                      |
+| 💬 **Quick chat mode**        | `Alt+X` opens the panel without capturing context — for questions that don't need screen awareness. Mudrik is always one keystroke away, even when you just need a quick answer.                                |
 | 🔌 **Any LLM**               | 18 providers out of the box — Anthropic, OpenAI, Google, DeepSeek, OpenRouter, Ollama, and more. Paste your key in settings — no terminal auth dance.                                                           |
 | 🔒 **Sandboxed**             | No shell commands, no filesystem writes. The AI reads files in your working directory and dispatches an allow-listed set of UI actions. That's the whole capability surface.                                   |
 
@@ -80,10 +79,9 @@ Alt+Space (pointer)
   ↓  Chromium/Electron? → auto-captures full-screen screenshot as fallback
   ↓  Mudrik opens opposite your cursor, ready to chat
 
-Ctrl+Space (area-select)
-  ↓  drag a rectangle on screen
-  ↓  region screenshot captured
-  ↓  Mudrik opens with a focused visual context
+Alt+X (quick chat)
+  ↓  panel opens instantly — no context capture
+  ↓  for questions that don't need screen awareness
 
 Send prompt
   ↓  streamed to `opencode run --agent readonly`

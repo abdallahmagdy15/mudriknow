@@ -151,7 +151,7 @@ ipcMain.handle("calibrate-show-splash", async () => {
     const cfg = loadConfig();
     showSplashScreen({
       pointer: cfg.hotkeyPointer,
-      area: cfg.hotkeyArea,
+      // area omitted — Area Capture is disabled for redesign
       quick: cfg.hotkeyQuick,
       lang: cfg.lang,
       debug: true,

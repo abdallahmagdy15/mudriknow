@@ -1023,7 +1023,7 @@ if (!data?.hasImage) {
             >
               <span className="settings-section-icon"><i className="fa-solid fa-keyboard"></i></span>
               <span className="settings-label">{t("hotkeys")}</span>
-              <span className="settings-section-meta">{hotkeyPointer} · {hotkeyArea.replace("CommandOrControl", "Ctrl")} · {hotkeyQuick}</span>
+              <span className="settings-section-meta">{hotkeyPointer} · {hotkeyQuick}</span>
               <span className={`settings-chevron ${openSections.hotkeys ? "open" : ""}`}><i className="fa-solid fa-chevron-down"></i></span>
             </button>
             {openSections.hotkeys && (
@@ -1040,18 +1040,7 @@ if (!data?.hasImage) {
                     placeholder="Alt+Space"
                   />
                 </label>
-                <label className="hotkey-row">
-                  <span>Area</span>
-                  <input
-                    className="hotkey-input"
-                    type="text"
-                    value={hotkeyArea}
-                    onChange={(e) => setHotkeyArea(e.target.value)}
-                    onBlur={() => { if (hotkeyArea) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                    placeholder="CommandOrControl+Space"
-                  />
-                </label>
+                {/* Area Capture hotkey is disabled for redesign — UI hidden, config retained. */}
                 <label className="hotkey-row">
                   <span>Quick Chat</span>
                   <input
