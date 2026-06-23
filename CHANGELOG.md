@@ -4,6 +4,14 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.7] - 2026-06-24
+
+### Fixed
+- **Guide mode no longer refused when desktop actions are off.** When `actionsEnabled=false`, the system prompt listed `guide_to` alongside the other interactive actions as "DISABLED". The model conflated `guide_to` with the `guide_offer` / `guide_step` markers (which are gated by the separate `autoGuideEnabled` flag) and refused to start guide sessions — telling users to enable "Allow desktop actions" even though Auto-Guide was already on. Fixed by dropping `guide_to` from the read-only prompt stub and the runtime actions block, and adding an explicit clarification that Auto-Guide is a separate setting. Runtime blocking of `guide_to` itself is unchanged; only the prompt wording was misleading.
+
+### Changed
+- **README & website: panel positioning wording corrected.** The panel opens at a fixed centered position on the left or right half of the screen (cursor only determines which half). Stale "opens opposite your cursor" phrasing — which implied the panel tracks the cursor position — replaced with "opens on the opposite side of your screen" in the README hotkey table, the how-it-works diagram, and the website hotkey table (EN + AR).
+
 ## [1.12.6] - 2026-06-21
 
 ### Fixed
@@ -209,6 +217,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.7]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.6...v1.12.7
 [1.12.6]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.5...v1.12.6
 [1.12.5]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.4...v1.12.5
 [1.12.4]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.3...v1.12.4
