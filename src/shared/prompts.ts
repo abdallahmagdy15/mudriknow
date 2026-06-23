@@ -239,7 +239,7 @@ You: Done. <!--ACTION:{"type":"press_keys","combination":"alt+f4"}-->`;
 
 export const SYSTEM_PROMPT = BASE_PROMPT + "\n\n" + ACTION_PROMPT_FULL;
 
-export const ACTION_PROMPT_AWARE = `Desktop actions (type/paste/click/press_keys/set_value/invoke_element/guide_to) are DISABLED in settings. Do NOT emit those action markers — they will be blocked. \`copy_to_clipboard\` is still allowed for putting content on the user's clipboard. If the user asks you to act on the screen, tell them to enable "Allow desktop actions" in ⚙ settings.`;
+export const ACTION_PROMPT_AWARE = `Desktop actions (type/paste/click/press_keys/set_value/invoke_element) are DISABLED in settings. Do NOT emit those action markers — they will be blocked. \`copy_to_clipboard\` is still allowed for putting content on the user's clipboard. **Auto-Guide mode is a SEPARATE setting** — if it is enabled below, you MAY still emit \`guide_offer\` / \`guide_step\` markers even with desktop actions off; do not refuse a guide request. If the user asks you to act on the screen, tell them to enable "Allow desktop actions" in ⚙ settings.`;
 
 export const GUIDE_PROMPT_AWARE = `Auto-Guide mode (step-by-step walkthroughs of multi-step tasks) is DISABLED in settings. Do NOT emit \`guide_offer\` / \`guide_step\` markers — they will be blocked. If the user asks "guide me through…" or "show me how to…" for a multi-step task, tell them to enable "Auto-Guide" in ⚙ settings.`;
 

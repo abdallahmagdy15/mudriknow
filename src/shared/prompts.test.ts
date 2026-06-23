@@ -34,8 +34,8 @@ describe("prompts split", () => {
 });
 
 describe("ACTION_PROMPT_AWARE", () => {
-  it("is short (under 60 words)", () => {
-    expect(ACTION_PROMPT_AWARE.split(/\s+/).length).toBeLessThan(60);
+  it("is short (under 90 words)", () => {
+    expect(ACTION_PROMPT_AWARE.split(/\s+/).length).toBeLessThan(90);
   });
 
   it("forbids interactive markers but explicitly allows copy_to_clipboard", () => {
@@ -46,6 +46,16 @@ describe("ACTION_PROMPT_AWARE", () => {
   it("tells the AI how the user can re-enable", () => {
     expect(ACTION_PROMPT_AWARE).toContain("Allow desktop actions");
     expect(ACTION_PROMPT_AWARE).toContain("settings");
+  });
+
+  it("does NOT mention guide_to (conflates with guide mode and causes false refusals)", () => {
+    expect(ACTION_PROMPT_AWARE).not.toContain("guide_to");
+  });
+
+  it("explicitly clarifies Auto-Guide is a separate setting", () => {
+    expect(ACTION_PROMPT_AWARE).toMatch(/Auto-Guide.*SEPARATE/i);
+    expect(ACTION_PROMPT_AWARE).toContain("guide_offer");
+    expect(ACTION_PROMPT_AWARE).toContain("guide_step");
   });
 });
 

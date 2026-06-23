@@ -28,7 +28,7 @@
 
 ## ✨ What it does
 
-Press **Alt+Space** anywhere on Windows. Mudrik scans your active window's UI — every button, field, label, and value — and opens a floating panel opposite your cursor so nothing gets covered. The element you're pointing at becomes the focal anchor. For web apps and Chromium windows, Mudrik auto-attaches a screenshot, because browser UIA trees can miss page content.
+Press **Alt+Space** anywhere on Windows. Mudrik scans your active window's UI — every button, field, label, and value — and opens a floating panel on the opposite side of your screen so nothing gets covered. The element you're pointing at becomes the focal anchor. For web apps and Chromium windows, Mudrik auto-attaches a screenshot, because browser UIA trees can miss page content.
 
 From there: ask, translate, fix, summarize. Or tell it to **act**: type, paste, click, invoke, press shortcuts. Turn on **Auto-Guide** and Mudrik becomes a teacher — an owl cursor appears on screen and walks you step‑by‑step through any multi‑step task.
 
@@ -54,7 +54,7 @@ Two global hotkeys put Mudrik in front of you. Both are rebindable from the ⚙ 
 
 | Shortcut     | What happens |
 | ------------ | ------------ |
-| `Alt+Space`  | Scans the window's UI tree at your cursor. Mudrik opens opposite your cursor, ready to help. |
+| `Alt+Space`  | Scans the window's UI tree at your cursor. Mudrik opens on the opposite side of your screen, ready to help. |
 | `Alt+X`      | Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness. |
 | `Esc`        | Cancel: stops streaming or closes the panel. |
 | `Enter`      | Send prompt. `Shift+Enter` for newline. |
@@ -77,7 +77,7 @@ Alt+Space (pointer)
   ↓  hotkey reads cursor position
   ↓  PowerShell UIA script — JSON tree of the active window
   ↓  Chromium/Electron? → auto-captures full-screen screenshot as fallback
-  ↓  Mudrik opens opposite your cursor, ready to chat
+  ↓  Mudrik opens on the opposite side of your screen, ready to chat
 
 Alt+X (quick chat)
   ↓  panel opens instantly — no context capture
