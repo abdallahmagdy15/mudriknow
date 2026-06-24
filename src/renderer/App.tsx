@@ -404,6 +404,15 @@ if (!data?.hasImage) {
         setGuideState(null);
       } else {
         setGuideState(state);
+        // When a step becomes active, the AI is done streaming and is waiting
+        // for user input. Reset streaming so the chat input is enabled —
+        // critical for the "Else" button path where the panel opens mid-step
+        // and the user needs to type a custom follow-up. Also fixes the case
+        // where accepting the guide offer set streaming=true but the deferred
+        // first step ran locally without a new stream to clear it.
+        if (state.phase === "step-active") {
+          setStreaming(false);
+        }
       }
     });
 

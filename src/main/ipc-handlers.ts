@@ -408,6 +408,7 @@ async function initGuideControllerIfNeeded(): Promise<void> {
       show: overlayMod.showOverlay,
       hide: overlayMod.hideOverlay,
       setOwlMode: overlayMod.setOwlMode,
+      hideBubble: overlayMod.hideBubble,
     },
     getActiveHwnd: winMod.getActiveHwnd,
     getCursorPos,
@@ -757,7 +758,13 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         ? (require("electron").nativeTheme.shouldUseDarkColors ? "dark" : "light")
         : (appConfig?.theme || "light");
       if (state.phase === "step-active" && state.caption) {
-        overlayMod.showBubble(state.caption, state.options || [], theme);
+        // Append the "Else" button to the overlay bubble only — the panel
+        // dock uses state.options directly (no Else) since the user can
+        // type in the chat input there.
+        const overlayOptions = state.elseOptionText
+          ? [...(state.options || []), state.elseOptionText]
+          : (state.options || []);
+        overlayMod.showBubble(state.caption, overlayOptions, theme);
         overlayMod.setOwlMode("pointing");
       } else if (state.phase === "waiting") {
         overlayMod.showBubble("Waiting...", [], theme);

@@ -59,6 +59,11 @@ export interface GuideStateUpdate {
   /** For phase==="idle" sent right after a guide_complete or guide_abort:
    *  short message to flash in the chat (recap or reason). */
   finalMessage?: string;
+  /** Localized label for the "Else" button. NOT included in `options` —
+   *  the panel dock ignores this (the user can type directly in the chat
+   *  input there). The overlay mirror appends it to the bubble buttons so
+   *  the user can open the panel for free-text input mid-step. */
+  elseOptionText?: string;
 }
 
 export interface ClickEvent {
@@ -75,6 +80,10 @@ export interface GuideControllerDeps {
     ) => Promise<void>;
     hide: () => void;
     setOwlMode?: (mode: "pointing" | "thinking") => void;
+    /** Hide just the speech bubble (owl stays visible). Used by the
+     *  "Else" button: user wants to type in the panel, so the bubble
+     *  buttons go away but the owl keeps pointing at the target. */
+    hideBubble?: () => void;
   };
   getActiveHwnd: () => Promise<number>;
   getCursorPos: () => { x: number; y: number };
@@ -140,6 +149,11 @@ export class GuideController {
    *  array. May be localized (e.g. "إلغاء") when the AI translates it.
    *  handleUserChoice matches against this instead of hardcoding "Cancel". */
   private cancelOptionText: string | null = null;
+  /** Localized "Else" label — only appended to the OVERLAY bubble's option
+   *  list (not the panel dock). When the user taps it, we hide the bubble
+   *  and show the panel with the chat input focused so they can type a
+   *  custom follow-up instead of picking a predefined option. */
+  private elseOptionText: string | null = null;
 
   constructor(private deps: GuideControllerDeps) {}
 
@@ -183,6 +197,11 @@ export class GuideController {
     return this.deps.getOptionLabels?.().cancel ?? "Cancel";
   }
 
+  /** Returns the localized "Else" label for the overlay-only button. */
+  private getElseLabel(): string {
+    return this.deps.getOptionLabels?.().somethingElse ?? "Something else";
+  }
+
   /** Renderer reports the user tapped a button in the chat-input options bar,
    *  or typed a custom message in the chat input during a guide step. */
   async handleUserChoice(option: string): Promise<void> {
@@ -221,6 +240,17 @@ export class GuideController {
       return;
     }
     if (this.phase === "step-active") {
+      // "Else" button: user wants to type a custom follow-up instead of
+      // picking a predefined option. Hide the bubble (owl stays pointing)
+      // and show the panel with the chat input focused. The panel dock
+      // renders the AI options + Cancel (minus Else) so the user can
+      // still tap a button if they change their mind. No advance — the
+      // guide stays in step-active until the user types or picks.
+      if (this.elseOptionText !== null && option === this.elseOptionText) {
+        this.deps.overlay.hideBubble?.();
+        this.deps.showPanelAndFocusInput();
+        return;
+      }
       // closeOptions short-circuit: AI marked this option as terminal (e.g.
       // "Done — task complete" on the final step). Close locally without
       // burning another round-trip on a confirmation the user already gave.
@@ -231,8 +261,11 @@ export class GuideController {
       }
       // Otherwise the user is signalling progress mid-walkthrough — either
       // by tapping an option button or by typing custom text in the chat
-      // input. Record and advance; the next guide_* marker arrives via
-      // handleAction().
+      // input. Hide the panel (it may be visible via the Else path or a
+      // panel-dock click), record and advance; the next guide_* marker
+      // arrives via handleAction(). The overlay's onStateUpdate for the
+      // "waiting" phase switches the owl to thinking automatically.
+      this.deps.hidePanel();
       this.recordPendingAction({ kind: "option", choice: option });
       void this.advanceFromStep();
       return;
@@ -258,6 +291,7 @@ export class GuideController {
     this.pendingAction = null;
     this.deferredFirstStep = null;
     this.cancelOptionText = null;
+    this.elseOptionText = null;
     const wasActive = this.phase !== "offer";
     this.phase = "idle";
     this.currentStep = null;
@@ -283,6 +317,7 @@ export class GuideController {
     this.pendingAction = null;
     this.deferredFirstStep = null;
     this.cancelOptionText = null;
+    this.elseOptionText = null;
     const wasActive = this.phase !== "offer";
     this.phase = "idle";
     this.currentStep = null;
@@ -355,13 +390,16 @@ export class GuideController {
     this.processing = false;
 
     // Inject localized Cancel. The AI is instructed NOT to include it.
-    // "Something else" is NOT injected — the user can type custom text
-    // directly in the chat input, so a dedicated button is redundant.
+    // "Else" is also injected — but only on the OVERLAY bubble (the panel
+    // dock doesn't need it since the user can type directly in the chat
+    // input). The overlay mirror in ipc-handlers appends it to showBubble.
     const cancelLabel = this.getCancelLabel();
+    const elseLabel = this.getElseLabel();
     const aiOptions = p.options;
     const mergedOptions = [...aiOptions, cancelLabel];
     const cancelIdx = aiOptions.length;
     this.cancelOptionText = cancelLabel;
+    this.elseOptionText = elseLabel;
 
     // Push the step UI to the renderer
     this.deps.onStateUpdate({
@@ -371,6 +409,7 @@ export class GuideController {
       cancelIndex: cancelIdx,
       stepIndex: p.stepIndex,
       estStepsLeft: p.estStepsLeft,
+      elseOptionText: elseLabel,
     });
 
     // Show the overlay (only if we have a target — typing-only steps may have target=null)
@@ -468,6 +507,8 @@ export class GuideController {
     this.deferredFirstStep = null;
     this.pendingAction = null;
     this.processing = false;
+    this.cancelOptionText = null;
+    this.elseOptionText = null;
     this.deps.onStateUpdate({ phase: "idle", finalMessage: p.summary });
     // Show thinking owl "Done!" for 3 seconds, then hide owl and show panel
     this.deps.overlay.setOwlMode?.("thinking");
@@ -485,6 +526,8 @@ export class GuideController {
     this.deferredFirstStep = null;
     this.pendingAction = null;
     this.processing = false;
+    this.cancelOptionText = null;
+    this.elseOptionText = null;
     this.deps.onStateUpdate({ phase: "idle", finalMessage: p.reason });
     // Show panel when guide aborts
     this.deps.showPanel();

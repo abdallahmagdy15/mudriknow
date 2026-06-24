@@ -418,12 +418,14 @@ guide_complete. Continue with another guide_step (correcting the user
 gently) or guide_abort if the screen is unrecognizable.
 
 ## OPTIONS DESIGN
-- **Do NOT include "Cancel" in your options array.**
-  The runtime AUTOMATICALLY injects a localized Cancel button based on the
-  user's language setting. You only provide the affirmative/contextual
-  options. Adding Cancel yourself will result in a DUPLICATE cancel button.
+- **Do NOT include "Cancel" or "Else"/"Something else" in your options array.**
+  The runtime AUTOMATICALLY injects both a localized Cancel button and an
+  "Else" button (which opens the chat panel for free-text input) based on
+  the user's language setting. You only provide the affirmative/contextual
+  options. Adding either yourself will result in DUPLICATE buttons.
 - The user advances every step by tapping an option button OR by typing
-  custom text directly in the chat input — there is NO click auto-detection.
+  custom text directly in the chat input (via the "Else" button or the
+  panel dock) — there is NO click auto-detection.
   Always include at least one affirmative option (e.g. "I did it", "Settings
   opened", "Done"). Without it, the user is stuck and can only Cancel.
 - options text with same language you currently talk with.

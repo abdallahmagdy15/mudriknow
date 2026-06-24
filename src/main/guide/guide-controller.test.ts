@@ -214,6 +214,73 @@ describe("GuideController", () => {
         choice: "I did it",
       });
     });
+
+    it("handleStep includes elseOptionText in the state update (for overlay mirror)", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      await ctrl.handleUserChoice("Start guide");
+      await ctrl.handleAction(sampleStep as unknown as Action);
+      expect(deps.onStateUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: "step-active",
+          elseOptionText: expect.any(String),
+        }),
+      );
+    });
+
+    it("Else button hides bubble + shows panel, does NOT advance the step", async () => {
+      const deps = makeDeps({
+        overlay: {
+          show: vi.fn().mockResolvedValue(undefined),
+          hide: vi.fn(),
+          setOwlMode: vi.fn(),
+          hideBubble: vi.fn(),
+        },
+      });
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      await ctrl.handleUserChoice("Start guide");
+      await ctrl.handleAction(sampleStep as unknown as Action);
+
+      (deps.overlay.hideBubble as ReturnType<typeof vi.fn>).mockClear();
+      (deps.showPanelAndFocusInput as ReturnType<typeof vi.fn>).mockClear();
+      (deps.sendFollowUp as ReturnType<typeof vi.fn>).mockClear();
+
+      // Tap "Something else" (the default Else label when getOptionLabels is unwired)
+      await ctrl.handleUserChoice("Something else");
+
+      // Bubble hidden, panel shown
+      expect(deps.overlay.hideBubble).toHaveBeenCalledTimes(1);
+      expect(deps.showPanelAndFocusInput).toHaveBeenCalledTimes(1);
+      // Guide stays in step-active — no advance, no AI round-trip
+      expect(ctrl.getPhase()).toBe("step-active");
+      expect(deps.sendFollowUp).not.toHaveBeenCalled();
+    });
+
+    it("after Else, user types custom text → hidePanel + advance normally", async () => {
+      const deps = makeDeps();
+      const ctrl = new GuideController(deps);
+      await ctrl.handleAction(sampleOffer as unknown as Action);
+      await ctrl.handleUserChoice("Start guide");
+      await ctrl.handleAction(sampleStep as unknown as Action);
+
+      // Tap Else first (opens panel)
+      await ctrl.handleUserChoice("Something else");
+      (deps.hidePanel as ReturnType<typeof vi.fn>).mockClear();
+
+      // Now user types custom text in the panel
+      await ctrl.handleUserChoice("I typed my email already");
+      await vi.advanceTimersByTimeAsync(sampleStep.waitMs + 50);
+
+      // Panel was hidden, step advanced
+      expect(deps.hidePanel).toHaveBeenCalledTimes(1);
+      expect(ctrl.getPhase()).toBe("awaiting-ai");
+      expect(deps.sendFollowUp).toHaveBeenCalledWith({
+        kind: "option",
+        choice: "I typed my email already",
+      });
+    });
   });
 
   describe("cancel and abort", () => {
