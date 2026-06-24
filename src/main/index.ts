@@ -639,14 +639,55 @@ function applyTheme(theme: "system" | "light" | "dark"): void {
 
 function applyLoginItemSetting(launchOnStartup: boolean): void {
   try {
+    const args: string[] = [];
+    if (!app.isPackaged) {
+      // In dev mode, process.execPath is electron.exe (not our app binary).
+      // Without the app path as the first arg, Windows startup launches
+      // electron.exe with only --hidden → shows the default Electron
+      // welcome page instead of Mudrik.
+      args.push(app.getAppPath());
+    }
+    if (launchOnStartup) {
+      args.push("--hidden");
+    }
     app.setLoginItemSettings({
       openAtLogin: launchOnStartup,
       openAsHidden: true,
-      args: launchOnStartup ? ["--hidden"] : [],
+      args,
     });
-    log(`setLoginItemSettings: openAtLogin=${launchOnStartup}`);
+    log(`setLoginItemSettings: openAtLogin=${launchOnStartup}, isPackaged=${app.isPackaged}, args=${JSON.stringify(args)}`);
   } catch (e: any) {
     log(`setLoginItemSettings FAILED: ${e.message}`);
+  }
+}
+
+// One-time cleanup: if the user previously toggled "Launch on startup"
+// while running in dev mode, a stale registry entry was created under
+// "electron.app.Electron" pointing to the dev electron.exe without the
+// app path. On Windows startup, that entry launches electron.exe --hidden
+// which shows the default Electron welcome page. We proactively remove
+// it if the value references our project directory.
+function cleanupStaleDevStartupEntry(): void {
+  if (!app.isPackaged) return; // don't touch registry in dev mode
+  try {
+    const out = execFileSync(
+      "reg",
+      ["query", "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "electron.app.Electron"],
+      { encoding: "utf-8", timeout: 2000, windowsHide: true }
+    ).toString();
+    // Only delete if the value points to our project dir (hoverbuddy).
+    // Another Electron app might legitimately use the default "Electron"
+    // name — we don't want to nuke its startup entry.
+    if (out.includes("hoverbuddy")) {
+      execFileSync(
+        "reg",
+        ["delete", "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "electron.app.Electron", "/f"],
+        { encoding: "utf-8", timeout: 2000, windowsHide: true }
+      );
+      log("cleanupStaleDevStartupEntry: removed stale electron.app.Electron (hoverbuddy) entry");
+    }
+  } catch {
+    // Key doesn't exist or read failed — nothing to clean up.
   }
 }
 
@@ -767,6 +808,7 @@ app.whenReady().then(async () => {
 
   applyTheme(config.theme);
   applyLoginItemSetting(config.launchOnStartup);
+  cleanupStaleDevStartupEntry();
 
   // Re-push acrylic state when the OS-level inputs change while the panel
   // is open: power-source transitions (AC ↔ battery) and high-contrast
