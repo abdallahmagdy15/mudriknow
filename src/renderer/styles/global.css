@@ -1076,6 +1076,8 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
   /* Surface stays opaque (transparent Electron window can't do real
      translucency), but we tint it with the aurora hues so the background
      appears to bleed through. */
@@ -1119,9 +1121,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 14px;
-  padding: 40px 16px;
+  padding: 20px 16px;
   text-align: center;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   color: var(--text-subtle);
 }
 
