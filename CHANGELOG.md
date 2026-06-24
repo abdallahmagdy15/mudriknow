@@ -4,6 +4,19 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.9] - 2026-06-25
+
+### Added
+- **"Else" button on guide overlay bubble.** The overlay bubble now shows an "Else" (localized "Something else") button alongside the AI options + Cancel. Clicking it hides the bubble (owl stays pointing) and opens the Mudrik panel with the chat input focused and enabled, so the user can type a custom follow-up instead of picking a predefined option. The panel dock shows the AI options + Cancel (no Else) since the user types directly. No AI round-trip on Else click — the guide stays paused until the user submits. Revived previously-dead `showPanelAndFocusInput` infrastructure.
+
+### Fixed
+- **Chat input disabled after guide offer acceptance.** Accepting a guide offer called `setStreaming(true)` in React, but the deferred first step ran locally (no new stream), so `streaming` never reset to `false`. When the panel opened via the Else button, the chat input was disabled and showed a "thinking" state. Fixed by resetting `streaming = false` when the step-active guide state arrives.
+- **Empty-state overflow in quick-chat mode.** The `.empty-state` had `height: 100%`, demanding the full `.messages` height even when the quick-chat-hint banner was present. Combined content overflowed → unnecessary scrollbar. Fixed with flexbox layout: `.messages` is now a flex column, `.empty-state` uses `flex: 1` to fill remaining space.
+- **Narrower maximized panel width.** The maximize toggle was hardcoded to 900px — wider than needed. Reduced to 780px, closer to the normal panel width (~730px on 1080p).
+
+### Changed
+- **GUIDE_PROMPT_FULL updated.** The OPTIONS DESIGN section now tells the AI that the runtime injects both "Else" and "Cancel" buttons, so the AI should not include them in its options array.
+
 ## [1.12.8] - 2026-06-24
 
 ### Fixed
@@ -222,6 +235,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.9]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.8...v1.12.9
 [1.12.8]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.7...v1.12.8
 [1.12.7]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.6...v1.12.7
 [1.12.6]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.5...v1.12.6
