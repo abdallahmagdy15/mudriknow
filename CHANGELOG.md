@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.8] - 2026-06-24
+
+### Fixed
+- **Default Electron page on Windows startup.** If "Launch on startup" was toggled while running Mudrik in dev mode, Electron wrote a registry entry under `electron.app.Electron` pointing to the dev `electron.exe` — but without the app path argument. On next Windows startup, `electron.exe --hidden` had no app to load and showed the default Electron welcome page instead of Mudrik. The packaged `Mudrik.exe` used a separate key (`electron.app.Mudrik`) so both entries coexisted. Fixed in three parts: (1) dev-mode entries now include `app.getAppPath()` as the first arg; (2) the packaged app proactively cleans up stale `electron.app.Electron` entries that reference the project directory on startup; (3) improved startup logging.
+
 ## [1.12.7] - 2026-06-24
 
 ### Fixed
@@ -217,6 +222,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.12.8]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.7...v1.12.8
 [1.12.7]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.6...v1.12.7
 [1.12.6]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.5...v1.12.6
 [1.12.5]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.4...v1.12.5
