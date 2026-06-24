@@ -880,7 +880,7 @@ export function registerIpcHandlers(
       const cursor = screen.getCursorScreenPoint();
       const display = screen.getDisplayNearestPoint(cursor);
       const wa = display.workArea;
-      const w = 900;
+      const w = 780;
       win.setBounds({
         x: Math.round(wa.x + (wa.width - w) / 2),
         y: wa.y,
