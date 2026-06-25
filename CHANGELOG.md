@@ -4,6 +4,23 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-06-26
+
+### Added
+- **Floating composer + floating top bar.** The chat input and the header are now elevated cards floating over a single continuous chat surface, instead of stacked boxed regions. Messages scroll seamlessly behind both bars and fade into them via CSS masks. The composer gains an animated cyan→gold gradient border ring (brightens and speeds up on focus) and a unified 8px rounding across the composer, toggles, send button, and message cards.
+- **Inline feature toggles in the composer.** Capture, Act, and Guide toggles sit inside the composer bar. Act ↔ `Config.actionsEnabled` and Guide ↔ `Config.autoGuideEnabled` — the same flags the Settings panel edits — so the two stay in sync. Capture reflects the live context-captured state (click to capture/release), replacing the separate capture badge that sat above the messages.
+
+### Changed
+- **Send button** is now a rounded-square gold button (primary-faded → primary-glow on hover), matching the active-toggle coloring; no hover size change or drop shadow.
+- **Composer textarea follows the font-size setting** live (was hardcoded at 13px).
+- **Focus glow is blue** (cyan) instead of orange.
+- **Top shadow removed** from the chat; content fades into the floating header instead.
+- **Dark-mode composer surface brightened** (`--composer-bg`) so the card reads as floating above the chat body.
+- **Unified 12px outer padding** around the header, composer, and message content.
+
+### Removed
+- Standalone context-capture button/badge above the messages (folded into the Capture toggle).
+
 ## [1.12.9] - 2026-06-25
 
 ### Added
@@ -235,6 +252,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.13.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.9...v1.13.0
 [1.12.9]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.8...v1.12.9
 [1.12.8]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.7...v1.12.8
 [1.12.7]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.6...v1.12.7
