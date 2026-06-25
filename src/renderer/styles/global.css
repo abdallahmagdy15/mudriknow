@@ -41,16 +41,14 @@ body {
 }
 
 .app {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding: 10px;
-  gap: 8px;
-  /* Translucent panel base with two aurora gradient layers on top. The
-      gradients are deliberately low-opacity and large so they only tint
-      the gaps between solid surfaces (header, messages, input). The base
-      layer (--bg-panel) is translucent so native Windows acrylic blur
-      shows through. See themes.css tokens. */
+  /* No padding/gap: the chat body is full-bleed and the header + composer
+     float over it as cards (each carries its own 6px inset). */
+  padding: 0;
+  gap: 0;
   background:
     radial-gradient(80% 60% at 20% 25%, var(--aurora-cyan), transparent 65%),
     radial-gradient(70% 70% at 80% 80%, var(--aurora-gold), transparent 65%),
@@ -61,20 +59,32 @@ body {
 }
 
 /* ── Header ── */
+/* Header — floating card over the chat body (same treatment as the
+   composer, minus the animated border ring). Absolute at the top so the
+   messages scroll continuously behind it; the top mask on .messages fades
+   content into it. */
 .app-header {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 6;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 10px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background:
+    radial-gradient(120% 120% at 15% 110%, var(--aurora-surface-cyan), transparent 60%),
+    radial-gradient(120% 120% at 90% -10%, var(--aurora-surface-gold), transparent 60%),
+    var(--composer-bg);
+  border: 1px solid var(--border-bright);
   border-radius: var(--radius-sm);
+  box-shadow: var(--composer-shadow);
   cursor: grab;
   user-select: none;
   -webkit-app-region: drag;
-  flex-shrink: 0;
-  position: relative;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
 }
 
 .app-header:active { cursor: grabbing; }
@@ -205,8 +215,8 @@ body {
 /* ── Recent Chats Popup ── */
 .recent-chats-popup {
   position: absolute;
-  top: 52px;
-  right: 10px;
+  top: 64px;
+  right: 12px;
   width: 260px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -219,7 +229,7 @@ body {
 
 .app[dir="rtl"] .recent-chats-popup {
   right: auto;
-  left: 10px;
+  left: 12px;
 }
 
 @keyframes popupIn {
@@ -1069,39 +1079,65 @@ body {
   color: var(--text-muted);
 }
 
+/* ── Chat stage: holds the scroll region + floating composer ── */
+.chat-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Floating anchor for the composer (and guide dock). Absolute at the bottom
+   of the chat-stage; messages scroll underneath. pointer-events:none on the
+   wrapper lets scroll-drag work in the gap; children re-enable it. */
+.floating-stack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  /* Unified 12px floating margin (matches the header) so the composer lifts
+     off the chat body evenly on all sides. */
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.floating-stack > * { pointer-events: auto; }
+
 /* ── Messages ── */
 .messages {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 10px;
+  /* Top room clears the floating header; bottom room clears the composer.
+     Horizontal padding matches the bars' 12px inset so bubbles align with
+     the card edges. The mask fades both tails into the floating cards. */
+  padding: 70px 12px 160px 12px;
   display: flex;
   flex-direction: column;
-  /* Surface stays opaque (transparent Electron window can't do real
-     translucency), but we tint it with the aurora hues so the background
-     appears to bleed through. */
   background:
     radial-gradient(100% 80% at 10% 20%, var(--aurora-surface-cyan), transparent 70%),
     radial-gradient(90% 90% at 90% 80%, var(--aurora-surface-gold), transparent 70%),
     var(--bg-msg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
+  /* No border / radius — full-bleed chat body that scrolls under both
+     floating cards. Mask fades the top (into the header) and the bottom
+     (into the composer). */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 64px, #000 calc(100% - 140px), transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 64px, #000 calc(100% - 140px), transparent 100%);
   scroll-behavior: smooth;
   position: relative;
 }
 
-.messages::before {
-  content: '';
-  position: sticky;
-  top: -10px;
-  display: block;
-  height: 16px;
-  margin: -10px -10px -6px -10px;
-  background: var(--messages-top-shadow);
-  pointer-events: none;
-  z-index: 1;
+.messages::-webkit-scrollbar { width: 6px; }
+.messages::-webkit-scrollbar-thumb {
+  background: rgba(116, 153, 194, 0.2); border-radius: 3px;
 }
+
+.messages::before { content: none; }
 
 .new-conversation-hint {
   display: flex;
@@ -1255,7 +1291,7 @@ body {
 .message {
   margin-bottom: 12px;
   padding: 12px 14px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   animation: msgSlide 0.25s var(--ease-out);
   position: relative;
   font-size: 13px;
@@ -1428,29 +1464,85 @@ body {
   margin-top: 2px;
 }
 
-/* ── Chat Input ── */
-.chat-input {
-  flex-shrink: 0;
+/* ── Floating Composer ──
+   The input is now an elevated card floating over the bottom of the
+   messages. .chat-stage (relative) wraps messages + .floating-stack
+   (absolute bottom). Messages fade into the composer via the mask on
+   .messages (see above). */
+
+/* @property lets us animate the conic-gradient angle directly —
+   Chromium-native, so this works identically in the Electron renderer. */
+@property --composer-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.composer {
   position: relative;
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--composer-radius);
+  border: 1px solid var(--border-bright);
   background:
-    radial-gradient(80% 80% at 20% 80%, var(--aurora-surface-cyan), transparent 70%),
-    radial-gradient(70% 70% at 80% 20%, var(--aurora-surface-gold), transparent 70%),
-    var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  padding: 5px 5px 5px 10px;
-  margin-bottom: 6px;
-  transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+    radial-gradient(120% 120% at 15% 110%, var(--aurora-surface-cyan), transparent 60%),
+    radial-gradient(120% 120% at 90% -10%, var(--aurora-surface-gold), transparent 60%),
+    var(--composer-bg);
+  box-shadow: var(--composer-shadow);
+  transition: box-shadow 0.28s var(--ease-out),
+              transform 0.28s var(--ease-out);
 }
 
-.chat-input:focus-within {
-  border-color: var(--primary-glow);
-  box-shadow: 0 0 0 3px rgba(242, 169, 58, 0.12);
+/* Animated gradient border ring — a cyan→gold conic gradient traveling
+   around the composer inside a masked 1.5px ring. Idle = slow + dim,
+   focus = 2× faster + full bright. */
+.composer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--composer-angle),
+    var(--cyan-light) 0deg,
+    var(--cyan) 90deg,
+    var(--gold) 180deg,
+    var(--beak) 250deg,
+    var(--cyan-light) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  opacity: 0.5;
+  animation: composerBorderSpin 6s linear infinite;
+  transition: opacity 0.3s var(--ease-out);
+  pointer-events: none;
+}
+.composer.focus {
+  box-shadow: var(--composer-shadow-focus);
+  transform: translateY(-1px);
+}
+.composer.focus::after {
+  opacity: 1;
+  animation-duration: 3s;
+}
+@keyframes composerBorderSpin {
+  to { --composer-angle: 360deg; }
 }
 
-.chat-input textarea {
+.composer-field {
+  display: flex;
+  align-items: flex-end;
+}
+
+.composer textarea {
   flex: 1;
   width: 100%;
   background: transparent;
@@ -1458,7 +1550,7 @@ body {
   border: none;
   padding: 6px 8px 6px 0;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   resize: none;
   outline: none;
   line-height: 1.5;
@@ -1467,47 +1559,115 @@ body {
   overflow-y: auto;
 }
 
-.chat-input textarea::placeholder {
+.composer textarea::placeholder {
   color: var(--text-ghost);
 }
 
-.chat-input textarea:disabled {
+.composer textarea:disabled {
   opacity: 0.4;
 }
 
-.btn-send {
-  width: 32px;
-  height: 32px;
+/* Toolbar: feature toggles left, send right */
+.composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.toggles {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+/* Toggle buttons — Capture / Act / Guide. Rounded-square shape shared with
+   the send button. Each mirrors a Config flag (or, for Capture, the live
+   context-captured state). ON = gold-tinted, OFF = ghost. */
+.tg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  transition: all 0.16s var(--ease-out);
+}
+/* Icon + label each flex-centered in their own box with line-height:1 so
+   they sit on the exact same optical center (no baseline drift). */
+.tg i {
+  font-size: 11px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.tg span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+.tg:hover:not(:disabled) {
+  border-color: var(--border-bright);
+  color: var(--text);
+  background: rgba(116, 153, 194, 0.10);
+}
+.tg.on {
+  background: var(--primary-faded);
+  border-color: var(--primary-glow);
+  color: var(--beak);
+}
+.tg.on i { color: var(--beak); }
+.tg.on:hover:not(:disabled) { background: var(--primary-glow); }
+.tg:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Send button — rounded square matching the toggles. Gold (primary) at
+   rest, deeper gold on hover — same coloring family as the active toggles. */
+.composer-send {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 6px;
-  background: var(--primary-faded);
-  color: var(--primary);
-  border: none;
+  border-radius: 8px;
+  border: 1px solid var(--primary-glow);
   cursor: pointer;
-  transition: all 0.15s var(--ease-out);
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 1;
+  background: var(--primary-faded);
+  transition: background 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
   flex-shrink: 0;
-  align-self: flex-end;
 }
 
-.btn-send:hover:not(:disabled) {
+.composer-send:hover:not(:disabled) {
   background: var(--primary-glow);
+  border-color: var(--primary);
   color: var(--beak);
-  transform: translateY(-1px) scale(1.04);
 }
 
-.btn-send:active:not(:disabled) {
-  transform: translateY(0) scale(0.96);
+.composer-send:active:not(:disabled) {
+  transform: translateY(1px);
   transition-duration: 0.05s;
 }
 
-.btn-send:disabled {
+.composer-send:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  transform: none;
-  filter: saturate(0.6);
 }
 
 /* ── Copy Chips ── */
@@ -1540,7 +1700,7 @@ body {
 
 .copy-toast {
   position: fixed;
-  bottom: 72px;
+  bottom: 116px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--bg-surface);

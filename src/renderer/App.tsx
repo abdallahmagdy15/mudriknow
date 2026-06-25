@@ -601,6 +601,16 @@ if (!data?.hasImage) {
     setScreenshotAttached(false);
   }, []);
 
+  // Composer Capture pill — toggles between capture and release. The pill
+  // reflects `contextCaptured`, so it stays in sync with hotkey captures too.
+  const handleToggleCapture = useCallback(() => {
+    if (contextCaptured) {
+      handleReleaseContext();
+    } else {
+      handleCaptureContext();
+    }
+  }, [contextCaptured, handleReleaseContext, handleCaptureContext]);
+
   const handleStopResponse = useCallback(() => {
     console.log("[RENDERER] Stop response clicked");
     window.hoverbuddy.stopResponse();
@@ -1178,19 +1188,10 @@ if (!data?.hasImage) {
           </div>
         </div>
       )}
-{/* Context preview hidden from end users — the LLM receives it
-           internally but the UI doesn't need to show the raw element data. */}
-      {!contextCaptured ? (
-        <button className="btn-capture-context" onClick={handleCaptureContext} disabled={streaming || contextLoading}>
-          <i className="fa-solid fa-crosshairs"></i> {t("captureContext")}
-        </button>
-      ) : (
-        <div className="context-captured-badge">
-          <i className="fa-solid fa-crosshairs"></i> {t("contextCaptured")}
-          <button className="context-captured-recapture" onClick={handleCaptureContext} title={t("recaptureContext")}><i className="fa-solid fa-arrows-rotate"></i></button>
-          <button className="context-captured-x" onClick={handleReleaseContext} title={t("releaseContext")}><i className="fa-solid fa-xmark"></i></button>
-        </div>
-      )}
+{/* Context capture UI now lives inside the floating composer (Capture pill).
+          The raw element preview stays hidden from end users — the LLM receives
+          it internally but the UI doesn't need to show it. */}
+      <div className="chat-stage">
       <div className="messages">
         {showQuickChatHint && (
           <div className="quick-chat-hint">
@@ -1273,31 +1274,45 @@ if (!data?.hasImage) {
         )}
         <div ref={messagesEndRef} />
       </div>
-      {guideState && guideState.options && guideState.options.length > 0 && (
-        <React.Suspense fallback={null}>
-          <ChatInputOptions
-            caption={guideState.caption || guideState.summary}
-            stepIndex={guideState.stepIndex}
-            estStepsLeft={guideState.estStepsLeft}
-            options={guideState.options}
-            cancelIndex={guideState.cancelIndex}
-            onChoose={(opt) => {
-              const isCancel = guideState.cancelIndex !== undefined && opt === guideState.options[guideState.cancelIndex];
-              if (!isCancel) {
-                setMessages((prev) => [...prev, { role: "user", content: opt, toolUses: [], timestamp: Date.now() }]);
-                setStreaming(true);
-              }
-              window.hoverbuddy.guideUserChoice(opt);
-            }}
-          />
-      </React.Suspense>
-    )}
-    {copyToast && (
-      <div className="copy-toast">
-        <i className="fa-solid fa-check"></i> {copyToast}
+      <div className="floating-stack">
+        {guideState && guideState.options && guideState.options.length > 0 && (
+          <React.Suspense fallback={null}>
+            <ChatInputOptions
+              caption={guideState.caption || guideState.summary}
+              stepIndex={guideState.stepIndex}
+              estStepsLeft={guideState.estStepsLeft}
+              options={guideState.options}
+              cancelIndex={guideState.cancelIndex}
+              onChoose={(opt) => {
+                const isCancel = guideState.cancelIndex !== undefined && opt === guideState.options[guideState.cancelIndex];
+                if (!isCancel) {
+                  setMessages((prev) => [...prev, { role: "user", content: opt, toolUses: [], timestamp: Date.now() }]);
+                  setStreaming(true);
+                }
+                window.hoverbuddy.guideUserChoice(opt);
+              }}
+            />
+          </React.Suspense>
+        )}
+        <ChatInput
+          ref={chatInputRef}
+          onSubmit={handleSubmit}
+          disabled={streaming || contextLoading}
+          lang={lang}
+          contextCaptured={contextCaptured}
+          onToggleCapture={handleToggleCapture}
+          actionsEnabled={actionsEnabled}
+          onToggleActions={handleToggleActionsEnabled}
+          autoGuideEnabled={autoGuideEnabled}
+          onToggleGuide={handleToggleAutoGuideEnabled}
+        />
       </div>
-    )}
-    <ChatInput ref={chatInputRef} onSubmit={handleSubmit} disabled={streaming || contextLoading} lang={lang} />
-  </div>
-);
+      </div>
+      {copyToast && (
+        <div className="copy-toast">
+          <i className="fa-solid fa-check"></i> {copyToast}
+        </div>
+      )}
+    </div>
+  );
 }

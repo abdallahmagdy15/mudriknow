@@ -5,11 +5,30 @@ interface Props {
   onSubmit: (prompt: string) => void;
   disabled: boolean;
   lang: Lang;
+  // Feature toggles — mirror the same Config flags the settings panel edits,
+  // so the composer pills and the settings switches stay in sync.
+  contextCaptured: boolean;
+  onToggleCapture: () => void;
+  actionsEnabled: boolean;
+  onToggleActions: () => void;
+  autoGuideEnabled: boolean;
+  onToggleGuide: () => void;
 }
 
-export const ChatInput = forwardRef<{ focus: () => void }, Props>(({ onSubmit, disabled, lang }, ref) => {
+export const ChatInput = forwardRef<{ focus: () => void }, Props>(({
+  onSubmit,
+  disabled,
+  lang,
+  contextCaptured,
+  onToggleCapture,
+  actionsEnabled,
+  onToggleActions,
+  autoGuideEnabled,
+  onToggleGuide,
+}, ref) => {
   const tp = (key: any) => translate(lang, key);
   const [text, setText] = useState("");
+  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useImperativeHandle(ref, () => ({
@@ -51,26 +70,65 @@ export const ChatInput = forwardRef<{ focus: () => void }, Props>(({ onSubmit, d
   const canSend = text.trim().length > 0 && !disabled;
 
   return (
-    <div className="chat-input">
-      <textarea
-        ref={textareaRef}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={tp("inputPlaceholder")}
-        disabled={disabled}
-        rows={2}
-      />
-      <button
-        type="button"
-        className="btn-send"
-        onClick={submit}
-        disabled={!canSend}
-        title={tp("send")}
-        aria-label={tp("send")}
-      >
-        <i className="fa-solid fa-arrow-up" style={{ fontSize: 14 }}></i>
-      </button>
-    </div>
+    <form
+      className={`composer${focused ? " focus" : ""}`}
+      onSubmit={(e) => { e.preventDefault(); submit(); }}
+      autoComplete="off"
+    >
+      <div className="composer-field">
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={tp("inputPlaceholder")}
+          disabled={disabled}
+          rows={2}
+        />
+      </div>
+      <div className="composer-bar">
+        <div className="toggles">
+          <button
+            type="button"
+            className={`tg${contextCaptured ? " on" : ""}`}
+            onClick={onToggleCapture}
+            disabled={disabled}
+            title={contextCaptured ? tp("releaseContext") : tp("captureContext")}
+          >
+            <i className="fa-solid fa-crosshairs"></i>
+            <span>{tp("capture")}</span>
+          </button>
+          <button
+            type="button"
+            className={`tg${actionsEnabled ? " on" : ""}`}
+            onClick={onToggleActions}
+            title={tp("allowDesktopActionsHint")}
+          >
+            <i className="fa-solid fa-bolt"></i>
+            <span>{tp("act")}</span>
+          </button>
+          <button
+            type="button"
+            className={`tg${autoGuideEnabled ? " on" : ""}`}
+            onClick={onToggleGuide}
+            title={tp("enableAutoGuideHint")}
+          >
+            <i className="fa-solid fa-route"></i>
+            <span>{tp("guide")}</span>
+          </button>
+        </div>
+        <button
+          type="submit"
+          className="composer-send"
+          disabled={!canSend}
+          title={tp("send")}
+          aria-label={tp("send")}
+        >
+          <i className="fa-solid fa-arrow-up"></i>
+        </button>
+      </div>
+    </form>
   );
 });
