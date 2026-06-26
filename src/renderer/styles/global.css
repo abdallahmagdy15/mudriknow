@@ -79,7 +79,7 @@ body {
     var(--composer-bg);
   border: 1px solid var(--border-bright);
   border-radius: var(--radius-sm);
-  box-shadow: var(--composer-shadow);
+  box-shadow: var(--header-shadow);
   cursor: grab;
   user-select: none;
   -webkit-app-region: drag;
@@ -1527,7 +1527,6 @@ body {
 }
 .composer.focus {
   box-shadow: var(--composer-shadow-focus);
-  transform: translateY(-1px);
 }
 .composer.focus::after {
   opacity: 1;
@@ -1536,6 +1535,12 @@ body {
 @keyframes composerBorderSpin {
   to { --composer-angle: 360deg; }
 }
+
+/* Dark mode: fade the animated border ring so it reads as a subtle glow
+   against the brighter composer surface instead of a bright neon edge.
+   Idle dimmer than light; focus capped below full. */
+[data-theme="dark"] .composer::after { opacity: 0.28; }
+[data-theme="dark"] .composer.focus::after { opacity: 0.6; }
 
 .composer-field {
   display: flex;

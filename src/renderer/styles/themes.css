@@ -59,14 +59,18 @@
 
   /* Floating composer elevation + corner radius */
   --composer-radius: var(--radius-sm);
+  --header-shadow:
+    0 2px 4px rgba(12, 37, 48, 0.07),
+    0 4px 8px rgba(12, 37, 48, 0.05),
+    0 6px 12px rgba(12, 37, 48, 0.04);
   --composer-shadow:
-    0 1px 2px rgba(12, 37, 48, 0.05),
-    0 6px 16px rgba(12, 37, 48, 0.08),
-    0 24px 48px -16px rgba(12, 37, 48, 0.14);
+    0 -2px 4px rgba(12, 37, 48, 0.07),
+    0 -4px 8px rgba(12, 37, 48, 0.05),
+    0 -6px 12px rgba(12, 37, 48, 0.04);
   --composer-shadow-focus:
-    0 1px 2px rgba(12, 37, 48, 0.05),
-    0 8px 20px rgba(116, 153, 194, 0.22),
-    0 28px 60px -14px rgba(12, 37, 48, 0.22);
+    0 -2px 6px rgba(12, 37, 48, 0.10),
+    0 -6px 12px rgba(116, 153, 194, 0.16),
+    0 -10px 20px rgba(116, 153, 194, 0.12);
   /* Composer surface. Same as --bg-elevated in light; bumped brighter in
      dark so the card reads as floating above the chat body. */
   --composer-bg: #f5f8fb;
@@ -113,14 +117,18 @@
   --error: #b05050;
 
   /* Dark composer elevation — heavier shadows for depth on dark surfaces. */
+  --header-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.28),
+    0 4px 8px rgba(116, 153, 194, 0.06),
+    0 6px 12px rgba(116, 153, 194, 0.04);
   --composer-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 20px rgba(0, 0, 0, 0.45),
-    0 28px 56px -16px rgba(0, 0, 0, 0.6);
+    0 -2px 4px rgba(0, 0, 0, 0.28),
+    0 -4px 8px rgba(116, 153, 194, 0.06),
+    0 -6px 12px rgba(116, 153, 194, 0.04);
   --composer-shadow-focus:
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 22px rgba(116, 153, 194, 0.20),
-    0 32px 64px -14px rgba(0, 0, 0, 0.66);
+    0 -2px 6px rgba(0, 0, 0, 0.38),
+    0 -6px 12px rgba(116, 153, 194, 0.18),
+    0 -10px 20px rgba(116, 153, 194, 0.12);
   /* Brighter than --bg-elevated (#141d28) so the composer lifts off the
      darker chat body like a real floating card. */
   --composer-bg: #1e2a3a;
