@@ -601,15 +601,8 @@ if (!data?.hasImage) {
     setScreenshotAttached(false);
   }, []);
 
-  // Composer Capture pill — toggles between capture and release. The pill
-  // reflects `contextCaptured`, so it stays in sync with hotkey captures too.
-  const handleToggleCapture = useCallback(() => {
-    if (contextCaptured) {
-      handleReleaseContext();
-    } else {
-      handleCaptureContext();
-    }
-  }, [contextCaptured, handleReleaseContext, handleCaptureContext]);
+  // Composer Capture pill — always captures/refreshes context. A separate
+  // × button (rendered when context is held) handles release.
 
   const handleStopResponse = useCallback(() => {
     console.log("[RENDERER] Stop response clicked");
@@ -1300,7 +1293,8 @@ if (!data?.hasImage) {
           disabled={streaming || contextLoading}
           lang={lang}
           contextCaptured={contextCaptured}
-          onToggleCapture={handleToggleCapture}
+          onCapture={handleCaptureContext}
+          onRelease={handleReleaseContext}
           actionsEnabled={actionsEnabled}
           onToggleActions={handleToggleActionsEnabled}
           autoGuideEnabled={autoGuideEnabled}

@@ -1586,6 +1586,16 @@ body {
   flex-wrap: wrap;
 }
 
+/* Capture group — capture/recapture pill + release × sit tightly together,
+   visually separated from the Act/Guide feature toggles by a hairline. */
+.capture-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding-right: 6px;
+  border-right: 1px solid var(--border);
+}
+
 /* Toggle buttons — Capture / Act / Guide. Rounded-square shape shared with
    the send button. Each mirrors a Config flag (or, for Capture, the live
    context-captured state). ON = gold-tinted, OFF = ghost. */
@@ -1637,6 +1647,32 @@ body {
 .tg.on i { color: var(--beak); }
 .tg.on:hover:not(:disabled) { background: var(--primary-glow); }
 .tg:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Release-context button — tiny × that appears next to the Capture pill
+   when context is held. Ghost by default, reddish on hover. */
+.tg-release {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  transition: all 0.16s var(--ease-out);
+}
+.tg-release:hover:not(:disabled) {
+  border-color: var(--border-bright);
+  color: var(--text);
+  background: rgba(255, 90, 90, 0.12);
+}
+.tg-release:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Send button — rounded square matching the toggles. Gold (primary) at
    rest, deeper gold on hover — same coloring family as the active toggles. */

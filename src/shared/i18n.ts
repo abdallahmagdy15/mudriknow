@@ -33,6 +33,7 @@ const en = {
   recaptureContext: "Recapture context",
   // Short labels for the floating-composer feature toggles.
   capture: "Capture",
+  recapture: "Recapture",
   act: "Act",
   guide: "Guide",
   quickChatMode: "Quick chat mode",
@@ -102,6 +103,7 @@ const ar: Record<Key, string> = {
   releaseContext: "إلغاء السياق",
   recaptureContext: "إعادة التقاط السياق",
   capture: "التقاط",
+  recapture: "إعادة التقاط",
   act: "إجراء",
   guide: "إرشاد",
   quickChatMode: "وضع الدردشة السريعة",

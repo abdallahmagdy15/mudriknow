@@ -8,7 +8,8 @@ interface Props {
   // Feature toggles — mirror the same Config flags the settings panel edits,
   // so the composer pills and the settings switches stay in sync.
   contextCaptured: boolean;
-  onToggleCapture: () => void;
+  onCapture: () => void;
+  onRelease: () => void;
   actionsEnabled: boolean;
   onToggleActions: () => void;
   autoGuideEnabled: boolean;
@@ -20,7 +21,8 @@ export const ChatInput = forwardRef<{ focus: () => void }, Props>(({
   disabled,
   lang,
   contextCaptured,
-  onToggleCapture,
+  onCapture,
+  onRelease,
   actionsEnabled,
   onToggleActions,
   autoGuideEnabled,
@@ -90,16 +92,30 @@ export const ChatInput = forwardRef<{ focus: () => void }, Props>(({
       </div>
       <div className="composer-bar">
         <div className="toggles">
-          <button
-            type="button"
-            className={`tg${contextCaptured ? " on" : ""}`}
-            onClick={onToggleCapture}
-            disabled={disabled}
-            title={contextCaptured ? tp("releaseContext") : tp("captureContext")}
-          >
-            <i className="fa-solid fa-crosshairs"></i>
-            <span>{tp("capture")}</span>
-          </button>
+          <div className="capture-group">
+            <button
+              type="button"
+              className={`tg${contextCaptured ? " on" : ""}`}
+              onClick={onCapture}
+              disabled={disabled}
+              title={contextCaptured ? tp("recaptureContext") : tp("captureContext")}
+            >
+              <i className="fa-solid fa-crosshairs"></i>
+              <span>{contextCaptured ? tp("recapture") : tp("capture")}</span>
+            </button>
+            {contextCaptured && (
+              <button
+                type="button"
+                className="tg-release"
+                onClick={onRelease}
+                disabled={disabled}
+                title={tp("releaseContext")}
+                aria-label={tp("releaseContext")}
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            )}
+          </div>
           <button
             type="button"
             className={`tg${actionsEnabled ? " on" : ""}`}

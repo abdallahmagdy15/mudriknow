@@ -4,6 +4,11 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] - 2026-06-27
+
+### Changed
+- **One-click context recapture.** The Capture toggle in the composer no longer requires two clicks to refresh context after doing work (release → re-capture). It now always captures/refreshes in a single click. A separate small × button appears next to the pill when context is held, for releasing to quick-chat mode. The capture controls are visually grouped and separated from the Act/Guide feature toggles by a hairline divider. The label flips from "Capture" to "Recapture" when context is already held.
+
 ## [1.13.0] - 2026-06-26
 
 ### Added
@@ -252,6 +257,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.13.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.0...v1.13.1
 [1.13.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.9...v1.13.0
 [1.12.9]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.8...v1.12.9
 [1.12.8]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.7...v1.12.8
