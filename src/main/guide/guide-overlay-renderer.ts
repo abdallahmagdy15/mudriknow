@@ -29,7 +29,11 @@ declare global {
       onBubbleFade: (h: (payload: { opacity: number }) => void) => void;
       onSetOwlMode: (h: (payload: { mode: "pointing" | "thinking" }) => void) => void;
       sendChoice: (choice: string) => void;
-      setIgnoreMouseEvents: (ignore: boolean) => void;
+      reportInteractive: (rects: {
+        owl: { x: number; y: number; w: number; h: number } | null;
+        bubble: { x: number; y: number; w: number; h: number } | null;
+      }) => void;
+      reportDragging: (dragging: boolean) => void;
     };
   }
 }
@@ -226,21 +230,105 @@ window.guideOverlay?.onBubbleFade(({ opacity }) => {
   }
 });
 
-// Hover detection for bubble
+// --- Click-through is driven by a MAIN-PROCESS cursor poller ---
+// The overlay window is click-through by default so clicks reach the app
+// beneath. We do NOT toggle click-through from the renderer: Electron's
+// forwarded mouse-move is unreliable when another window sits beneath the
+// overlay at the bubble/owl spot, so clicks fell through to that window even
+// though the bubble rendered on top. Instead the renderer reports the owl +
+// bubble rects (window-relative) and the drag flag; the main process polls
+// the cursor and toggles setIgnoreMouseEvents authoritatively.
+let isDragging = false;
+let rectReportTimer: ReturnType<typeof setInterval> | null = null;
+
+interface Rect { x: number; y: number; w: number; h: number; }
+
+function rectFromEl(el: HTMLElement): Rect {
+  const r = el.getBoundingClientRect();
+  return { x: r.left, y: r.top, w: r.width, h: r.height };
+}
+
+function reportRects(): void {
+  const owlRect = owl.classList.contains("visible") ? rectFromEl(owl) : null;
+  const bubbleVisible = bubble.classList.contains("visible") && bubble.style.display !== "none";
+  const bubbleRect = bubbleVisible ? rectFromEl(bubble) : null;
+  window.guideOverlay?.reportInteractive({ owl: owlRect, bubble: bubbleRect });
+}
+
+// Report geometry on a light cadence so the main poller always has fresh
+// rects (covers owl animation, drag, and bubble reposition). Started on show,
+// stopped on hide.
+window.guideOverlay?.onShow(() => {
+  if (!rectReportTimer) {
+    rectReportTimer = setInterval(reportRects, 50);
+  }
+  reportRects();
+});
+
+window.guideOverlay?.onHide(() => {
+  if (rectReportTimer) {
+    clearInterval(rectReportTimer);
+    rectReportTimer = null;
+  }
+  isDragging = false;
+  window.guideOverlay?.reportDragging(false);
+  window.guideOverlay?.reportInteractive({ owl: null, bubble: null });
+});
+
+// Bubble hover only manages the inactivity-fade now (click-through is the
+// main poller's job). Hover reliably fires here because the poller makes the
+// overlay hittable whenever the cursor is over the bubble.
 bubble.addEventListener("mouseenter", () => {
   bubble.classList.remove("faded");
   clearInactivityTimer();
-  window.guideOverlay?.setIgnoreMouseEvents(false);
 });
 
 bubble.addEventListener("mouseleave", () => {
   startInactivityTimer();
-  // Small delay to prevent flickering when moving between bubble elements
-  setTimeout(() => {
-    if (!bubble.matches(':hover')) {
-      window.guideOverlay?.setIgnoreMouseEvents(true);
-    }
-  }, 50);
+});
+
+// Owl drag: shove the owl (and its trailing bubble) aside to see or interact
+// with windows that opened behind it during a guide. The bubble follows via
+// the MutationObserver below. While dragging, the main poller keeps the
+// overlay hittable (reportDragging(true)) so document mousemove keeps flowing.
+let dragStart: { mouseX: number; mouseY: number; owlX: number; owlY: number } | null = null;
+
+function onDragMove(e: MouseEvent): void {
+  if (!dragStart) return;
+  const dx = e.clientX - dragStart.mouseX;
+  const dy = e.clientY - dragStart.mouseY;
+  let nx = dragStart.owlX + dx;
+  let ny = dragStart.owlY + dy;
+  const VW = window.innerWidth;
+  const VH = window.innerHeight;
+  nx = Math.max(EDGE_PADDING, Math.min(nx, VW - OWL_SIZE - EDGE_PADDING));
+  ny = Math.max(EDGE_PADDING, Math.min(ny, VH - OWL_SIZE - EDGE_PADDING));
+  owl.style.left = `${nx}px`;
+  owl.style.top = `${ny}px`;
+  reportRects();
+}
+
+function onDragEnd(): void {
+  document.removeEventListener("mousemove", onDragMove);
+  document.removeEventListener("mouseup", onDragEnd);
+  isDragging = false;
+  owl.classList.remove("dragging");
+  dragStart = null;
+  window.guideOverlay?.reportDragging(false);
+  reportRects();
+}
+
+owl.addEventListener("mousedown", (e) => {
+  if (e.button !== 0) return;
+  const left = parseInt(owl.style.left || "0", 10);
+  const top = parseInt(owl.style.top || "0", 10);
+  dragStart = { mouseX: e.clientX, mouseY: e.clientY, owlX: left, owlY: top };
+  isDragging = true;
+  owl.classList.add("dragging");
+  window.guideOverlay?.reportDragging(true);
+  document.addEventListener("mousemove", onDragMove);
+  document.addEventListener("mouseup", onDragEnd);
+  e.preventDefault();
 });
 
 // Track owl position for bubble positioning

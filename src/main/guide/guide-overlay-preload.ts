@@ -31,7 +31,18 @@ contextBridge.exposeInMainWorld("guideOverlay", {
   sendChoice: (choice: string) => {
     ipcRenderer.send("guide-overlay-choice", choice);
   },
-  setIgnoreMouseEvents: (ignore: boolean) => {
-    ipcRenderer.send("guide-overlay-set-ignore-mouse-events", ignore);
+  // Click-through is owned by a main-process cursor poller (see
+  // guide-overlay.ts). The renderer reports the owl + bubble rects (window-
+  // relative) and the drag flag so the poller can decide hit-testing without
+  // relying on Electron's forwarded mouse-move, which is unreliable when
+  // another window sits beneath the overlay at the bubble/owl spot.
+  reportInteractive: (rects: {
+    owl: { x: number; y: number; w: number; h: number } | null;
+    bubble: { x: number; y: number; w: number; h: number } | null;
+  }) => {
+    ipcRenderer.send("guide-overlay-report-rects", rects);
+  },
+  reportDragging: (dragging: boolean) => {
+    ipcRenderer.send("guide-overlay-report-dragging", dragging);
   },
 });

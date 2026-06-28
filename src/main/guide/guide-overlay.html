@@ -173,9 +173,10 @@
                   opacity 200ms ease,
                   transform 300ms ease;
       opacity: 0;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: grab;
     }
-    .owl.visible { opacity: 1; }
+    .owl.visible { opacity: 0.65; }
     .owl.bob { animation: bob 1.4s ease-in-out infinite; }
     .owl.thinking {
       width: 56px;
@@ -192,6 +193,14 @@
     @keyframes bob {
       0%, 100% { transform: translateY(0); }
       50%      { transform: translateY(-4px); }
+    }
+    /* While dragged by the user: kill the smooth left/top transition and any
+     * bob/thinking animation so the owl tracks the cursor 1:1. Declared after
+     * .owl.bob / .owl.thinking so it wins equal-specificity ties. */
+    .owl.dragging {
+      cursor: grabbing;
+      transition: none;
+      animation: none;
     }
         .loading-text {
       color: #18BFE1;

@@ -4,6 +4,14 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.2] - 2026-06-28
+
+### Added
+- **Auto-Guide owl pointer is now draggable and semi-transparent.** The owl reads at 0.65 opacity so content beneath is visible, and can be grabbed and dragged aside — the speech bubble trails it automatically. Lets the user peek past or move the pointer when it covers something important, including windows that open behind it mid-guide.
+
+### Fixed
+- **Auto-Guide bubble buttons not clickable when another window sits behind the overlay.** The bubble rendered on top (screen-saver z-order) but clicks fell through to the window beneath (e.g. Device Manager moved under it). Root cause: click-through toggling relied on Electron's forwarded `mouseenter`, which goes deaf when another window is under the overlay at the bubble's location. Replaced with a main-process cursor poller (≈30 ms) that hit-tests the real cursor position against renderer-reported owl + bubble rects and toggles `setIgnoreMouseEvents` authoritatively. The owl drag uses the same path. Cursor polling is independent of foreground window / z-order, so bubble buttons and owl dragging now work regardless of what is beneath.
+
 ## [1.13.1] - 2026-06-27
 
 ### Changed
@@ -257,6 +265,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.13.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.1...v1.13.2
 [1.13.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.0...v1.13.1
 [1.13.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.9...v1.13.0
 [1.12.9]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.8...v1.12.9
