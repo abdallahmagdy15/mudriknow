@@ -40,6 +40,16 @@
   --success: #4a8f6b;
   --error: #c45a5a;
 
+  /* Syntax highlighting (light) */
+  --syntax-text: #1a2530;
+  --syntax-keyword: #7449bc;
+  --syntax-string: #4a8f6b;
+  --syntax-number: #b6723c;
+  --syntax-comment: #6b7f94;
+  --syntax-function: #4f7399;
+  --syntax-tag: #c45a5a;
+  --syntax-attr: #b6723c;
+
   /* Aurora background — subtle, slow-moving gradient glow on the panel.
       Rendered as extra background layers ON TOP of the translucent
       --bg-panel fill. The Electron window is transparent and the main
@@ -47,8 +57,8 @@
       --bg-panel is translucent so that blur shows through. */
   --aurora-cyan: rgba(116, 153, 194, 0.26);
   --aurora-gold: rgba(232, 148, 35, 0.09);
-  --aurora-surface-cyan: rgba(116, 153, 194, 0.20);
-  --aurora-surface-gold: rgba(232, 148, 35, 0.07);
+  --aurora-surface-cyan: rgba(116, 153, 194, 0.28);
+  --aurora-surface-gold: rgba(232, 148, 35, 0.11);
   --messages-top-shadow: linear-gradient(to bottom, rgba(232, 238, 244, 0.98) 0%, rgba(232, 238, 244, 0.55) 60%, transparent 100%);
   --aurora-duration: 24s;
 
@@ -64,13 +74,11 @@
     0 4px 8px rgba(12, 37, 48, 0.05),
     0 6px 12px rgba(12, 37, 48, 0.04);
   --composer-shadow:
-    0 -2px 4px rgba(12, 37, 48, 0.07),
-    0 -4px 8px rgba(12, 37, 48, 0.05),
-    0 -6px 12px rgba(12, 37, 48, 0.04);
+    0 -1px 2px rgba(12, 37, 48, 0.06),
+    0 -6px 16px rgba(12, 37, 48, 0.05);
   --composer-shadow-focus:
-    0 -2px 6px rgba(12, 37, 48, 0.10),
-    0 -6px 12px rgba(116, 153, 194, 0.16),
-    0 -10px 20px rgba(116, 153, 194, 0.12);
+    0 -1px 3px rgba(12, 37, 48, 0.08),
+    0 -8px 20px rgba(116, 153, 194, 0.14);
   /* Composer surface. Same as --bg-elevated in light; bumped brighter in
      dark so the card reads as floating above the chat body. */
   --composer-bg: #f5f8fb;
@@ -116,28 +124,36 @@
   --success: #4a8b5f;
   --error: #b05050;
 
+  /* Syntax highlighting (dark) */
+  --syntax-text: #d8e2eb;
+  --syntax-keyword: #c792ea;
+  --syntax-string: #c3e88d;
+  --syntax-number: #f78c6c;
+  --syntax-comment: #5a6f80;
+  --syntax-function: #82aaff;
+  --syntax-tag: #f07178;
+  --syntax-attr: #ffcb6b;
+
   /* Dark composer elevation — heavier shadows for depth on dark surfaces. */
   --header-shadow:
     0 2px 4px rgba(0, 0, 0, 0.28),
     0 4px 8px rgba(116, 153, 194, 0.06),
     0 6px 12px rgba(116, 153, 194, 0.04);
   --composer-shadow:
-    0 -2px 4px rgba(0, 0, 0, 0.28),
-    0 -4px 8px rgba(116, 153, 194, 0.06),
-    0 -6px 12px rgba(116, 153, 194, 0.04);
+    0 -1px 2px rgba(10, 14, 20, 0.22),
+    0 -6px 16px rgba(10, 14, 20, 0.16);
   --composer-shadow-focus:
-    0 -2px 6px rgba(0, 0, 0, 0.38),
-    0 -6px 12px rgba(116, 153, 194, 0.18),
-    0 -10px 20px rgba(116, 153, 194, 0.12);
+    0 -1px 3px rgba(10, 14, 20, 0.28),
+    0 -8px 20px rgba(116, 153, 194, 0.16);
   /* Brighter than --bg-elevated (#141d28) so the composer lifts off the
      darker chat body like a real floating card. */
   --composer-bg: #1e2a3a;
 
-  /* Dark mode aurora: very subtle so it doesn't fight the dark surfaces. */
-  --aurora-cyan: rgba(116, 153, 194, 0.10);
-  --aurora-gold: rgba(232, 148, 35, 0.06);
-  --aurora-surface-cyan: rgba(116, 153, 194, 0.09);
-  --aurora-surface-gold: rgba(232, 148, 35, 0.05);
+  /* Dark mode aurora: subtle but present so the mesh reads on dark surfaces. */
+  --aurora-cyan: rgba(116, 153, 194, 0.14);
+  --aurora-gold: rgba(232, 148, 35, 0.08);
+  --aurora-surface-cyan: rgba(116, 153, 194, 0.14);
+  --aurora-surface-gold: rgba(232, 148, 35, 0.08);
   --messages-top-shadow: linear-gradient(to bottom, rgba(13, 20, 28, 0.98) 0%, rgba(13, 20, 28, 0.55) 60%, transparent 100%);
 }
 
@@ -150,6 +166,11 @@
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(-10px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes hintSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shimmer {

@@ -863,6 +863,16 @@ export function registerIpcHandlers(
     hidePanel();
   });
 
+  ipcMain.on(IPC.OPEN_EXTERNAL, (_e, url: unknown) => {
+    if (typeof url !== "string") return;
+    if (!/^https:\/\//i.test(url)) {
+      log(`OPEN_EXTERNAL rejected non-https url: ${url.slice(0, 80)}`);
+      return;
+    }
+    const { shell } = require("electron") as typeof import("electron");
+    shell.openExternal(url).catch((err: unknown) => log(`openExternal failed: ${String(err)}`));
+  });
+
   ipcMain.on(IPC.MINIMIZE, () => {
     log("MINIMIZE received — hiding panel, will notify when response arrives");
     hidePanel();

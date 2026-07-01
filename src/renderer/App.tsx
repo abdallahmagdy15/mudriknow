@@ -3,6 +3,10 @@ import { ContextPreview } from "./components/ContextPreview";
 import { OwlMascot, OwlState } from "./components/OwlMascot";
 import { ChatInput } from "./components/ChatInput";
 import { ResponseView } from "./components/ResponseView";
+import { Markdown } from "./components/Markdown";
+import { MessageCopyButton } from "./components/MessageCopyButton";
+import { CopyIcon } from "./components/icons";
+import { parseMessageContent } from "./utils/message-content";
 import { ContextPayload, Action } from "@shared/types";
 import { t as translate, Lang } from "@shared/i18n";
 
@@ -48,6 +52,7 @@ declare global {
       hidePanel: () => void;
       onGuideStateUpdate: (cb: (state: any) => void) => void;
       onAcrylicState: (cb: (data: { active: boolean }) => void) => void;
+      openExternal: (url: string) => void;
     };
   }
 }
@@ -72,11 +77,6 @@ interface ActionResultEntry {
   result: { success: boolean; error?: string; output?: string };
 }
 
-interface MessageSegment {
-  type: "text" | "copy-chip";
-  content: string;
-}
-
 /**
  * Threshold for inlining a stream-error string in the UI. Anything longer
  * (or non-string) is treated as "unexpected runtime detail the user doesn't
@@ -84,31 +84,6 @@ interface MessageSegment {
  * value still goes to the renderer console for debugging.
  */
 const MAX_INLINE_ERROR_LEN = 120;
-
-function parseMessageContent(content: string): MessageSegment[] {
-  const segments: MessageSegment[] = [];
-  const copyRe = /<!--COPY:([\s\S]*?)-->/g;
-  const clean = content
-    .replace(/<!--ACTION:[\s\S]*?-->/g, "")
-    .replace(/<skill_content[\s\S]*?<\/skill_content>/gi, "")
-    .replace(/<skill[\s\S]*?<\/skill>/gi, "")
-    .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
-    .replace(/\[skill\][\s\S]*?\[\/skill\]/gi, "")
-    .trim();
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = copyRe.exec(clean)) !== null) {
-    if (match.index > lastIndex) {
-      segments.push({ type: "text", content: clean.slice(lastIndex, match.index) });
-    }
-    segments.push({ type: "copy-chip", content: match[1] });
-    lastIndex = copyRe.lastIndex;
-  }
-  if (lastIndex < clean.length) {
-    segments.push({ type: "text", content: clean.slice(lastIndex) });
-  }
-  return segments;
-}
 
 export function App() {
   const [context, setContext] = useState<ContextPayload | null>(null);
@@ -676,11 +651,12 @@ if (!data?.hasImage) {
     window.hoverbuddy.retryAction(action);
   }, []);
 
-  const handleCopyChip = useCallback((text: string) => {
+  const copyToClipboard = useCallback((text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    setCopyToast("Copied to clipboard");
+    setCopyToast(label);
     setTimeout(() => setCopyToast(null), 2000);
   }, []);
+  const handleCopyChip = useCallback((text: string) => copyToClipboard(text, "Copied to clipboard"), [copyToClipboard]);
 
   const handleToggleActionsEnabled = useCallback(() => {
     const newVal = !actionsEnabled;
@@ -845,13 +821,23 @@ if (!data?.hasImage) {
     const segments = parseMessageContent(content);
     return segments.map((seg, i) => {
       if (seg.type === "copy-chip") {
+        const copyCard = (e: React.MouseEvent) => {
+          const card = (e.currentTarget as HTMLElement).closest(".copy-card");
+          const body = card?.querySelector(".copy-card-body") as HTMLElement | null;
+          handleCopyChip(body?.innerText ?? "");
+        };
         return (
-          <span key={i} className="copy-chip" onClick={() => handleCopyChip(seg.content)}>
-            {seg.content}
-          </span>
+          <div key={i} className="copy-card">
+            <button className="copy-card-btn" title="Copy" onClick={copyCard}>
+              <CopyIcon />
+            </button>
+            <div className="copy-card-body">
+              <Markdown>{seg.content}</Markdown>
+            </div>
+          </div>
         );
       }
-      return <span key={i}>{seg.content}</span>;
+      return <Markdown key={i}>{seg.content}</Markdown>;
     });
   }, [handleCopyChip]);
 
@@ -1185,14 +1171,14 @@ if (!data?.hasImage) {
           The raw element preview stays hidden from end users — the LLM receives
           it internally but the UI doesn't need to show it. */}
       <div className="chat-stage">
+      {showQuickChatHint && (
+        <div className="quick-chat-hint">
+          <i className="fa-solid fa-circle-info"></i>
+          <span><strong>{t("quickChatMode")}</strong> — {t("quickChatHint")}</span>
+          <button className="quick-chat-hint-x" onClick={() => { quickChatDismissedRef.current = true; setQuickChatDismissed(true); }} title={t("cancel")}><i className="fa-solid fa-xmark"></i></button>
+        </div>
+      )}
       <div className="messages">
-        {showQuickChatHint && (
-          <div className="quick-chat-hint">
-            <i className="fa-solid fa-circle-info"></i>
-            <span><strong>{t("quickChatMode")}</strong> — {t("quickChatHint")}</span>
-            <button className="quick-chat-hint-x" onClick={() => { quickChatDismissedRef.current = true; setQuickChatDismissed(true); }} title={t("cancel")}><i className="fa-solid fa-xmark"></i></button>
-          </div>
-        )}
         {restoringSession && (
           <div className="session-restoring">{t("loadingHistory")}</div>
         )}
@@ -1226,7 +1212,14 @@ if (!data?.hasImage) {
                 </div>
               )}
             </div>
-            <pre className="message-content">{renderSegments(msg.content, `m${i}`)}</pre>
+            <div className={`message-content ${msg.role === "assistant" ? "md" : ""}`}>
+              {msg.role === "assistant" ? renderSegments(msg.content, `m${i}`) : msg.content}
+            </div>
+            <MessageCopyButton
+              content={msg.content}
+              variant={msg.role === "assistant" ? "ai" : "user"}
+              onCopy={(text, label) => copyToClipboard(text, label === "md" ? "Copied markdown" : "Copied text")}
+            />
             {streaming && !currentResponse && msg.role === "user" && i === messages.length - 1 && (
               <div className="loading-bar-container">
                 <div className="loading-bar" />
@@ -1239,7 +1232,7 @@ if (!data?.hasImage) {
         {currentResponse && (
           <div className="message message-assistant">
             <div className="message-role">Mudrik</div>
-            <pre className="message-content">{renderSegments(currentResponse, "streaming")}</pre>
+            <div className="message-content md">{renderSegments(currentResponse, "streaming")}</div>
             {streaming && <span className="cursor-blink">|</span>}
             {streaming && <button className="btn-stop-inline" onClick={handleStopResponse}>{t("stop")}</button>}
           </div>

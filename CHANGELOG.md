@@ -4,6 +4,23 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-07-01
+
+### Added
+- **Rich Markdown rendering in AI responses.** AI replies now render as formatted Markdown (bold, italic, strikethrough, inline code, fenced code blocks with syntax highlighting via highlight.js, bullet/numbered lists, blockquotes, links, GFM tables) instead of plain monospace text. A new MARKDOWN FORMATTING rule in the system prompt tells the AI to format its main reply body as Markdown. COPY-marker deliverables (code, commands, drafted text) now render as formatted copy-cards that preserve newlines instead of collapsing to a single raw line; clicking a card copies its rendered text. Markdown links open in the system browser via a new https-only openExternal IPC so the panel never navigates away. Syntax token colors are theme-aware via --syntax-* variables (light + dark).
+- **Per-message copy control.** Hovering any message reveals a copy action below it. The main button copies the rendered text (what you see); a caret opens a menu with "Copy as Markdown" (the raw Markdown source). User messages get a single copy button. The menu dismisses on outside-click, focus-loss, or Escape. Uses clean stroke-based SVG icons (Lucide-style) instead of Font Awesome glyphs.
+
+### Changed
+- **COPY-marker prompt semantics.** COPY markers now wrap only discrete paste-ready snippets (code, commands, drafted emails), not the AI's whole formatted answer/guide/summary — that now lives in the main response body as Markdown. Keeps rich content visible in the chat instead of trapped inside a chip.
+- **Chat body background is a static 5-blob radial mesh gradient** (cyan + gold, scattered positions) for a modern look. A drift animation was tried but removed — it forced a per-frame repaint of 5 radial gradients (heavy GPU); the static mesh keeps the vibrance at idle GPU cost.
+- **Composer shadow softened** to a macOS-style diffuse tinted lift in both light and dark themes (pure black dropped in favor of the app's navy page-tone; lower alphas, larger blur).
+- **Quick-chat alert is now isolated** from the chat body: it floats as a fixed banner below the top bar (absolute, backdrop-filter) instead of scrolling with the messages, so dismissing it no longer shifts the owl/empty-state. Top clearance increased so it never tucks under the bar.
+- **Chat body top spacing** tuned (padding + fade-mask) so the first message breathes below the floating header without excess.
+- **Renderer webpack resolve.conditionNames** now resolves browser/default exports (not node) so isomorphic deps like vfile pick their browser variant — fixes ReferenceError: require is not defined on panel load (nodeIntegration is off).
+
+### Fixed
+- **Panel blank/broken on load after adding react-markdown.** vfile (a unified/remark dependency) resolved its Node variant under webpack's electron-renderer target, emitting raw require("node:path")/"node:process"/"node:url" calls that are undefined in the renderer (context isolation). Fixed via conditionNames so the browser variants are used; bundle verified to contain zero raw require() calls.
+
 ## [1.13.2] - 2026-06-28
 
 ### Added
@@ -265,6 +282,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.14.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.2...v1.14.0
 [1.13.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.1...v1.13.2
 [1.13.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.0...v1.13.1
 [1.13.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.9...v1.13.0
