@@ -153,6 +153,12 @@ module.exports = [
     resolve: {
       extensions: [".ts", ".tsx", ".js"],
       alias: { "@shared": path.resolve(__dirname, "src/shared") },
+      // Resolve the `default`/`browser` export conditions (not `node`) so
+      // isomorphic deps like `vfile` pick their browser variant. The Node
+      // variant imports `node:path`/`node:process`/`node:url`, which webpack
+      // leaves as a raw `require()` under `electron-renderer`; the renderer
+      // runs with nodeIntegration OFF, so that throws "require is not defined".
+      conditionNames: ["web", "browser", "import", "require", "default"],
     },
     output: {
       filename: "renderer.js",

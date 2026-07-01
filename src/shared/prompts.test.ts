@@ -144,3 +144,18 @@ describe("buildSystemPrompt — guide block FULL", () => {
     expect(out).not.toContain(GUIDE_PROMPT_AWARE);
   });
 });
+
+describe("markdown formatting rule", () => {
+  it("BASE_PROMPT instructs the AI to use Markdown", () => {
+    expect(BASE_PROMPT).toContain("MARKDOWN FORMATTING");
+    expect(BASE_PROMPT).toContain("**bold**");
+    expect(BASE_PROMPT).toMatch(/fenced code/i);
+    expect(BASE_PROMPT).toMatch(/tables/i);
+  });
+
+  it("keeps the main answer in the response body; COPY only for discrete paste snippets", () => {
+    expect(BASE_PROMPT).toMatch(/MAIN response body/i);
+    expect(BASE_PROMPT).toMatch(/paste-ready deliverable/i);
+    expect(BASE_PROMPT).toMatch(/do not wrap.*whole formatted answer|do not wrap your whole/i);
+  });
+});

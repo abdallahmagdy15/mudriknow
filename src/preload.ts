@@ -81,4 +81,5 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
     ipcRenderer.on("guide-state-update", (_e, state) => cb(state)),
   onAcrylicState: (cb: (data: { active: boolean }) => void) =>
     ipcRenderer.on("acrylic-state", (_e, data) => cb(data)),
+  openExternal: (url: string) => ipcRenderer.send("open-external", url),
 });

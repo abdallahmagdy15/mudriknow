@@ -1033,19 +1033,30 @@ body {
 }
 
 .quick-chat-hint {
-  background: rgba(232, 148, 35, 0.08);
-  border: 1px solid rgba(232, 148, 35, 0.18);
+  /* Fixed banner below the top bar, ISOLATED from the scrolling chat body.
+     Absolutely positioned in .chat-stage so it floats over the .messages
+     top padding; dismissing it never shifts the owl/empty-state or any
+     message below. Stays put while the body scrolls under it. */
+  position: absolute;
+  top: 62px;
+  left: 12px;
+  right: 12px;
+  z-index: 5;
+  flex-shrink: 0;
+  margin: 0;
+  background: rgba(232, 148, 35, 0.10);
+  border: 1px solid rgba(232, 148, 35, 0.22);
   border-radius: var(--radius-xs);
   padding: 7px 28px 7px 10px;
-  margin: 0 0 8px;
   font-size: 11px;
   line-height: 1.45;
   color: var(--text-muted);
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  flex-shrink: 0;
-  position: relative;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: hintSlideDown 0.2s var(--ease-out);
 }
 
 .quick-chat-hint i {
@@ -1116,18 +1127,24 @@ body {
   /* Top room clears the floating header; bottom room clears the composer.
      Horizontal padding matches the bars' 12px inset so bubbles align with
      the card edges. The mask fades both tails into the floating cards. */
-  padding: 70px 12px 160px 12px;
+  padding: 82px 12px 160px 12px;
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(100% 80% at 10% 20%, var(--aurora-surface-cyan), transparent 70%),
-    radial-gradient(90% 90% at 90% 80%, var(--aurora-surface-gold), transparent 70%),
+    radial-gradient(45% 38% at 14% 16%, var(--aurora-surface-cyan), transparent 72%),
+    radial-gradient(42% 42% at 86% 22%, var(--aurora-surface-gold), transparent 70%),
+    radial-gradient(55% 50% at 76% 84%, var(--aurora-surface-cyan), transparent 74%),
+    radial-gradient(40% 36% at 20% 78%, var(--aurora-surface-gold), transparent 70%),
+    radial-gradient(60% 60% at 46% 52%, var(--aurora-surface-cyan), transparent 80%),
     var(--bg-msg);
+  /* Static mesh — no animation. Animating background-position on 5 radial
+     gradients forces a full per-frame repaint of the viewport (heavy GPU).
+     Positions are intentionally scattered for an organic mesh look. */
   /* No border / radius — full-bleed chat body that scrolls under both
-     floating cards. Mask fades the top (into the header) and the bottom
-     (into the composer). */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 64px, #000 calc(100% - 140px), transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 64px, #000 calc(100% - 140px), transparent 100%);
+      floating cards. Mask fades the top (into the header) and the bottom
+      (into the composer). */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 76px, #000 calc(100% - 140px), transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 76px, #000 calc(100% - 140px), transparent 100%);
   scroll-behavior: smooth;
   position: relative;
 }
@@ -1711,33 +1728,44 @@ body {
   cursor: not-allowed;
 }
 
-/* ── Copy Chips ── */
-.copy-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+/* ── Copy cards (COPY-marker deliverables, rendered as Markdown) ── */
+.copy-card {
+  position: relative;
+  margin: 8px 0;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
+  transition: border-color 0.15s var(--ease-out);
+}
+.copy-card:hover { border-color: var(--border-bright); }
+.copy-card-body {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.copy-card-body > .md { margin: 0; }
+.copy-card-body p { margin: 0 0 6px; }
+.copy-card-body p:last-child { margin-bottom: 0; }
+.copy-card-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-muted);
   cursor: pointer;
-  margin-top: 8px;
-  transition: all 0.15s var(--ease-out);
-  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
-  font-size: 12px;
-  color: var(--text-subtle);
+  opacity: 0;
+  transition: opacity 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+  z-index: 2;
 }
-
-.copy-chip:hover {
-  border-color: var(--border-bright);
-  background: rgba(116, 153, 194, 0.08);
-}
-
-.copy-chip.copied {
-  background: rgba(74, 143, 107, 0.06);
-  border-color: var(--success);
-  color: var(--success);
-}
+.copy-card:hover .copy-card-btn { opacity: 1; }
+.copy-card-btn:hover { color: var(--text); border-color: var(--border-bright); }
 
 .copy-toast {
   position: fixed;
@@ -1946,3 +1974,171 @@ body {
 .option-btn:active {
   transform: translateY(1px);
 }
+
+/* ── Markdown content ── */
+.message-content.md {
+  white-space: normal;
+}
+.message-content.md > .md { margin: 0; }
+.message-content.md p { margin: 0 0 8px; }
+.message-content.md p:last-child { margin-bottom: 0; }
+.message-content.md h1,
+.message-content.md h2,
+.message-content.md h3,
+.message-content.md h4 {
+  margin: 12px 0 6px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+.message-content.md h1 { font-size: 1.3em; }
+.message-content.md h2 { font-size: 1.2em; }
+.message-content.md h3 { font-size: 1.1em; }
+.message-content.md h4 { font-size: 1em; }
+.message-content.md ul,
+.message-content.md ol { margin: 0 0 8px; padding-left: 22px; }
+.message-content.md li { margin: 2px 0; }
+.message-content.md blockquote {
+  margin: 0 0 8px;
+  padding: 4px 12px;
+  border-left: 3px solid var(--border-bright);
+  color: var(--text-subtle);
+  background: rgba(116, 153, 194, 0.04);
+}
+.message-content.md a {
+  color: var(--secondary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.message-content.md pre {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.message-content.md pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  border-radius: 0;
+}
+.message-content.md code {
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  font-size: 0.92em;
+  background: rgba(116, 153, 194, 0.10);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.message-content.md table {
+  border-collapse: collapse;
+  margin: 0 0 8px;
+  width: 100%;
+  font-size: 0.95em;
+}
+.message-content.md th,
+.message-content.md td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: left;
+}
+.message-content.md th {
+  background: rgba(116, 153, 194, 0.06);
+  font-weight: 600;
+}
+.message-content.md hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+.message-content.md img { max-width: 100%; }
+
+/* ── Syntax highlighting tokens (theme-aware via --syntax-* vars) ── */
+.message-content.md .hljs { color: var(--syntax-text); background: transparent; }
+.message-content.md .hljs-keyword,
+.message-content.md .hljs-built_in,
+.message-content.md .hljs-type { color: var(--syntax-keyword); }
+.message-content.md .hljs-string,
+.message-content.md .hljs-regexp { color: var(--syntax-string); }
+.message-content.md .hljs-number,
+.message-content.md .hljs-literal { color: var(--syntax-number); }
+.message-content.md .hljs-comment { color: var(--syntax-comment); font-style: italic; }
+.message-content.md .hljs-title,
+.message-content.md .hljs-section,
+.message-content.md .hljs-title.function_ { color: var(--syntax-function); }
+.message-content.md .hljs-tag,
+.message-content.md .hljs-name { color: var(--syntax-tag); }
+.message-content.md .hljs-attr,
+.message-content.md .hljs-attribute { color: var(--syntax-attr); }
+.message-content.md .hljs-variable,
+.message-content.md .hljs-params { color: var(--syntax-text); }
+
+/* ── Message hover copy actions (footer, below content) ── */
+.message-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  max-height: 0;
+  overflow: visible;
+  opacity: 0;
+  transition: max-height 0.15s var(--ease-out), opacity 0.15s var(--ease-out);
+}
+.message:hover .message-actions {
+  max-height: 30px;
+  opacity: 1;
+}
+.copy-split-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.copy-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s var(--ease-out), background 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+.copy-action-caret { width: 18px; }
+.copy-action:hover {
+  color: var(--text);
+  background: rgba(116, 153, 194, 0.10);
+  border-color: var(--border);
+}
+
+.copy-menu {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  min-width: 168px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  z-index: 20;
+  padding: 3px;
+}
+.copy-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  border-radius: 4px;
+}
+.copy-menu-item:hover { background: rgba(116, 153, 194, 0.10); }
+.copy-menu-item svg { color: var(--text-muted); flex-shrink: 0; }
