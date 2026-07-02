@@ -1503,10 +1503,7 @@ body {
   padding: 10px 12px;
   border-radius: var(--composer-radius);
   border: 1px solid var(--border-bright);
-  background:
-    radial-gradient(120% 120% at 15% 110%, var(--aurora-surface-cyan), transparent 60%),
-    radial-gradient(120% 120% at 90% -10%, var(--aurora-surface-gold), transparent 60%),
-    var(--composer-bg);
+  background: var(--composer-bg);
   box-shadow: var(--composer-shadow);
   transition: box-shadow 0.28s var(--ease-out),
               transform 0.28s var(--ease-out);
