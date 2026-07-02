@@ -10,6 +10,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Rebrand: Mudrik → MudrikNow.** Product renamed to "MudrikNow" to reflect its quick-access, instant-context philosophy. All user-facing strings, installer artifacts, prompts, and docs updated. Internal identifiers (`window.mudrik`, `%APPDATA%/mudrik/` config path) intentionally unchanged — existing v1.x users upgrade with zero config migration.
 - **appId changed** to `com.mudriknow.app`. **Breaking:** auto-update from v1.x will not work — download v2.0.0 manually from [Releases](https://github.com/abdallahmagdy15/mudriknow/releases).
 - **System prompt reframed** to emphasize quick-access AI, fast context capture, and productivity — not deep agentic workflows.
+- **Read-only commands toggle removed.** The "Allow read-only commands" setting was confusing (disabled implied all commands allowed). Simplified to always-on: the AI always has access to the curated read-only command set (git inspection, system queries, etc.) with the same three-layer kill-switch filtering. Existing users who disabled it are auto-migrated.
+- **Arabic localization improved.** Wordmark and chat labels now show `مدرك` in Arabic (instead of English). Tajawal font loaded from Google Fonts for modern, readable Arabic typography. Send button repositioned correctly in RTL layout.
+- **Clickable starter prompts.** The empty-state capability chips are now actionable buttons: "Guide me" (enables Auto-Guide + sends a walkthrough request), "Capture" (triggers context capture), and "Explain" (asks the AI about the current element).
 
 ### Fixed
 - Mojibake in calibrate window title (`â€"` → em dash).
