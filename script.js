@@ -1,4 +1,4 @@
-// Mudrik · Landing Page · vanilla JS (≤100 lines)
+// MudrikNow · Landing Page · vanilla JS (≤100 lines)
 (function () {
   'use strict';
 
