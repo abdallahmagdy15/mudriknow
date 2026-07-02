@@ -802,7 +802,7 @@ app.whenReady().then(async () => {
   // and first-run detection is accurate.
   if (firstRun) saveConfig(config);
 
-  ensureAgentInWorkingDir(config.workingDir);
+  ensureAgentInWorkingDir(config.workingDir, config.readOnlyCommandsEnabled);
 
   pruneOldLogs(30 * 24 * 60 * 60 * 1000); // 30 days
 
@@ -900,7 +900,7 @@ app.whenReady().then(async () => {
       applyTheme(next.theme);
     }
     if (next.workingDir !== prev.workingDir) {
-      ensureAgentInWorkingDir(next.workingDir);
+      ensureAgentInWorkingDir(next.workingDir, next.readOnlyCommandsEnabled);
     }
   });
   log("IPC handlers registered");

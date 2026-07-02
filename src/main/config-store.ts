@@ -49,12 +49,17 @@ export function migrateLegacyConfig(): void {
 
 /**
  * Ensure the sandboxed OpenCode agent definition exists in the given working
- * directory. OpenCode 1.4.x discovers agents by scanning `.opencode/agent/`
+ * directory. OpenCode discovers agents by scanning `.opencode/agent/`
  * in the CWD, so we copy `readonly.md` out of the packaged resources the
  * first time we see a working dir that doesn't have one. Overwrites on each
  * launch so updated versions of the agent propagate on upgrade.
+ *
+ * When `readOnlyCommandsEnabled` is true, the frontmatter is modified to
+ * add pattern-based bash permissions (Layer 1 of the three-layer defense)
+ * instead of the default `bash: deny`. The body text is also updated to
+ * explain the read-only command capability.
  */
-export function ensureAgentInWorkingDir(workingDir: string): void {
+export function ensureAgentInWorkingDir(workingDir: string, readOnlyCommandsEnabled: boolean = false): void {
   try {
     // In dev, `process.resourcesPath` points at Electron's own resources —
     // our source agent lives next to the repo root. In a packaged install it
@@ -66,14 +71,114 @@ export function ensureAgentInWorkingDir(workingDir: string): void {
       log(`ensureAgentInWorkingDir: source agent missing at ${packagedSrc} and ${devSrc}`);
       return;
     }
+
+    let content = fs.readFileSync(src, "utf-8");
+
+    if (readOnlyCommandsEnabled) {
+      content = applyReadOnlyCommandsFrontmatter(content);
+    }
+
     const destDir = path.join(workingDir, ".opencode", "agent");
     fs.mkdirSync(destDir, { recursive: true });
     const dest = path.join(destDir, "readonly.md");
-    fs.copyFileSync(src, dest);
-    log(`readonly agent provisioned at ${dest}`);
+    fs.writeFileSync(dest, content, "utf-8");
+    log(`readonly agent provisioned at ${dest} (readOnlyCommands=${readOnlyCommandsEnabled})`);
   } catch (e: any) {
     log(`ensureAgentInWorkingDir FAILED (non-fatal): ${e.message}`);
   }
+}
+
+/**
+ * Denylist-based bash permission rules for Layer 1 enforcement.
+ * Default: allow everything. Then deny known mutating commands + operators.
+ * Ordered so that `findLast` (used by OpenCode's permission resolver) gives
+ * operator-deny patterns (last) the highest priority.
+ *
+ * MUST stay in sync with MUTATING_COMMANDS in opencode-client.ts (Layer 3).
+ */
+function buildBashPermissionPatterns(): string {
+  const lines: string[] = [
+    '    "*": "allow"',
+  ];
+
+  // Mutating command denies — PowerShell cmdlets + aliases + externals
+  const mutatingCmds = [
+    "remove-item", "set-content", "add-content", "out-file",
+    "new-item", "copy-item", "move-item", "rename-item",
+    "set-item", "clear-content", "clear-item", "set-itemproperty",
+    "stop-process", "stop-service", "start-service", "set-service",
+    "start-process", "invoke-webrequest", "invoke-restmethod",
+    "restart-computer", "stop-computer", "set-executionpolicy",
+    "del", "erase", "rd", "rmdir", "mkdir", "md",
+    "copy", "move", "ren", "rename", "format",
+    "taskkill", "shutdown", "diskpart", "cipher", "chkdsk",
+    "node", "python", "python3", "py", "cmd", "powershell", "pwsh",
+    "dotnet", "msbuild", "pip", "yarn", "cargo", "go", "curl", "wget",
+    "sc", "schtasks", "net", "reg", "iwr",
+  ];
+  for (const cmd of mutatingCmds) {
+    lines.push(`    "${cmd} *": "deny"`);
+    lines.push(`    "${cmd}": "deny"`);
+    // PowerShell is case-insensitive — also deny PascalCase variants
+    const pascal = cmd.replace(/(^|[-\s])(.)/g, (_m, p1, p2) => p1 + p2.toUpperCase());
+    if (pascal !== cmd) {
+      lines.push(`    "${pascal}": "deny"`);
+      lines.push(`    "${pascal} *": "deny"`);
+    }
+  }
+
+  // Mutating git subcommands
+  const gitMutating = [
+    "push", "commit", "merge", "rebase", "reset", "checkout", "switch",
+    "stash", "pull", "clone", "add", "rm", "mv", "init",
+    "cherry-pick", "revert", "apply", "am", "bisect", "worktree",
+  ];
+  for (const sub of gitMutating) {
+    lines.push(`    "git ${sub}*": "deny"`);
+  }
+
+  // Mutating npm subcommands
+  const npmMutating = ["install", "i ", "uninstall", "un ", "update", "up ", "rm ", "ci ", "add "];
+  for (const sub of npmMutating) {
+    lines.push(`    "npm ${sub}*": "deny"`);
+  }
+
+  // Operator deny patterns — LAST = highest priority for findLast
+  for (const op of [";", "&", "|", "<", ">"]) {
+    lines.push(`    "*${op}*": "deny"`);
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Transforms the readonly.md content to enable read-only bash commands.
+ * Replaces the frontmatter bash:deny with pattern-based permissions,
+ * and updates the body text to explain the command capability.
+ */
+function applyReadOnlyCommandsFrontmatter(content: string): string {
+  // Replace frontmatter: bash: false → bash: true
+  let result = content.replace(/bash: false/, "bash: true");
+
+  // Replace frontmatter permission: "  bash: deny" → pattern object
+  // Uses simple string replacement (not regex) to avoid CRLF/LF mismatch.
+  // "  bash: deny" appears exactly once in the permission section.
+  const patterns = buildBashPermissionPatterns();
+  result = result.replace("  bash: deny", "  bash:\n" + patterns);
+
+  // Update body text: replace the "cannot run shell commands" paragraph
+  result = result.replace(
+    /You cannot run shell commands, modify files, or spawn subagents\. The Mudrik main process has disabled those tools\. Any attempt to use them will be rejected by the runtime\. Web search and web fetch are available for looking up information you don't have\./,
+    `You can run a LIMITED set of read-only shell commands (git inspection, system state queries, log parsing) via the bash tool. The runtime enforces a strict command allowlist + operator block — anything mutating or unlisted is blocked before execution and terminates the session. You can still read files, search, list directories, and use web search/fetch as usual. Do NOT attempt to write, edit, delete, or modify anything.`
+  );
+
+  // Update the tool list reference: "six tools" → "seven tools"
+  result = result.replace(
+    /The runtime enforces an ALLOWLIST of exactly six tools: read, grep, glob, list, webfetch, websearch\./,
+    `The runtime enforces an ALLOWLIST of seven tools: read, grep, glob, list, webfetch, websearch, AND bash (read-only commands only — filtered by pattern + operator block).`
+  );
+
+  return result;
 }
 
 /**
