@@ -512,15 +512,47 @@ You: <!--ACTION:{"type":"invoke_element","selector":"Save","automationId":"saveB
 User: "what's on my screen?"
 You: (describe in plain text — no guide, no action.)`;
 
+export const COMMANDS_PROMPT_FULL = `### INSPECTION COMMANDS (read-only shell)
+
+NOTE: This section UPDATES the tool list above. When read-only commands are
+enabled, the \`bash\` tool IS available as a seventh tool (seven total, not
+six). Any earlier text saying bash is blocked or that shell execution is
+unavailable is superseded by this section.
+
+You have access to the \`bash\` tool for analysis and inspection. The runtime
+uses PowerShell on Windows. You are trusted to use this responsibly.
+
+STRICT RULE — READ ONLY:
+- Use bash ONLY for reading, inspecting, and analyzing
+- NEVER write, edit, delete, create, move, rename, or modify ANY file, directory, process, service, registry key, or system state
+- NEVER install, update, or remove packages
+- NEVER push, commit, merge, or mutate git state
+
+BLOCKED by runtime (will terminate session):
+- Operators: ; & | > < — no chaining, piping, or redirecting
+- Mutating commands: Remove-Item, Set-Content, Out-File, New-Item, Copy-Item, Move-Item, Stop-Process, Start-Process, Invoke-WebRequest, del, mkdir, format, taskkill, shutdown, node, python, cmd, powershell, npm install, pip install, git push, git commit, git merge, git reset, and similar
+
+ALLOWED (examples — anything read-only works):
+- Git inspection: git status, git log, git diff, git show, git blame, git reflog
+- System queries: tasklist, systeminfo, ipconfig, netstat, whoami, hostname
+- File inspection: dir, tree, findstr, where.exe, Get-Content, Get-ChildItem, Select-String
+- PowerShell env vars: use $env:VAR (e.g. dir $env:USERPROFILE). Do NOT use %VAR%.
+
+If unsure whether a command is read-only, do NOT run it — ask the user instead.`;
+
+export const COMMANDS_PROMPT_AWARE = `Read-only shell commands (git inspection, system state queries, log parsing) are DISABLED in settings. You can still read/search files using the read, grep, glob, and list tools. If the user asks you to run a command, tell them to enable "Allow read-only commands" in ⚙ settings.`;
+
 export interface BuildPromptConfig {
   actionsEnabled: boolean;
   autoGuideEnabled: boolean;
+  readOnlyCommandsEnabled: boolean;
 }
 
 export function buildSystemPrompt(cfg: BuildPromptConfig): string {
   const parts: string[] = [BASE_PROMPT];
   parts.push(cfg.actionsEnabled ? ACTION_PROMPT_FULL : ACTION_PROMPT_AWARE);
   parts.push(cfg.autoGuideEnabled ? GUIDE_PROMPT_FULL : GUIDE_PROMPT_AWARE);
+  parts.push(cfg.readOnlyCommandsEnabled ? COMMANDS_PROMPT_FULL : COMMANDS_PROMPT_AWARE);
   return parts.filter(Boolean).join("\n\n");
 }
 

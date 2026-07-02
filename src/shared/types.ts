@@ -161,12 +161,17 @@ export interface Config {
    *  multi-step tasks). Adds ~700 tokens to every system prompt — opt-in
    *  to keep prompts lean. Lazy-loads the guide module on first use. */
   autoGuideEnabled: boolean;
+  /** When true, allows the AI to run a curated set of read-only shell
+   *  commands (git inspection, system state queries, log parsing) via the
+   *  bash tool. Enforced by OpenCode pattern permissions (before execution)
+   *  + kill-switch operator/prefix filter. Off by default — user opts in. */
+  readOnlyCommandsEnabled: boolean;
 }
 
 export const DEFAULT_CONFIG: Config = {
   model: "ollama-cloud/gemini-3-flash-preview",
   workingDir: "",
-  actionsEnabled: true,
+  actionsEnabled: false,
   recentModels: ["ollama-cloud/gemini-3-flash-preview"],
   apiKeys: {},
   hotkeyPointer: "Alt+Space",
@@ -174,13 +179,14 @@ export const DEFAULT_CONFIG: Config = {
   hotkeyQuick: "Alt+X",
   panelWidth: 440,
   panelHeight: 500,
-  launchOnStartup: false,
+  launchOnStartup: true,
   hasCompletedWelcome: false,
   theme: "system",
   lang: "en",
   fontSize: 14,
-  restoreSessionOnActivate: true,
-  autoGuideEnabled: false,
+  restoreSessionOnActivate: false,
+  autoGuideEnabled: true,
+  readOnlyCommandsEnabled: true,
 };
 
 export interface WindowInfo {

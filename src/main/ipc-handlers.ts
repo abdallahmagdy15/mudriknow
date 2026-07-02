@@ -95,7 +95,7 @@ let userStoppedCurrentResponse = false;
 import { executeAction, parseActionsFromResponse, ActionResult, setLastContextElement, validateAction, isInteractiveAction } from "./action-executor";
 import { showNotification } from "./tray";
 import { cleanupImage, captureAndOptimize } from "./vision";
-import { saveConfig, ensureIsolatedOpenCodeConfig, migrateIsolatedOpenCodeDataToDefault } from "./config-store";
+import { saveConfig, ensureIsolatedOpenCodeConfig, migrateIsolatedOpenCodeDataToDefault, ensureAgentInWorkingDir } from "./config-store";
 import { spawn } from "child_process";
 import * as os from "os";
 import * as path from "path";
@@ -855,6 +855,7 @@ export function registerIpcHandlers(
     workingDir,
     allApiKeys,
     isolatedOpenCodeConfig,
+    config.readOnlyCommandsEnabled,
   );
   log(`OpenCodeClient initialized: model=${config.model}, dir=${workingDir}, keys=${Object.keys(allApiKeys).length} (config=${Object.keys(config.apiKeys || {}).length}, auth=${Object.keys(readOpenCodeAuthKeys()).length}), isolatedConfig=${isolatedOpenCodeConfig}`);
 
@@ -922,11 +923,19 @@ export function registerIpcHandlers(
     if (newConfig.workingDir) {
       const isolated = ensureIsolatedOpenCodeConfig(config.workingDir);
       migrateIsolatedOpenCodeDataToDefault(config.workingDir);
-      client = new OpenCodeClient(config.model, config.workingDir, config.apiKeys, isolated);
+      client = new OpenCodeClient(config.model, config.workingDir, config.apiKeys, isolated, config.readOnlyCommandsEnabled);
     }
     // If keys changed without a full client rebuild, propagate the new map.
     if (newConfig.apiKeys) {
       client.updateApiKeys(mergedApiKeys(config.apiKeys));
+    }
+    // Re-provision the readonly agent + update kill-switch when the
+    // read-only commands flag flips. The agent file must reflect the new
+    // frontmatter (bash patterns vs deny) before the next message send.
+    if (newConfig.readOnlyCommandsEnabled !== undefined && newConfig.readOnlyCommandsEnabled !== prev.readOnlyCommandsEnabled) {
+      ensureAgentInWorkingDir(config.workingDir, config.readOnlyCommandsEnabled);
+      client.updateReadOnlyCommands(config.readOnlyCommandsEnabled);
+      log(`readOnlyCommandsEnabled flipped: ${prev.readOnlyCommandsEnabled} → ${config.readOnlyCommandsEnabled} (agent re-provisioned)`);
     }
     log(`Config updated: model=${config.model}, recentModels=${JSON.stringify(config.recentModels)}`);
     saveConfig(config);
@@ -1294,6 +1303,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       const systemPrefix = `${buildSystemPrompt({
         actionsEnabled: config.actionsEnabled,
         autoGuideEnabled: config.autoGuideEnabled,
+        readOnlyCommandsEnabled: config.readOnlyCommandsEnabled,
       })}\n\n`;
       // Tell the AI about the current actions permission. The toggle is
       // LIVE — when the user flips it in settings, contextNeedsSending is
