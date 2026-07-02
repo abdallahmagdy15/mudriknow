@@ -8,7 +8,7 @@ import { log } from "./logger";
 /**
  * One-shot rebrand migration: copy any config the user had under the old
  * `%APPDATA%\hoverbuddy\` folder into the new `%APPDATA%\mudrik\` (or
- * `Mudrik\` when packaged) folder that Electron now resolves
+ * `MudrikNow\` when packaged) folder that Electron now resolves
  * `app.getPath("userData")` to.
  *
  * Runs BEFORE loadConfig on app startup. Safe to run every launch:
@@ -168,7 +168,7 @@ function applyReadOnlyCommandsFrontmatter(content: string): string {
 
   // Update body text: replace the "cannot run shell commands" paragraph
   result = result.replace(
-    /You cannot run shell commands, modify files, or spawn subagents\. The Mudrik main process has disabled those tools\. Any attempt to use them will be rejected by the runtime\. Web search and web fetch are available for looking up information you don't have\./,
+    /You cannot run shell commands, modify files, or spawn subagents\. The MudrikNow main process has disabled those tools\. Any attempt to use them will be rejected by the runtime\. Web search and web fetch are available for looking up information you don't have\./,
     `You can run a LIMITED set of read-only shell commands (git inspection, system state queries, log parsing) via the bash tool. The runtime enforces a strict command allowlist + operator block — anything mutating or unlisted is blocked before execution and terminates the session. You can still read files, search, list directories, and use web search/fetch as usual. Do NOT attempt to write, edit, delete, or modify anything.`
   );
 
@@ -182,13 +182,13 @@ function applyReadOnlyCommandsFrontmatter(content: string): string {
 }
 
 /**
- * Provision an ISOLATED OpenCode config directory under Mudrik's userData
- * so the OpenCode subprocess Mudrik spawns reads OUR config — empty MCPs,
+ * Provision an ISOLATED OpenCode config directory under MudrikNow's userData
+ * so the OpenCode subprocess MudrikNow spawns reads OUR config — empty MCPs,
  * no plugins, no skills — instead of the user's global one at
  * `~/.config/opencode/opencode.json`. The user's global config can keep
  * registering Playwright, zai-mcp-server, superpowers, anything else they
  * use for direct `opencode run` invocations; those will simply be invisible
- * to Mudrik's spawn because XDG_CONFIG_HOME is overridden in the spawn env.
+ * to MudrikNow's spawn because XDG_CONFIG_HOME is overridden in the spawn env.
  *
  * This is the "stop it from root" fix: relying on the AI to obey prompts
  * is brittle (it kept reaching for playwright_browser_*); cutting off the
@@ -220,9 +220,9 @@ export function ensureIsolatedOpenCodeConfig(workingDir: string): string {
 
 /**
  * Default opencode data location. Used after the XDG_DATA_HOME isolation was
- * removed — Mudrik's opencode subprocesses now share the same data dir as a
+ * removed — MudrikNow's opencode subprocesses now share the same data dir as a
  * user's standalone `opencode` CLI invocation, so `opencode session list`
- * finds Mudrik's sessions without any env-var gymnastics.
+ * finds MudrikNow's sessions without any env-var gymnastics.
  */
 export function getDefaultOpenCodeDataDir(): string {
   const xdgData = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
@@ -230,12 +230,12 @@ export function getDefaultOpenCodeDataDir(): string {
 }
 
 /**
- * One-time migration: move any opencode data that previous Mudrik versions
+ * One-time migration: move any opencode data that previous MudrikNow versions
  * stored under isolated paths to the default opencode data dir. Old paths:
  *   - <workingDir>/opencode-data/opencode/   (original isolation)
  *   - <workingDir>/opencode/                  (intermediate layout)
  * If the default dir already has data (user used the opencode CLI directly
- * before), the old isolated dirs are simply removed — newer Mudrik data
+ * before), the old isolated dirs are simply removed — newer MudrikNow data
  * is expected to be in the default dir.
  */
 export function migrateIsolatedOpenCodeDataToDefault(workingDir: string): void {

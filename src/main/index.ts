@@ -34,9 +34,9 @@ if (!gotTheLock) {
     log("Second instance attempted — asking whether to close the running one");
     const choice = dialog.showMessageBoxSync({
       type: "info",
-      title: "Mudrik",
+      title: "MudrikNow",
       message:
-        "Mudrik is already running in the background. Use Alt+Space, Ctrl+Space, Alt+X, or the tray icon to open it. Do you want to close the running instance first?",
+        "MudrikNow is already running in the background. Use Alt+Space, Ctrl+Space, Alt+X, or the tray icon to open it. Do you want to close the running instance first?",
       buttons: ["OK", "Close"],
       defaultId: 1,
       cancelId: 1,
@@ -644,7 +644,7 @@ function applyLoginItemSetting(launchOnStartup: boolean): void {
       // In dev mode, process.execPath is electron.exe (not our app binary).
       // Without the app path as the first arg, Windows startup launches
       // electron.exe with only --hidden → shows the default Electron
-      // welcome page instead of Mudrik.
+      // welcome page instead of MudrikNow.
       args.push(app.getAppPath());
     }
     if (launchOnStartup) {
@@ -696,8 +696,8 @@ async function maybeShowWelcome(): Promise<void> {
   try {
     await dialog.showMessageBox({
       type: "info",
-      title: "Welcome to Mudrik",
-      message: "Mudrik runs from the system tray.",
+      title: "Welcome to MudrikNow",
+      message: "MudrikNow runs from the system tray.",
       detail:
         `Press ${config.hotkeyPointer} on any window to open the assistant for the UI element under your cursor.\n\n` +
         `Press ${config.hotkeyQuick} for quick chat — instant AI without screen capture.\n\n` +
@@ -749,8 +749,8 @@ function showStartupSplash(onClosed?: () => void): void {
   @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
 </style></head>
 <body onclick="window.close()">
-  ${iconUrl ? `<img src="${iconUrl}" alt="Mudrik" />` : ''}
-  <div class="title">Mudrik is now running in your tray</div>
+  ${iconUrl ? `<img src="${iconUrl}" alt="MudrikNow" />` : ''}
+  <div class="title">MudrikNow is now running in your tray</div>
   <div class="hint">Alt+Space to get started</div>
   <div class="dismiss">Click to dismiss</div>
 </body></html>`;

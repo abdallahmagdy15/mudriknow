@@ -1,4 +1,4 @@
-# Contributing to Mudrik
+# Contributing to MudrikNow
 
 Thanks for your interest. This doc covers the minimum you need to send a patch.
 
@@ -57,7 +57,7 @@ set GH_TOKEN=ghp_xxxxxxxx
 npm run release
 ```
 
-Produces `Mudrik-Setup-X.Y.Z.exe` + `latest.yml` and drafts a GitHub Release. Publish the draft and installed clients pick up the update on next launch.
+Produces `MudrikNow-Setup-X.Y.Z.exe` + `latest.yml` and drafts a GitHub Release. Publish the draft and installed clients pick up the update on next launch.
 
 The build is **not code-signed**. To sign with an EV or OV certificate add `CSC_LINK` / `CSC_KEY_PASSWORD` ([electron-builder docs](https://www.electron.build/code-signing)).
 

@@ -15,7 +15,7 @@ html, body, #root {
 }
 
 body {
-  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Plus Jakarta Sans", "Tajawal", "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: var(--font-size-base);
   background: transparent;
   color: var(--text);
@@ -1225,6 +1225,17 @@ body {
   border: 1px solid rgba(116, 153, 194, 0.15);
   color: var(--text-subtle);
   font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s var(--ease-out);
+}
+.empty-state .cap-chip:hover {
+  background: rgba(24, 191, 225, 0.1);
+  border-color: rgba(24, 191, 225, 0.25);
+  color: var(--cyan);
 }
 
 /* Loading */
@@ -1691,7 +1702,7 @@ body {
 /* Send button — rounded square matching the toggles. Gold (primary) at
    rest, deeper gold on hover — same coloring family as the active toggles. */
 .composer-send {
-  margin-left: auto;
+  margin-inline-start: auto;
   width: 34px;
   height: 34px;
   display: inline-flex;

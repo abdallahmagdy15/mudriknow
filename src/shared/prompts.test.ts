@@ -12,9 +12,9 @@ import {
 } from "./prompts";
 
 describe("prompts split", () => {
-  it("BASE_PROMPT exists and includes the Mudrik intro", () => {
+  it("BASE_PROMPT exists and includes the MudrikNow intro", () => {
     expect(BASE_PROMPT).toBeTypeOf("string");
-    expect(BASE_PROMPT).toContain("Mudrik");
+    expect(BASE_PROMPT).toContain("MudrikNow");
     expect(BASE_PROMPT).toContain("UIA");
   });
 

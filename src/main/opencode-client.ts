@@ -34,7 +34,7 @@ export interface OpenCodeEvent {
 export type EventHandler = (event: OpenCodeEvent) => void;
 
 /**
- * Tools that must NEVER execute from a Mudrik-initiated OpenCode session.
+ * Tools that must NEVER execute from a MudrikNow-initiated OpenCode session.
  * The model is limited to text + `<!--ACTION:...-->` markers; anything else is
  * treated as a sandbox breach and terminates the session.
  *
@@ -43,7 +43,7 @@ export type EventHandler = (event: OpenCodeEvent) => void;
  * authoritative enforcement point.
  */
 /**
- * Base allowlist — the tools Mudrik's readonly agent may ALWAYS use.
+ * Base allowlist — the tools MudrikNow's readonly agent may ALWAYS use.
  * When `readOnlyCommandsEnabled` is true, `bash` is added (with command-
  * string filtering via detectDisallowedBashCommand).
  *
@@ -58,7 +58,7 @@ export type EventHandler = (event: OpenCodeEvent) => void;
  * (edit, write, task, todowrite, skill, ANY MCP server's tools
  * regardless of naming) terminates the session. Users can still register
  * MCP servers in their global OpenCode config — those tools just won't
- * be reachable from inside Mudrik's subprocess.
+ * be reachable from inside MudrikNow's subprocess.
  */
 const BASE_ALLOWED_TOOLS: ReadonlySet<string> = new Set([
   "read",
@@ -274,12 +274,12 @@ export class OpenCodeClient {
   private activeProcess: ChildProcess | null = null;
   private apiKeys: Record<string, string> = {};
   /**
-   * Path to a Mudrik-controlled `XDG_CONFIG_HOME` directory containing an
+   * Path to a MudrikNow-controlled `XDG_CONFIG_HOME` directory containing an
    * `opencode/opencode.json` with empty `mcp` (and no plugins/skills). When
    * set, it's injected into the spawn env so the OpenCode subprocess reads
    * OUR config instead of the user's global one — making any MCP servers
    * the user registered (Playwright, zai-mcp-server, etc.) invisible to
-   * the AI Mudrik runs. Provisioned via `ensureIsolatedOpenCodeConfig`.
+   * the AI MudrikNow runs. Provisioned via `ensureIsolatedOpenCodeConfig`.
    */
   private isolatedConfigDir: string | null = null;
   // When true, the bash tool is allowed with read-only command filtering.
@@ -456,7 +456,7 @@ export class OpenCodeClient {
               const isBashBlock = blockedTool.startsWith("bash:");
               const msg = isBashBlock
                 ? `Blocked: ${blockedTool.slice(5)}. Read-only mode — mutating commands and operators (; & | > <) are not allowed. Session terminated for safety.`
-                : `Blocked: model attempted to use the "${blockedTool}" tool. Mudrik only allows UI action markers. Session terminated for safety.`;
+                : `Blocked: model attempted to use the "${blockedTool}" tool. MudrikNow only allows UI action markers. Session terminated for safety.`;
               log(msg);
               if (isBashBlock) {
                 this.sessionId = null;
@@ -640,7 +640,7 @@ function getNpmGlobalPrefix(): string | null {
 export function findOpenCodeBin(): string | null {
   // opencode-ai ≤1.14.x ships a JS shim at bin/opencode (needs node).
   // opencode-ai ≥1.15.x ships a native binary at bin/opencode.exe (spawn directly).
-  // We try both so Mudrik works regardless of which version is installed.
+  // We try both so MudrikNow works regardless of which version is installed.
   const candidates = process.platform === "win32"
     ? ["opencode.exe", "opencode"]
     : ["opencode"];

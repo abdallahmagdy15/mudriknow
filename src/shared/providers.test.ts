@@ -9,7 +9,7 @@ import {
 describe("buildCleanOpenCodeEnv", () => {
   it("enables OpenCode's built-in websearch tool via OPENCODE_ENABLE_EXA", () => {
     // OpenCode only registers the `websearch` tool when the provider is
-    // `opencode/*` OR this env var is truthy. Mudrik uses arbitrary
+    // `opencode/*` OR this env var is truthy. MudrikNow uses arbitrary
     // providers, so the env var is the only way the model ever sees
     // websearch. Without it the tool is absent and the model honestly
     // tells the user it can't search — even though readonly.md, the

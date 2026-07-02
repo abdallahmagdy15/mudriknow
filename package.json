@@ -1,7 +1,7 @@
 {
-  "name": "mudrik",
-  "version": "1.15.0",
-  "description": "Mudrik — a Windows tray AI assistant that perceives the UI element under your cursor and acts on it via UI Automation.",
+  "name": "mudriknow",
+  "version": "2.0.0",
+  "description": "MudrikNow — a Windows tray AI assistant that perceives the UI element under your cursor and acts on it via UI Automation.",
   "main": "dist/main.js",
   "scripts": {
     "build": "webpack",
@@ -21,9 +21,9 @@
     "ai-assistant",
     "uiautomation",
     "opencode",
-    "mudrik"
+    "mudriknow"
   ],
-  "author": "Mudrik contributors",
+  "author": "MudrikNow contributors",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {

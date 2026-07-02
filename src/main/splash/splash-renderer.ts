@@ -8,7 +8,7 @@
 
   const strings: Record<string, { tagline: string; status: string; shortcutLabels: string[] }> = {
     en: {
-      tagline: "Running in the background. Call Mudrik any time with a shortcut.",
+      tagline: "Running in the background. Call MudrikNow any time with a shortcut.",
       status: "Ready",
       shortcutLabels: ["Pointer", "Quick"],
     },

@@ -12,7 +12,7 @@ function getScriptContent(): string {
   const lines: string[] = [];
   // $TargetHwnd is passed when the caller wants a specific window's UIA
   // tree, regardless of which window is currently in the foreground. This
-  // bypasses a real bug we hit in production: the PowerShell process Mudrik
+  // bypasses a real bug we hit in production: the PowerShell process MudrikNow
   // spawns briefly takes foreground itself, so GetForegroundWindow() inside
   // the script returned PowerShell's own HWND ("Process: powershell" in the
   // calibrate diagnostic). Result was an empty/wrong tree even though the

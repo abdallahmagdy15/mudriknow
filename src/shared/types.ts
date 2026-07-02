@@ -196,7 +196,7 @@ export interface WindowInfo {
   // HWND of the user's target window at capture time. sendFollowUp uses
   // this to explicitly re-foreground the user's app (Excel, Chrome, etc.)
   // before the next screenshot/UIA recapture — Windows' default foreground
-  // transition after Mudrik's panel hides isn't reliable, especially if
+  // transition after MudrikNow's panel hides isn't reliable, especially if
   // the app was previously fullscreen.
   hwnd?: number;
 }

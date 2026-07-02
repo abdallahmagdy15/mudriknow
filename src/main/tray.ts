@@ -83,7 +83,7 @@ export function createTrayWithShow(onShow: (() => void) | undefined, onQuit: () 
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: `Mudrik v${app.getVersion()}`, enabled: false },
+    { label: `MudrikNow v${app.getVersion()}`, enabled: false },
     { type: "separator" },
     ...(onShow ? [{ label: "Show Panel", click: () => { log("Show Panel clicked from tray"); onShow(); } }] : []),
     { type: "separator" },
@@ -120,7 +120,7 @@ export function createTrayWithShow(onShow: (() => void) | undefined, onQuit: () 
     { label: "Quit", click: onQuit },
   ]);
 
-  tray.setToolTip("Mudrik — Alt+Space to activate");
+  tray.setToolTip("MudrikNow — Alt+Space to activate");
   tray.setContextMenu(contextMenu);
 
   if (onShow) {

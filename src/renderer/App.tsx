@@ -1207,19 +1207,32 @@ if (!data?.hasImage) {
             <div className="owl-wrap">
               <OwlMascot state="idle" size={88} />
             </div>
-            <div className="wordmark">Mudrik</div>
+            <div className="wordmark">{t("appTitle")}</div>
             <div className="hint">{t("startNewConversation")}</div>
             <div className="caps">
-              <span className="cap-chip">Explain element</span>
-              <span className="cap-chip">Open settings</span>
-              <span className="cap-chip">Run command</span>
+              <button className="cap-chip" onClick={() => {
+                if (!autoGuideEnabled) handleToggleAutoGuideEnabled();
+                handleSubmit("Guide me through this step by step");
+              }}>
+                <i className="fa-solid fa-route"></i> {t("chipGuide")}
+              </button>
+              <button className="cap-chip" onClick={() => {
+                if (!contextCaptured) handleCaptureContext();
+              }}>
+                <i className="fa-solid fa-crosshairs"></i> {contextCaptured ? t("recapture") : t("chipCapture")}
+              </button>
+              <button className="cap-chip" onClick={() => {
+                handleSubmit("Explain what this UI element does and how to use it");
+              }}>
+                <i className="fa-solid fa-lightbulb"></i> {t("chipExplain")}
+              </button>
             </div>
           </div>
         )}
         {messages.filter(msg => msg.content.trim()).map((msg, i) => (
           <div key={i} className={`message message-${msg.role}`}>
             <div className="message-header">
-              <div className="message-role">{msg.role === "user" ? t("you") : "Mudrik"}</div>
+              <div className="message-role">{msg.role === "user" ? t("you") : t("appTitle")}</div>
               {msg.timestamp && (
                 <div className="message-timestamp">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1245,7 +1258,7 @@ if (!data?.hasImage) {
         ))}
         {currentResponse && (
           <div className="message message-assistant">
-            <div className="message-role">Mudrik</div>
+            <div className="message-role">{t("appTitle")}</div>
             <div className="message-content md">{renderSegments(currentResponse, "streaming")}</div>
             {streaming && <span className="cursor-blink">|</span>}
             {streaming && <button className="btn-stop-inline" onClick={handleStopResponse}>{t("stop")}</button>}

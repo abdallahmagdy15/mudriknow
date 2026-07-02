@@ -308,7 +308,7 @@ export function parseActionsFromResponse(text: string): ParsedActions {
       if (!ALLOWED_ACTION_TYPES.has(parsed.type as ActionType)) {
         const reason =
           parsed.type === "run_command"
-            ? "shell commands are disabled in Mudrik"
+            ? "shell commands are disabled in MudrikNow"
             : `unknown action type "${parsed.type}"`;
         log(`BLOCKED action marker: type=${parsed.type} (${reason})`);
         blocked.push({ type: parsed.type, reason });

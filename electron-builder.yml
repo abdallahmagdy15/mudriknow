@@ -1,6 +1,6 @@
-appId: com.mudrik.app
-productName: Mudrik
-copyright: Copyright © 2026 Mudrik contributors
+appId: com.mudriknow.app
+productName: MudrikNow
+copyright: Copyright © 2026 MudrikNow contributors
 directories:
   output: release
   buildResources: assets
@@ -23,7 +23,7 @@ extraResources:
 win:
   target: nsis
   icon: assets/icon.ico
-  artifactName: Mudrik-Setup-${version}.${ext}
+  artifactName: MudrikNow-Setup-${version}.${ext}
 nsis:
   oneClick: false
   perMachine: false
@@ -31,10 +31,10 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false
-  uninstallDisplayName: Mudrik
-  shortcutName: Mudrik
+  uninstallDisplayName: MudrikNow
+  shortcutName: MudrikNow
 publish:
   provider: github
   owner: abdallahmagdy15
-  repo: mudrik
+  repo: mudriknow
   releaseType: release

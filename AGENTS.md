@@ -1,4 +1,4 @@
-# AGENTS.md — Mudrik (hoverbuddy)
+# AGENTS.md — MudrikNow (hoverbuddy)
 
 Compact, high-signal notes for OpenCode sessions working in this repo. For full architecture, threat model, and design specs, see [`CLAUDE.md`](CLAUDE.md).
 
@@ -84,13 +84,13 @@ Maintain a side section or dedicated file (`open-items.md`) to track future task
 
 ### Runtime dependency (not bundled)
 
-- **`opencode-ai` must be installed globally** — Mudrik spawns the `opencode` CLI binary at runtime. Install via `npm i -g opencode-ai`. The app searches `%APPDATA%/npm/node_modules/opencode-ai/bin/` for both `opencode.exe` (native, ≥1.15.x) and `opencode` (JS shim, ≤1.14.x).
+- **`opencode-ai` must be installed globally** — MudrikNow spawns the `opencode` CLI binary at runtime. Install via `npm i -g opencode-ai`. The app searches `%APPDATA%/npm/node_modules/opencode-ai/bin/` for both `opencode.exe` (native, ≥1.15.x) and `opencode` (JS shim, ≤1.14.x).
 
 ## Architecture (the non-obvious parts)
 
 - **Windows-only, end-to-end**. UIA, PowerShell script embedding, robotjs, GDI+ capture, and `findOpenCodeBin` path resolution are all Windows-specific. Do not add `process.platform` branches unless you are also porting the PowerShell layer.
 - **Electron tray app** (`src/main/index.ts`). The panel is a frameless, transparent `BrowserWindow`. `window-all-closed` is suppressed so the tray icon survives.
-- **Single-instance lock** — `app.requestSingleInstanceLock()` runs before `whenReady()`. A second launch fails to acquire the lock, short-circuits init, shows a native alert ("Mudrik is already running…") offering to close the running instance, then quits. The first instance logs `second-instance` events.
+- **Single-instance lock** — `app.requestSingleInstanceLock()` runs before `whenReady()`. A second launch fails to acquire the lock, short-circuits init, shows a native alert ("MudrikNow is already running…") offering to close the running instance, then quits. The first instance logs `second-instance` events.
 - **Startup splash** — optional owl-branded welcome overlay (`src/main/splash/`) shown on non-hidden launches when `Config.showSplashOnStartup` is true. Auto-dismisses after ~3.6 s or on click. Disabled on Windows auto-startup (`--hidden`). Has a debug trigger in the calibration window.
 - **Nine webpack bundles** (see `webpack.config.js`). The four "core" ones are:
   1. `main.js` (`src/main/index.ts`) — main process.
@@ -163,7 +163,7 @@ When changing the version number, update **all** of these files:
 | `package.json` | `"version"` field |
 | `package-lock.json` | **Two** fields: top-level `"version"` and `packages[""].version` |
 | `CHANGELOG.md` | Add new `## [X.Y.Z] — YYYY-MM-DD` section at top + add compare link `[X.Y.Z]: ...compare/vPREV...vX.Y.Z` at the bottom |
-| `index.html` + `docs/index.html` (on `gh-pages` branch) | Download button label, e.g. `"Mudrik X.Y.Z installer (.exe)"` — update in **both** root `index.html` and `docs/index.html` |
+| `index.html` + `docs/index.html` (on `gh-pages` branch) | Download button label, e.g. `"MudrikNow X.Y.Z installer (.exe)"` — update in **both** root `index.html` and `docs/index.html` |
 | Git tag `vX.Y.Z` | Create annotated tag and push — this triggers `release.yml` CI to build + publish the installer |
 
 **Do NOT** hardcode the version in `README.md` — it uses a dynamic GitHub release badge. Only the files above need manual updates.
@@ -283,7 +283,7 @@ Test page with 7 iframes (srcdoc, local file, external domain, data:, javascript
 
 The main process boot order in `src/main/index.ts`:
 
-1. **Single-instance lock** (`app.requestSingleInstanceLock()`) — runs *before* `whenReady()`. If the lock is not acquired (second launch), the app waits for `whenReady`, shows a native `dialog.showMessageBoxSync` alert ("Mudrik is already running… Use Alt+Space, Ctrl+Space, Alt+X, or the tray icon…"), then `app.quit()`. The first instance registers a `second-instance` handler that logs the event.
+1. **Single-instance lock** (`app.requestSingleInstanceLock()`) — runs *before* `whenReady()`. If the lock is not acquired (second launch), the app waits for `whenReady`, shows a native `dialog.showMessageBoxSync` alert ("MudrikNow is already running… Use Alt+Space, Ctrl+Space, Alt+X, or the tray icon…"), then `app.quit()`. The first instance registers a `second-instance` handler that logs the event.
 2. **`app.whenReady()`** — the primary instance proceeds. If `!gotTheLock` (shouldn't happen in the primary instance, but defensive), it returns early.
 3. **Legacy config migration** → `loadConfig` → `ensureAgentInWorkingDir` → `pruneOldLogs(30d)` → `applyTheme` → `applyLoginItemSetting`.
 4. **Splash screen** — if `!startedHidden && config.showSplashOnStartup`, `showSplashScreen()` displays the owl-branded overlay. Auto-dismisses after ~3.6 s (`setTimeout` in `splash-window.ts`) or on click. The splash does **not** block app init — it's a fire-and-forget overlay.

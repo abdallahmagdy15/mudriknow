@@ -148,7 +148,7 @@ async function pasteText(text: string): Promise<boolean> {
     //      foreground, so its keybd_event went to the PS window instead
     //      of the user's app. Paste reported success while Excel got
     //      nothing.
-    // koffi keybd_event runs INSIDE the Mudrik process — no spawn, no
+    // koffi keybd_event runs INSIDE the MudrikNow process — no spawn, no
     // foreground steal — so the synthesized Ctrl+V hits whatever's
     // foreground when it fires (which is the user's app after the
     // preceding clickElement). robotjs mouse clicks still work fine and
@@ -552,9 +552,9 @@ export async function findElementBounds(selector: string, automationId?: string,
   // Resolve target HWND. Priority order:
   //   1. lastUserAppHwnd — the HWND captured at the most recent Alt+Space.
   //      This is the RIGHT one to use most of the time: when an action
-  //      runs, Mudrik's panel has just received the user's prompt and is
+  //      runs, MudrikNow's panel has just received the user's prompt and is
   //      itself foreground, so a getActiveHwnd() call here returns
-  //      MUDRIK's HWND. The PS script would then walk Mudrik's tree
+  //      MUDRIK's HWND. The PS script would then walk MudrikNow's tree
   //      (no Excel cells / no Chrome elements) and fail with
   //      "could not find UI element". This was the bug behind every
   //      "click_element: C10 FAIL but paste_text: C10 OK" report — paste's

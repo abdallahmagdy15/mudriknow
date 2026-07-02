@@ -1,4 +1,4 @@
-// Renderer for the Mudrik debug tools window. Vanilla JS — no React.
+// Renderer for the MudrikNow debug tools window. Vanilla JS — no React.
 // Two tabs: Cursor Calibration and Timing Log.
 
 interface Candidate {

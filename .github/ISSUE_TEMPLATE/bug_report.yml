@@ -5,8 +5,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Mudrik version
-      description: Tray menu → the first disabled entry, e.g. "Mudrik v1.0.1".
+      label: MudrikNow version
+      description: Tray menu → the first disabled entry, e.g. "MudrikNow v1.0.1".
       placeholder: v1.0.0
     validations:
       required: true

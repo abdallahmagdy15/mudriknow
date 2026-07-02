@@ -6,7 +6,7 @@ import * as os from "os";
 // We can't use `app.getPath("userData")` here because logger.ts is imported
 // before app.ready — every module that logs on import would crash. Hardcode
 // the path instead (Windows filesystem is case-insensitive, so this matches
-// both the dev `mudrik` and the packaged `Mudrik` folders).
+// both the dev `mudrik` and the packaged `MudrikNow` folders).
 const NEW_LOG_DIR = path.join(os.homedir(), "AppData", "Roaming", "mudrik");
 // Fallback to the pre-rebrand folder if the user has only that one and a log
 // line fires before migrateLegacyConfig() has run. Harmless once migration

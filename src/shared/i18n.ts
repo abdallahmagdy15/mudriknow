@@ -8,7 +8,7 @@ const en = {
   maximize: "Maximize",
   restore: "Restore",
   close: "Close",
-  appTitle: "Mudrik",
+  appTitle: "MudrikNow",
   model: "Model",
   hotkeys: "Hotkeys",
   appearance: "Appearance",
@@ -26,7 +26,7 @@ const en = {
   launchOnStartup: "Launch on startup",
   restoreChatOnPopup: "Restore chat on popup",
   enableAutoGuide: "Enable Auto-Guide mode",
-  enableAutoGuideHint: "Lets Mudrik walk you through multi-step tasks step-by-step. Adds extra context to AI calls (~700 tokens per message) — turn off to keep prompts lean.",
+  enableAutoGuideHint: "Lets MudrikNow walk you through multi-step tasks step-by-step. Adds extra context to AI calls (~700 tokens per message) — turn off to keep prompts lean.",
   allowReadOnlyCommands: "Allow read-only commands",
   allowReadOnlyCommandsHint: "Lets the AI run a curated set of read-only shell commands (git inspection, system state queries, log parsing). Strictly filtered — no writing, editing, or deleting. Off by default.",
   captureContext: "Capture Context",
@@ -61,7 +61,7 @@ const en = {
   send: "Send",
   startNewConversation: "Start a new conversation",
   somethingWentWrong: "Something went wrong",
-  errorDescription: "Mudrik hit an unexpected error. Try reopening the panel or restarting the app.",
+  errorDescription: "MudrikNow hit an unexpected error. Try reopening the panel or restarting the app.",
   restart: "Restart",
   areaHint: "Click and drag to select area",
   areaEsc: "Esc to cancel",
@@ -72,6 +72,9 @@ const en = {
   guideNoResponse: "AI didn't respond — tap Retry to continue the guide.",
   guideEnded: "Guide ended.",
   somethingElse: "Something else",
+  chipGuide: "Guide me",
+  chipCapture: "Capture screen",
+  chipExplain: "Explain this",
 };
 
 const ar: Record<Key, string> = {
@@ -144,6 +147,9 @@ const ar: Record<Key, string> = {
   guideNoResponse: "لم يستجب الذكاء الاصطناعي — اضغط إعادة المحاولة لمواصلة الإرشاد.",
   guideEnded: "انتهى الإرشاد.",
   somethingElse: "شيء آخر",
+  chipGuide: "أرشدني",
+  chipCapture: "التقط الشاشة",
+  chipExplain: "اشرح هذا",
 };
 
 const strings: Record<Lang, Record<Key, string>> = { en, ar };

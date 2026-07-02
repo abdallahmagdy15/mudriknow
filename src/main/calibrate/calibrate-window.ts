@@ -1,4 +1,4 @@
-﻿// Cursor calibration test window â€” opened from the tray menu.
+// Cursor calibration test window â€” opened from the tray menu.
 //
 // Diagnostic tool: captures UIA from the foreground window using context-reader,
 // shows 50 random clickables. User picks a target and verifies the owl lands on it.
@@ -47,7 +47,7 @@ export function openCalibrateWindow(): void {
   win = new BrowserWindow({
     width: 560,
     height: 720,
-    title: "Mudrik â€” Cursor Calibration",
+    title: "MudrikNow — Cursor Calibration",
     backgroundColor: "#0F1822",
     autoHideMenuBar: true,
     webPreferences: {
@@ -176,7 +176,7 @@ ipcMain.handle("calibrate-show-hero", async () => {
     heroWindow = new BrowserWindow({
       width: 720,
       height: 520,
-      title: "Mudrik Hero Preview",
+      title: "MudrikNow Hero Preview",
       backgroundColor: "#0F1822",
       autoHideMenuBar: true,
       webPreferences: {

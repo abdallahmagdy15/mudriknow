@@ -2,7 +2,7 @@
  * Provider-to-env-var mapping for OpenCode API keys.
  *
  * OpenCode honours well-known env vars per provider when spawning a run.
- * Mudrik stores user-supplied keys in Config.apiKeys (keyed by provider
+ * MudrikNow stores user-supplied keys in Config.apiKeys (keyed by provider
  * name, e.g. "anthropic") and injects them as the correct env var name
  * for every OpenCode subprocess.
  *
@@ -33,7 +33,7 @@ const KNOWN_PROVIDER_ENV_VARS: Record<string, string> = {
   ollama: "OLLAMA_API_KEY",
 };
 
-/** Names of providers Mudrik knows how to inject credentials for.
+/** Names of providers MudrikNow knows how to inject credentials for.
  *  Used by the renderer to surface a friendly "unknown provider" message
  *  when the user types a typo like `anthrop/claude-…`. */
 export const knownProviderNames: readonly string[] = Object.keys(KNOWN_PROVIDER_ENV_VARS);
@@ -56,7 +56,7 @@ export function providerFromModelId(modelId: string): string {
 /**
  * Shape of OpenCode's `auth.json` — a flat map of provider → credential.
  * Values are kept narrow (`type: "api"` is the only kind we manage from
- * Mudrik). OAuth-style entries written by `opencode auth login` use the
+ * MudrikNow). OAuth-style entries written by `opencode auth login` use the
  * same shape with `type: "oauth"` and an `access`/`refresh` pair; we only
  * touch entries whose type is `"api"` to avoid trampling on those.
  */
@@ -166,7 +166,7 @@ export function buildCleanOpenCodeEnv(
   }
   // 4. Enable OpenCode's built-in `websearch` tool. OpenCode only registers
   //    websearch when the provider is `opencode/*` OR this env var is truthy.
-  //    Mudrik spawns arbitrary providers, so without this the tool is absent
+  //    MudrikNow spawns arbitrary providers, so without this the tool is absent
   //    and the model honestly tells the user it can't search — even though
   //    readonly.md, the system prompt, and the runtime allowlist all permit
   //    it. No API key needed (Exa hosted MCP). webfetch needs no such flag.

@@ -89,12 +89,12 @@ export interface GuideControllerDeps {
   getCursorPos: () => { x: number; y: number };
   /** Sends a follow-up to OpenCode and streams. Takes the action descriptor
    *  directly; the implementation handles hiding the panel, capturing
-   *  screenshot + UIA tree of the TARGET app (not Mudrik), formatting the
+   *  screenshot + UIA tree of the TARGET app (not MudrikNow), formatting the
    *  prompt with fresh candidates, and showing the panel. The controller
    *  doesn't wait on the AI — the next guide_* marker arrives via
    *  handleAction(). Replaces the previous buildFollowUpPrompt+sendFollowUp
    *  pair so screenshot and UIA capture happen in ONE hide-show window
-   *  with Mudrik out of the foreground (otherwise UIA reads Mudrik's own
+   *  with MudrikNow out of the foreground (otherwise UIA reads MudrikNow's own
    *  tree, not the app the user is being guided through). */
   sendFollowUp: (
     actionDesc:

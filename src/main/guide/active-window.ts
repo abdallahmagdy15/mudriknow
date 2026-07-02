@@ -28,7 +28,7 @@ const _AttachThreadInput = user32.func("bool __stdcall AttachThreadInput(uint32,
 const _GetWindowThreadProcessId = user32.func("uint32 __stdcall GetWindowThreadProcessId(void*, void*)");
 const _GetCurrentThreadId = kernel32.func("uint32 __stdcall GetCurrentThreadId()");
 // keybd_event for synthesized keyboard input. Sends to whatever window
-// has foreground at the time of the call — so Mudrik must guarantee the
+// has foreground at the time of the call — so MudrikNow must guarantee the
 // target app is foreground when synthesizing Ctrl+V (handled by the
 // pasteText caller via setForegroundHwnd + clickElement before this).
 const _keybd_event = user32.func("void __stdcall keybd_event(uint8, uint8, uint32, uintptr_t)");
@@ -73,7 +73,7 @@ export async function sendCtrlV(): Promise<boolean> {
 
 // Activates an HWND as the foreground window. Used by the guide-mode
 // follow-up flow to re-foreground the user's target app (Excel, Chrome,
-// etc.) AFTER Mudrik's panel hides, before capturing the next screenshot
+// etc.) AFTER MudrikNow's panel hides, before capturing the next screenshot
 // + UIA tree. Without this, Windows' default foreground transition picks
 // whichever window is next in Z-order — frequently the Shell/Taskbar,
 // not the user's actual app. Symptom: AI sees "active window != Excel"
@@ -114,7 +114,7 @@ export async function setForegroundHwnd(hwnd: number): Promise<boolean> {
   // Un-minimize ONLY if actually minimized. SW_RESTORE on a MAXIMIZED
   // window un-maximizes it — which is exactly what we don't want
   // (production bug: Excel was fullscreen, this call took it out of
-  // fullscreen and the user perceived it as "Mudrik minimized my Excel").
+  // fullscreen and the user perceived it as "MudrikNow minimized my Excel").
   // IsIconic is the standard "is the window minimized" check.
   try {
     if (_IsIconic(hwnd as any)) {
@@ -139,14 +139,14 @@ export async function setForegroundHwnd(hwnd: number): Promise<boolean> {
 
 // Cache of the user's last-known target-app HWND. Set from ipc-handlers
 // every time setContext runs (i.e. on every Alt+Space / Ctrl+Space) using
-// the HWND that context-reader captured BEFORE Mudrik's panel showed.
+// the HWND that context-reader captured BEFORE MudrikNow's panel showed.
 //
 // Action handlers (findElementBounds in action-executor-heavy) read this
 // instead of calling getActiveHwnd() at execution time — at the moment an
-// action runs, Mudrik's panel has just received the user's prompt and is
+// action runs, MudrikNow's panel has just received the user's prompt and is
 // itself the foreground window, so a fresh getActiveHwnd() returns
 // MUDRIK's HWND, not the user's app. The PS find-element script then
-// walks Mudrik's own tree (no Excel cells in there) and the action fails
+// walks MudrikNow's own tree (no Excel cells in there) and the action fails
 // with "could not find UI element". The cached HWND is the user's actual
 // target app — capture-time is the right time to ask "which window does
 // this user mean?".

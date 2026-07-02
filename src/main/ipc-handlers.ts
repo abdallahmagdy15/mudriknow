@@ -7,9 +7,9 @@ import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProv
 /**
  * OpenCode reads provider credentials from `<XDG_DATA_HOME>/opencode/auth.json`,
  * defaulting to `~/.local/share/opencode/auth.json` on Windows when no
- * `XDG_DATA_HOME` is set. Mudrik writes to that same default path so a
+ * `XDG_DATA_HOME` is set. MudrikNow writes to that same default path so a
  * user's standalone `opencode auth login` / `opencode auth list` from a
- * terminal sees the same credentials Mudrik's subprocesses use.
+ * terminal sees the same credentials MudrikNow's subprocesses use.
  */
 function findOpenCodeAuthPath(): string {
   const xdgData = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
@@ -75,10 +75,10 @@ function updateAuthFile(authPath: string, provider: string, key: string | null):
 }
 
 /**
- * Persist Mudrik's apiKey changes into OpenCode's on-disk auth.json at the
+ * Persist MudrikNow's apiKey changes into OpenCode's on-disk auth.json at the
  * default opencode data location. Writing to the same path a standalone
- * `opencode` CLI uses means the credentials stay in sync between Mudrik
- * and any CLI invocation — no separate Mudrik-only store to forget about.
+ * `opencode` CLI uses means the credentials stay in sync between MudrikNow
+ * and any CLI invocation — no separate MudrikNow-only store to forget about.
  *
  * `key === null` clears the entry. Only touches `type: "api"` rows so any
  * OAuth credentials written by `opencode auth login` survive untouched.
@@ -208,7 +208,7 @@ export function setContext(context: ContextPayload): void {
   });
   // Cache the user's app HWND so action handlers can use the captured
   // foreground (Excel/Chrome/etc.) instead of whatever's foreground at
-  // execution time (which is usually Mudrik's panel, since the user
+  // execution time (which is usually MudrikNow's panel, since the user
   // just submitted a prompt). Lazy-loads active-window.ts the first
   // time so we don't pull koffi into the cold-start path for users
   // who never trigger an action.
@@ -471,7 +471,7 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         // The user may have opened a dialog or switched windows mid-guide.
         const { setForegroundHwnd, getActiveHwnd } = await import("./guide/active-window");
         const currentActiveHwnd = await getActiveHwnd();
-        // If Mudrik panel is the active window, fall back to the cached context hwnd
+        // If MudrikNow panel is the active window, fall back to the cached context hwnd
         const mudrikHwnd = win.getNativeWindowHandle().readInt32LE(0);
         const targetHwnd = (currentActiveHwnd && currentActiveHwnd !== mudrikHwnd)
           ? currentActiveHwnd
@@ -548,7 +548,7 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         : "No screen context captured.";
 
       // Pre-enumerate clickable UIA candidates from the freshly-captured tree
-      // (now correctly the TARGET app's tree, not Mudrik's). Cap to 50 for
+      // (now correctly the TARGET app's tree, not MudrikNow's). Cap to 50 for
       // prompt cost; convert physical->logical bounds to match overlay coords.
       // Interactable control types we surface to the AI as candidates.
       // Includes everything the user can click, type into, select, or
@@ -654,7 +654,7 @@ async function initGuideControllerIfNeeded(): Promise<void> {
 
       const cellW = Math.max(60, Math.round(pw / 20));
       const cellH = Math.max(60, Math.round(ph / 20));
-      const prompt = `--- USER MESSAGE ---\n${desc}\n--- END MESSAGE ---\n\n${screen}${candidatesBlock}\n\nA fresh full-screen screenshot is attached with a faint numbered coordinate grid overlay. Each grid cell is approximately ${cellW}×${cellH} pixels. Top-left cell is (0,0). When estimating positions from the screenshot, count grid cells from the top-left for accuracy: x ≈ column × ${cellW}, y ≈ row × ${cellH}. The user's screen is ${pw}×${ph} pixels (DPI scale ${sf}×). Coordinates in the candidates list above and in the screenshot are in the SAME physical pixel space.\n\nTarget rules (BINARY — pick one):\n1. Target IS in the candidates list above → COPY its name as selector, its automationId verbatim, its bounds verbatim into target.uiaBounds. The owl will land pixel-perfect.\n2. Target is NOT in the list, OR you're not sure, OR the step has no single point target (typing, scrolling, keyboard shortcut) → set target:null. The user navigates from your caption alone — better than a misplaced owl.\n3. For Chromium/Electron apps where UIA is blind: estimate the position from the screenshot by counting grid cells and set target.guessBounds with your estimate.\n\nNEVER set both uiaBounds and guessBounds. Pick one: uiaBounds when the target IS in the UIA list, guessBounds when estimating from the screenshot, null when unsure.\n\nDo NOT include a "confidence" field — it's no longer used.\n\nIMPORTANT: if "Active window" above is NOT what you'd expect for the current step (e.g. you told the user to click in Excel but active window is "unknown" / "Shell" / a different app), the user likely IS still in their app — Mudrik's panel hides briefly during recapture and Windows occasionally fails to restore the right foreground window. Trust the user's progress unless their captions clearly contradict it; only emit "click app in taskbar" if the candidates list AND the screenshot both confirm a different app is active.\n\nDecide the next guide marker (guide_step, guide_complete, or guide_abort).`;
+      const prompt = `--- USER MESSAGE ---\n${desc}\n--- END MESSAGE ---\n\n${screen}${candidatesBlock}\n\nA fresh full-screen screenshot is attached with a faint numbered coordinate grid overlay. Each grid cell is approximately ${cellW}×${cellH} pixels. Top-left cell is (0,0). When estimating positions from the screenshot, count grid cells from the top-left for accuracy: x ≈ column × ${cellW}, y ≈ row × ${cellH}. The user's screen is ${pw}×${ph} pixels (DPI scale ${sf}×). Coordinates in the candidates list above and in the screenshot are in the SAME physical pixel space.\n\nTarget rules (BINARY — pick one):\n1. Target IS in the candidates list above → COPY its name as selector, its automationId verbatim, its bounds verbatim into target.uiaBounds. The owl will land pixel-perfect.\n2. Target is NOT in the list, OR you're not sure, OR the step has no single point target (typing, scrolling, keyboard shortcut) → set target:null. The user navigates from your caption alone — better than a misplaced owl.\n3. For Chromium/Electron apps where UIA is blind: estimate the position from the screenshot by counting grid cells and set target.guessBounds with your estimate.\n\nNEVER set both uiaBounds and guessBounds. Pick one: uiaBounds when the target IS in the UIA list, guessBounds when estimating from the screenshot, null when unsure.\n\nDo NOT include a "confidence" field — it's no longer used.\n\nIMPORTANT: if "Active window" above is NOT what you'd expect for the current step (e.g. you told the user to click in Excel but active window is "unknown" / "Shell" / a different app), the user likely IS still in their app — MudrikNow's panel hides briefly during recapture and Windows occasionally fails to restore the right foreground window. Trust the user's progress unless their captions clearly contradict it; only emit "click app in taskbar" if the candidates list AND the screenshot both confirm a different app is active.\n\nDecide the next guide marker (guide_step, guide_complete, or guide_abort).`;
 
       // Stream tokens to the renderer for visibility; accumulate the response
       // text; parse + dispatch guide markers when the subprocess exits.
@@ -841,13 +841,13 @@ export function registerIpcHandlers(
   const workingDir = config.workingDir || process.cwd();
   // Provision an isolated XDG_CONFIG_HOME for the OpenCode spawn — empty
   // mcp/plugins/skills — so any MCP servers the user registered globally
-  // (Playwright, zai-mcp-server, etc.) are invisible to Mudrik's subprocess.
+  // (Playwright, zai-mcp-server, etc.) are invisible to MudrikNow's subprocess.
   // The runtime kill-switch stays as a second layer of defense.
   const isolatedOpenCodeConfig = ensureIsolatedOpenCodeConfig(workingDir);
-  // Migrate any opencode data previous Mudrik versions stored under isolated
+  // Migrate any opencode data previous MudrikNow versions stored under isolated
   // paths (<workingDir>/opencode-data/opencode/ or <workingDir>/opencode/) to
   // the default opencode data dir, so a `opencode session list` from a
-  // terminal finds Mudrik's sessions without any env-var setup.
+  // terminal finds MudrikNow's sessions without any env-var setup.
   migrateIsolatedOpenCodeDataToDefault(workingDir);
   const allApiKeys = mergedApiKeys(config.apiKeys || {});
   client = new OpenCodeClient(
@@ -1041,7 +1041,7 @@ export function registerIpcHandlers(
     client.updateApiKeys(mergedApiKeys(map));
     saveConfig(config);
     // Mirror into OpenCode's auth.json so a plain `opencode` invocation from
-    // a terminal sees the same credentials Mudrik uses internally.
+    // a terminal sees the same credentials MudrikNow uses internally.
     writeOpenCodeAuth(normalized, trimmed || null);
     log(`SAVE_API_KEY: provider=${provider} (${trimmed ? "set" : "cleared"}), total providers=${Object.keys(map).length}`);
     return { ok: true };
@@ -1069,7 +1069,7 @@ export function registerIpcHandlers(
       log(`REMOVE_MODEL: removed ${modelToRemove}, active model ${config.model} unchanged`);
     }
     // Cascade: if no remaining model uses this provider, drop the saved key
-    // (both from Mudrik's config and OpenCode's auth.json) so the credential
+    // (both from MudrikNow's config and OpenCode's auth.json) so the credential
     // doesn't sit on disk for a provider the user no longer wants.
     const removedProvider = providerFromModelId(modelToRemove).toLowerCase();
     const stillUsed = filtered.some((m) => providerFromModelId(m).toLowerCase() === removedProvider);
@@ -1437,7 +1437,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
           log("No text received — but client already surfaced a specific error, skipping generic fallback");
         } else {
           log("No text received — sending friendly error");
-          win.webContents.send(IPC.STREAM_ERROR, "No response was received from the AI. Please try again — if this keeps happening, restart Mudrik.");
+          win.webContents.send(IPC.STREAM_ERROR, "No response was received from the AI. Please try again — if this keeps happening, restart MudrikNow.");
         }
         return;
       }
@@ -1507,7 +1507,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       log(`ERROR from OpenCode: ${msg}`);
       if (msg.startsWith("exit:")) {
         const code = msg.replace("exit:", "");
-        win.webContents.send(IPC.STREAM_ERROR, `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart Mudrik.`);
+        win.webContents.send(IPC.STREAM_ERROR, `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart MudrikNow.`);
       } else {
         win.webContents.send(IPC.STREAM_ERROR, msg.length > 120 ? "Something went wrong. Please try again." : msg);
       }
@@ -1860,10 +1860,10 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "1"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
         const sessions = JSON.parse(listRaw);
         if (!Array.isArray(sessions) || sessions.length === 0) { log("restoreSession: no sessions"); return null; }
-        // Filter to sessions created from Mudrik's working directory. Without
+        // Filter to sessions created from MudrikNow's working directory. Without
         // this we restore the most recent GLOBAL OpenCode session — which may
         // belong to a CLI run in the user's home dir and leak unrelated
-        // conversation history into Mudrik's chat.
+        // conversation history into MudrikNow's chat.
         const ourSessions = sessions
           .filter((s: any) => s.directory === cwd)
           .sort((a: any, b: any) => b.created - a.created);
@@ -2188,7 +2188,7 @@ function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {
             showPanelFn?.(lastContext);
           }
         }
-        showNotification("Mudrik", "AI response is ready");
+        showNotification("MudrikNow", "AI response is ready");
       }
       break;
 

@@ -1,8 +1,18 @@
 # Changelog
 
-All notable changes to Mudrik are documented in this file.
+All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.0] - 2026-07-02
+
+### Changed
+- **Rebrand: Mudrik → MudrikNow.** Product renamed to "MudrikNow" to reflect its quick-access, instant-context philosophy. All user-facing strings, installer artifacts, prompts, and docs updated. Internal identifiers (`window.mudrik`, `%APPDATA%/mudrik/` config path) intentionally unchanged — existing v1.x users upgrade with zero config migration.
+- **appId changed** to `com.mudriknow.app`. **Breaking:** auto-update from v1.x will not work — download v2.0.0 manually from [Releases](https://github.com/abdallahmagdy15/mudriknow/releases).
+- **System prompt reframed** to emphasize quick-access AI, fast context capture, and productivity — not deep agentic workflows.
+
+### Fixed
+- Mojibake in calibrate window title (`â€"` → em dash).
 
 ## [1.15.0] - 2026-07-02
 
@@ -292,30 +302,31 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
-[1.15.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.14.0...v1.15.0
-[1.14.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.2...v1.14.0
-[1.13.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.1...v1.13.2
-[1.13.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.0...v1.13.1
-[1.13.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.9...v1.13.0
-[1.12.9]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.8...v1.12.9
-[1.12.8]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.7...v1.12.8
-[1.12.7]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.6...v1.12.7
-[1.12.6]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.5...v1.12.6
-[1.12.5]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.4...v1.12.5
-[1.12.4]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.3...v1.12.4
-[1.12.3]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.2...v1.12.3
-[1.12.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.1...v1.12.2
-[1.12.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.12.0...v1.12.1
-[1.12.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.11.0...v1.12.0
-[1.11.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.10.0...v1.11.0
-[1.10.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.1...v1.10.0
-[1.9.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.9.0...v1.9.1
-[1.9.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.7.0...v1.9.0
-[1.7.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.6.0...v1.7.0
-[1.6.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.0.0...v1.3.0
-[1.0.0]: https://github.com/abdallahmagdy15/mudrik/compare/v0.9.0...v1.0.0
-[0.9.0]: https://github.com/abdallahmagdy15/mudrik/releases/tag/v0.9.0
+[2.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.15.0...v2.0.0
+[1.15.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.14.0...v1.15.0
+[1.14.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.13.2...v1.14.0
+[1.13.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.13.1...v1.13.2
+[1.13.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.13.0...v1.13.1
+[1.13.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.9...v1.13.0
+[1.12.9]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.8...v1.12.9
+[1.12.8]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.7...v1.12.8
+[1.12.7]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.6...v1.12.7
+[1.12.6]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.5...v1.12.6
+[1.12.5]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.4...v1.12.5
+[1.12.4]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.3...v1.12.4
+[1.12.3]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.2...v1.12.3
+[1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
+[1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
+[1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[1.11.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.10.0...v1.11.0
+[1.10.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.9.1...v1.10.0
+[1.9.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.9.0...v1.9.1
+[1.9.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.7.0...v1.9.0
+[1.7.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.0.0...v1.3.0
+[1.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v0.9.0...v1.0.0
+[0.9.0]: https://github.com/abdallahmagdy15/mudriknow/releases/tag/v0.9.0
 
