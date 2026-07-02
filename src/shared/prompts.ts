@@ -540,19 +540,16 @@ ALLOWED (examples — anything read-only works):
 
 If unsure whether a command is read-only, do NOT run it — ask the user instead.`;
 
-export const COMMANDS_PROMPT_AWARE = `Read-only shell commands (git inspection, system state queries, log parsing) are DISABLED in settings. You can still read/search files using the read, grep, glob, and list tools. If the user asks you to run a command, tell them to enable "Allow read-only commands" in ⚙ settings.`;
-
 export interface BuildPromptConfig {
   actionsEnabled: boolean;
   autoGuideEnabled: boolean;
-  readOnlyCommandsEnabled: boolean;
 }
 
 export function buildSystemPrompt(cfg: BuildPromptConfig): string {
   const parts: string[] = [BASE_PROMPT];
   parts.push(cfg.actionsEnabled ? ACTION_PROMPT_FULL : ACTION_PROMPT_AWARE);
   parts.push(cfg.autoGuideEnabled ? GUIDE_PROMPT_FULL : GUIDE_PROMPT_AWARE);
-  parts.push(cfg.readOnlyCommandsEnabled ? COMMANDS_PROMPT_FULL : COMMANDS_PROMPT_AWARE);
+  parts.push(COMMANDS_PROMPT_FULL);
   return parts.filter(Boolean).join("\n\n");
 }
 

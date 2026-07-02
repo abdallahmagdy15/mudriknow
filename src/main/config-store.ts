@@ -302,6 +302,8 @@ export function loadConfig(): Config {
     if (!Array.isArray(merged.recentModels) || merged.recentModels.length === 0) {
       merged.recentModels = [merged.model];
     }
+    // Read-only commands are always on — toggle removed for UI simplicity.
+    merged.readOnlyCommandsEnabled = true;
     log(`Config loaded from ${p}`);
     return merged;
   } catch (err: any) {

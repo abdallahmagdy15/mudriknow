@@ -932,11 +932,8 @@ export function registerIpcHandlers(
     // Re-provision the readonly agent + update kill-switch when the
     // read-only commands flag flips. The agent file must reflect the new
     // frontmatter (bash patterns vs deny) before the next message send.
-    if (newConfig.readOnlyCommandsEnabled !== undefined && newConfig.readOnlyCommandsEnabled !== prev.readOnlyCommandsEnabled) {
-      ensureAgentInWorkingDir(config.workingDir, config.readOnlyCommandsEnabled);
-      client.updateReadOnlyCommands(config.readOnlyCommandsEnabled);
-      log(`readOnlyCommandsEnabled flipped: ${prev.readOnlyCommandsEnabled} → ${config.readOnlyCommandsEnabled} (agent re-provisioned)`);
-    }
+    // (readOnlyCommandsEnabled is now always true — toggle removed — but
+    // keep the propagation in case the field is ever re-introduced.)
     log(`Config updated: model=${config.model}, recentModels=${JSON.stringify(config.recentModels)}`);
     saveConfig(config);
     if (configChangeListener) {
@@ -1303,7 +1300,6 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       const systemPrefix = `${buildSystemPrompt({
         actionsEnabled: config.actionsEnabled,
         autoGuideEnabled: config.autoGuideEnabled,
-        readOnlyCommandsEnabled: config.readOnlyCommandsEnabled,
       })}\n\n`;
       // Tell the AI about the current actions permission. The toggle is
       // LIVE — when the user flips it in settings, contextNeedsSending is

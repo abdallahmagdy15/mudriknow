@@ -8,7 +8,6 @@ import {
   GUIDE_PROMPT_AWARE,
   GUIDE_PROMPT_FULL,
   COMMANDS_PROMPT_FULL,
-  COMMANDS_PROMPT_AWARE,
 } from "./prompts";
 
 describe("prompts split", () => {
@@ -63,20 +62,20 @@ describe("ACTION_PROMPT_AWARE", () => {
 
 describe("buildSystemPrompt", () => {
   it("with actionsEnabled=true, includes ACTION_PROMPT_FULL not AWARE", () => {
-    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false, readOnlyCommandsEnabled: false });
+    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false });
     expect(out).toContain(ACTION_PROMPT_FULL);
     expect(out).not.toContain(ACTION_PROMPT_AWARE);
   });
 
   it("with actionsEnabled=false, includes ACTION_PROMPT_AWARE not FULL", () => {
-    const out = buildSystemPrompt({ actionsEnabled: false, autoGuideEnabled: false, readOnlyCommandsEnabled: false });
+    const out = buildSystemPrompt({ actionsEnabled: false, autoGuideEnabled: false });
     expect(out).toContain(ACTION_PROMPT_AWARE);
     expect(out).not.toContain(ACTION_PROMPT_FULL);
   });
 
   it("always includes BASE_PROMPT", () => {
-    const out1 = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false, readOnlyCommandsEnabled: false });
-    const out2 = buildSystemPrompt({ actionsEnabled: false, autoGuideEnabled: false, readOnlyCommandsEnabled: false });
+    const out1 = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false });
+    const out2 = buildSystemPrompt({ actionsEnabled: false, autoGuideEnabled: false });
     expect(out1).toContain(BASE_PROMPT);
     expect(out2).toContain(BASE_PROMPT);
   });
@@ -97,12 +96,12 @@ describe("GUIDE_PROMPT_AWARE", () => {
 
 describe("buildSystemPrompt — guide block AWARE", () => {
   it("with autoGuideEnabled=false, includes GUIDE_PROMPT_AWARE", () => {
-    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false, readOnlyCommandsEnabled: false });
+    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false });
     expect(out).toContain(GUIDE_PROMPT_AWARE);
   });
 
   it("with autoGuideEnabled=true, does NOT include GUIDE_PROMPT_AWARE", () => {
-    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: true, readOnlyCommandsEnabled: false });
+    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: true });
     expect(out).not.toContain(GUIDE_PROMPT_AWARE);
   });
 });
@@ -141,7 +140,7 @@ describe("GUIDE_PROMPT_FULL", () => {
 
 describe("buildSystemPrompt — guide block FULL", () => {
   it("with autoGuideEnabled=true, includes GUIDE_PROMPT_FULL not AWARE", () => {
-    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: true, readOnlyCommandsEnabled: false });
+    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: true });
     expect(out).toContain(GUIDE_PROMPT_FULL);
     expect(out).not.toContain(GUIDE_PROMPT_AWARE);
   });
@@ -201,32 +200,9 @@ describe("COMMANDS_PROMPT_FULL", () => {
   });
 });
 
-describe("COMMANDS_PROMPT_AWARE", () => {
-  it("is short (under 80 words)", () => {
-    expect(COMMANDS_PROMPT_AWARE.split(/\s+/).length).toBeLessThan(80);
-  });
-
-  it("tells how to enable", () => {
-    expect(COMMANDS_PROMPT_AWARE).toContain("read-only commands");
-    expect(COMMANDS_PROMPT_AWARE).toContain("settings");
-  });
-
-  it("mentions the existing read tools still work", () => {
-    expect(COMMANDS_PROMPT_AWARE).toContain("read");
-    expect(COMMANDS_PROMPT_AWARE).toContain("grep");
-  });
-});
-
 describe("buildSystemPrompt — commands block", () => {
-  it("with readOnlyCommandsEnabled=true, includes COMMANDS_PROMPT_FULL", () => {
-    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false, readOnlyCommandsEnabled: true });
+  it("always includes COMMANDS_PROMPT_FULL", () => {
+    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false });
     expect(out).toContain(COMMANDS_PROMPT_FULL);
-    expect(out).not.toContain(COMMANDS_PROMPT_AWARE);
-  });
-
-  it("with readOnlyCommandsEnabled=false, includes COMMANDS_PROMPT_AWARE", () => {
-    const out = buildSystemPrompt({ actionsEnabled: true, autoGuideEnabled: false, readOnlyCommandsEnabled: false });
-    expect(out).toContain(COMMANDS_PROMPT_AWARE);
-    expect(out).not.toContain(COMMANDS_PROMPT_FULL);
   });
 });

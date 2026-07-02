@@ -211,7 +211,6 @@ export function App() {
   const [fontSize, setFontSize] = useState(14);
   const [restoreSessionOnActivate, setRestoreSessionOnActivate] = useState(true);
   const [autoGuideEnabled, setAutoGuideEnabled] = useState(false);
-  const [readOnlyCommandsEnabled, setReadOnlyCommandsEnabled] = useState(false);
   const [guideState, setGuideState] = useState<any | null>(null);
   // Mirror guideState into a ref so the main mount-effect's closures
   // (onContext, onStreamDone, etc.) can read the latest phase without
@@ -434,7 +433,6 @@ if (!data?.hasImage) {
         // Legacy config field — no longer used; ignore.
       }
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
-      if (cfg?.readOnlyCommandsEnabled !== undefined) setReadOnlyCommandsEnabled(cfg.readOnlyCommandsEnabled);
       configLoadedRef.current = true;
     });
   }, []);
@@ -684,12 +682,6 @@ if (!data?.hasImage) {
     setAutoGuideEnabled(newVal);
     window.hoverbuddy.setConfig({ autoGuideEnabled: newVal });
   }, [autoGuideEnabled]);
-
-  const handleToggleReadOnlyCommands = useCallback(() => {
-    const newVal = !readOnlyCommandsEnabled;
-    setReadOnlyCommandsEnabled(newVal);
-    window.hoverbuddy.setConfig({ readOnlyCommandsEnabled: newVal });
-  }, [readOnlyCommandsEnabled]);
 
   const handleSetTheme = useCallback((newTheme: "system" | "light" | "dark") => {
     setTheme(newTheme);
@@ -1154,12 +1146,6 @@ if (!data?.hasImage) {
                 <label className="settings-toggle" title={t("enableAutoGuideHint")}>
                   <span>{t("enableAutoGuide")}</span>
                   <div className={`toggle-switch ${autoGuideEnabled ? "on" : ""}`} onClick={handleToggleAutoGuideEnabled}>
-                    <div className="toggle-knob" />
-                  </div>
-                </label>
-                <label className="settings-toggle" title={t("allowReadOnlyCommandsHint")}>
-                  <span>{t("allowReadOnlyCommands")}</span>
-                  <div className={`toggle-switch ${readOnlyCommandsEnabled ? "on" : ""}`} onClick={handleToggleReadOnlyCommands}>
                     <div className="toggle-knob" />
                   </div>
                 </label>
