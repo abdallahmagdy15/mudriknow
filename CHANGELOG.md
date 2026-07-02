@@ -4,6 +4,16 @@ All notable changes to Mudrik are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-07-02
+
+### Added
+- **Opt-in read-only command execution.** The AI can now run shell commands for analysis and inspection via the `bash` tool, gated behind a config flag (on by default for new installs). Uses a denylist approach: mutating commands (Remove-Item, Set-Content, git push, npm install, node, python, etc.) and shell operators (; & | > <) are blocked; everything else is allowed. Three-layer defense: (1) OpenCode pattern permissions in frontmatter block mutating commands before execution, (2) kill-switch operator block catches chaining/piping/redirecting, (3) kill-switch mutating-command denylist. Session auto-resets on bash block to prevent AI hallucinating from stale pre-block context. Settings toggle in ⚙.
+
+### Changed
+- **New default config for fresh installs.** Desktop actions off by default, Auto-Guide on, read-only commands on, launch on startup on, restore chat on popup off.
+- **Composer background is now solid** (`--composer-bg`) instead of gradient in both light and dark themes.
+- **System prompt updated for PowerShell** (not cmd.exe) — uses `$env:VAR` syntax, documents PowerShell aliases (`dir` = `Get-ChildItem`), and lists blocked operators/mutating commands.
+
 ## [1.14.0] - 2026-07-01
 
 ### Added
@@ -282,6 +292,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 - Stale previous-context bug (monotonic `activationSeq` drops superseded reads).
 - Auto-screenshot on Alt+Space removed — manual 📸 button only.
 
+[1.15.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.2...v1.14.0
 [1.13.2]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.1...v1.13.2
 [1.13.1]: https://github.com/abdallahmagdy15/mudrik/compare/v1.13.0...v1.13.1
