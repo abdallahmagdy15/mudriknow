@@ -4,6 +4,27 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-05
+
+### Added
+- **Reliable AI-model connection UX.** A complete rebuild of how you connect an AI model, so non-technical users can go from install → working model in ~2 minutes.
+  - **Provider chooser + live model picker** — pick a provider, then pick a model from its live list (display name, image/reasoning badges, context window, $/1M cost). No more memorizing `provider/model` strings. Powered by OpenCode's own [models.dev](https://models.dev) catalog, so no parallel provider model can drift out of sync.
+  - **Real API-key verification** — the **Verify** button runs a tiny authenticated completion through the OpenCode engine in an isolated environment and confirms the key works *before* you trust it. Transient server hiccups are retried automatically.
+  - **Forced setup + connection banner** — chat is disabled until your current model's provider is connected; a banner explains why and a pulsing **Add a model** nudge points to the next step. The banner reappears on auth/subscription failures with a **Fix in Settings** action.
+  - **Classified errors** — provider errors (which arrive as `APIError.data.message`) are extracted and classified into auth / rate-limit / quota / model-not-found / network / provider-down, each with a clear message. No more cryptic "AI engine crashed (exit code 1)".
+- **Manage-provider hub** — from any recent model: change model / edit key / switch provider in one place; plus an inline edit-key button on connected providers.
+- **"Load more" pagination** on provider and model lists (search filters across all entries).
+
+### Changed
+- **NVIDIA pinned first** in the provider list — generous, genuinely-usable free tier for every user; the setup nudge shows step-by-step key guidance.
+- **Recent-models list** now holds up to 8 (was 3) with live connection-status dots.
+- **Multi-segment model IDs preserved** (e.g. `nvidia/deepseek-ai/deepseek-v4-flash`) — a verbose-output parser regression that silently dropped the leading provider is fixed and unit-tested.
+- Banners use a solid + blurred surface so chat text can't bleed through.
+
+### Fixed
+- Provider error messages hidden at `error.data.message` (producing empty errors and misleading "exit code 1" crashes).
+- API-key verification failing on flaky providers (now retries transient errors).
+
 ## [2.0.0] - 2026-07-02
 
 ### Changed
@@ -321,6 +342,8 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[2.1.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.15.0...v2.0.0
 [1.11.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.9.1...v1.10.0
 [1.9.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.9.0...v1.9.1
