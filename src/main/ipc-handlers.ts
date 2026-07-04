@@ -1,8 +1,15 @@
 import { ipcMain, BrowserWindow, app } from "electron";
-import { Config, ContextPayload, IPC, Action, VisibleWindow } from "../shared/types";
+import { Config, ContextPayload, IPC, Action, VisibleWindow, ModelDisplay, ProviderStatus } from "../shared/types";
 import { OpenCodeClient, OpenCodeEvent, findOpenCodeBin, isNativeOpenCodeBin } from "./opencode-client";
 import { buildSystemPrompt } from "../shared/prompts";
-import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames } from "../shared/providers";
+import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames, envVarForProvider } from "../shared/providers";
+import { classifyError, extractErrorMessage } from "../shared/error-classifier";
+import {
+  getKeyUrl, getLogoUrl, isFreeProvider, providerDisplayName, envVarFromCatalog,
+} from "../shared/provider-catalog";
+import { getCatalog } from "./catalog-store";
+import { verifyProviderKey } from "./key-verifier";
+import { parseVerboseModels } from "./models-parser";
 
 /**
  * OpenCode reads provider credentials from `<XDG_DATA_HOME>/opencode/auth.json`,
@@ -915,7 +922,7 @@ export function registerIpcHandlers(
     log(`SET_CONFIG received: ${JSON.stringify(newConfig)}`);
     const prev: Config = { ...config };
     if (newConfig.model) {
-      const updated = [newConfig.model, ...config.recentModels.filter(m => m !== newConfig.model)].slice(0, 3);
+      const updated = [newConfig.model, ...config.recentModels.filter(m => m !== newConfig.model)].slice(0, 8);
       config.recentModels = updated;
       client.updateModel(newConfig.model);
     }
@@ -1020,14 +1027,23 @@ export function registerIpcHandlers(
   /**
    * Persist an API key for the named provider and refresh the OpenCode
    * client's env map so the next `opencode run` / `opencode models` call
-   * sees it. Does NOT validate the key — OpenCode has no pre-flight test
-   * endpoint, so a bad key surfaces as a runtime error on the first
-   * message send. An empty key clears the entry.
+   * sees it. When `verify` is true and the key is non-empty, runs a real
+   * pre-flight check first via VERIFY_KEY — on failure the key is NOT saved
+   * and { ok:false, code:"auth_failed", ... } is returned so the renderer can
+   * show the classified reason. An empty key always clears (no verify).
    */
-  ipcMain.handle(IPC.SAVE_API_KEY, (_e, provider: string, key: string) => {
+  ipcMain.handle(IPC.SAVE_API_KEY, async (_e, provider: string, key: string, verify?: boolean) => {
     if (!provider) return { ok: false, error: "provider is required" };
     const normalized = provider.toLowerCase();
     const trimmed = (key || "").trim();
+    if (verify && trimmed) {
+      const catalog = await getCatalog();
+      const wd = appConfig.workingDir || app.getPath("userData");
+      const verdict = await verifyProviderKey(normalized, trimmed, catalog, wd, ensureIsolatedOpenCodeConfig(wd));
+      if (!verdict.ok && (verdict.category === "AUTH_INVALID" || verdict.category === "AUTH_MISSING")) {
+        return { ok: false, code: "auth_failed", category: verdict.category, message: verdict.message };
+      }
+    }
     const map = { ...(config.apiKeys || {}) };
     if (trimmed) {
       map[normalized] = trimmed;
@@ -1040,7 +1056,7 @@ export function registerIpcHandlers(
     // Mirror into OpenCode's auth.json so a plain `opencode` invocation from
     // a terminal sees the same credentials MudrikNow uses internally.
     writeOpenCodeAuth(normalized, trimmed || null);
-    log(`SAVE_API_KEY: provider=${provider} (${trimmed ? "set" : "cleared"}), total providers=${Object.keys(map).length}`);
+    log(`SAVE_API_KEY: provider=${provider} (${trimmed ? "set" : "cleared"}${verify ? ", verified" : ""}), total providers=${Object.keys(map).length}`);
     return { ok: true };
   });
 
@@ -1080,6 +1096,140 @@ export function registerIpcHandlers(
     }
     saveConfig(config);
     return config;
+  });
+
+  /**
+   * Remove a saved API key for a provider (both MudrikNow's config and
+   * OpenCode's auth.json mirror). The empty-key clear path already existed
+   * inside SAVE_API_KEY but was unwired in the UI; this exposes it explicitly
+   * so the settings panel can offer a "Remove key" affordance.
+   */
+  ipcMain.handle(IPC.REMOVE_API_KEY, (_e, provider: string) => {
+    if (!provider) return { ok: false, error: "provider is required" };
+    const normalized = provider.toLowerCase();
+    if (config.apiKeys && normalized in config.apiKeys) {
+      const next = { ...config.apiKeys };
+      delete next[normalized];
+      config.apiKeys = next;
+      client.updateApiKeys(mergedApiKeys(next));
+      saveConfig(config);
+    }
+    writeOpenCodeAuth(normalized, null);
+    log(`REMOVE_API_KEY: cleared provider=${normalized}`);
+    return { ok: true };
+  });
+
+  /**
+   * List all known providers with live authentication status. Merges the
+   * models.dev catalog (display names, logos) with credentials detected in
+   * OpenCode's auth.json and the shell environment.
+   */
+  ipcMain.handle(IPC.LIST_PROVIDERS, async (): Promise<ProviderStatus[]> => {
+    const catalog = await getCatalog();
+    const authKeys = readOpenCodeAuthKeys();
+    const ids = new Set<string>([...Object.keys(catalog), ...Object.keys(authKeys)]);
+    const out: ProviderStatus[] = [];
+    for (const id of ids) {
+      const lower = id.toLowerCase();
+      const c = catalog[lower];
+      let source: "auth.json" | "env" | "none" = "none";
+      if (authKeys[lower]) {
+        source = "auth.json";
+      } else {
+        // Check shell env via the catalog's own env-var name (authoritative),
+        // falling back to the convention-based name.
+        const envName = envVarFromCatalog(lower, catalog) || envVarForProvider(lower);
+        if (process.env[envName]) source = "env";
+      }
+      out.push({
+        id: lower,
+        name: providerDisplayName(lower, catalog),
+        logoUrl: getLogoUrl(lower),
+        keyUrl: getKeyUrl(lower, c?.doc),
+        authenticated: source !== "none",
+        source,
+        free: isFreeProvider(lower),
+      });
+    }
+    return out;
+  });
+
+  // Session cache for LIST_MODELS: provider → { at, models }. Avoids re-running
+  // `opencode models <p> --verbose` (a 1-3s subprocess) on every settings open.
+  const modelsCache = new Map<string, { at: number; models: ModelDisplay[] }>();
+  const MODELS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+  // (model-list verbose parser lives in src/main/models-parser.ts so it's
+  //  unit-tested — the multi-segment id regression is covered there.)
+
+  /**
+   * List the models available for a provider. Live data comes from
+   * `opencode models <provider> --verbose` (with the user's current keys);
+   * on any failure we fall back to the catalog snapshot so the picker stays
+   * browseable (entries flagged authRequired so the UI can prompt to connect).
+   */
+  ipcMain.handle(IPC.LIST_MODELS, async (_e, providerId: string): Promise<ModelDisplay[]> => {
+    const pid = (providerId || "").toLowerCase();
+    const cached = modelsCache.get(pid);
+    if (cached && Date.now() - cached.at < MODELS_CACHE_TTL_MS) return cached.models;
+
+    const catalog = await getCatalog();
+    const fallbackFromCatalog = (): ModelDisplay[] => {
+      const p = catalog[pid];
+      if (!p) return [];
+      return Object.values(p.models).map((mm) => ({
+        id: `${p.id}/${mm.id}`,
+        name: mm.name,
+        provider: pid,
+        attachment: mm.attachment,
+        reasoning: mm.reasoning,
+        toolCall: true,
+        authRequired: true,
+      }));
+    };
+
+    const bin = findOpenCodeBin();
+    if (!bin) {
+      const fb = fallbackFromCatalog();
+      modelsCache.set(pid, { at: Date.now(), models: fb });
+      return fb;
+    }
+    try {
+      const isNative = isNativeOpenCodeBin(bin);
+      const cmd = isNative ? bin : "node";
+      const args = isNative ? ["models", pid, "--verbose"] : [bin, "models", pid, "--verbose"];
+      const env = buildCleanOpenCodeEnv(process.env, mergedApiKeys(config.apiKeys));
+      const raw = await new Promise<string>((res, rej) => {
+        const { execFile } = require("child_process");
+        execFile(cmd, args, { env, encoding: "utf-8", timeout: 30000, maxBuffer: 5 * 1024 * 1024, cwd: appConfig.workingDir || os.homedir() }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
+      });
+      const parsed = parseVerboseModels(raw, pid);
+      // If the provider isn't authenticated, opencode prints an error to
+      // stderr and stdout is empty → fall back to catalog so the UI can show
+      // models with an "auth required" nudge.
+      const models = parsed.length > 0 ? parsed : fallbackFromCatalog();
+      modelsCache.set(pid, { at: Date.now(), models });
+      return models;
+    } catch (err: any) {
+      log(`LIST_MODELS fallback for ${pid}: ${err.message}`);
+      const fb = fallbackFromCatalog();
+      modelsCache.set(pid, { at: Date.now(), models: fb });
+      return fb;
+    }
+  });
+
+  /**
+   * Real pre-flight key verification. Delegates to key-verifier.ts which
+   * spawns `opencode run` with the candidate key in an isolated environment
+   * and classifies the result. The key is NOT persisted here — the caller
+   * (SAVE_API_KEY with verify, or the renderer's Verify button) decides what
+   * to do with the verdict.
+   */
+  ipcMain.handle(IPC.VERIFY_KEY, async (_e, providerId: string, key: string) => {
+    const catalog = await getCatalog();
+    const workingDir = appConfig.workingDir || app.getPath("userData");
+    const isolatedConfigDir = ensureIsolatedOpenCodeConfig(workingDir);
+    return verifyProviderKey(providerId, key, catalog, workingDir, isolatedConfigDir);
   });
 
   ipcMain.on(IPC.NEW_SESSION, () => {
@@ -1360,7 +1510,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         timeoutFired = true;
         log(`TIMEOUT: No AI activity for ${IDLE_TIMEOUT_MS / 1000}s — killing process`);
         client.kill();
-        win.webContents.send(IPC.STREAM_ERROR, `AI hasn't responded in ${IDLE_TIMEOUT_MS / 60000} minutes. Likely a transient provider issue — please try sending again.`);
+        emitStreamError(win, { category: "UNKNOWN", message: `AI hasn't responded in ${IDLE_TIMEOUT_MS / 60000} minutes. Likely a transient provider issue — please try sending again.`, recoveryAction: "retry" });
       }, IDLE_TIMEOUT_MS);
     };
     const stopIdleTimer = () => {
@@ -1433,7 +1583,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
           log("No text received — but client already surfaced a specific error, skipping generic fallback");
         } else {
           log("No text received — sending friendly error");
-          win.webContents.send(IPC.STREAM_ERROR, "No response was received from the AI. Please try again — if this keeps happening, restart MudrikNow.");
+          emitStreamError(win, { category: "UNKNOWN", message: "No response was received from the AI. Please try again — if this keeps happening, restart MudrikNow.", recoveryAction: "retry" });
         }
         return;
       }
@@ -1503,9 +1653,9 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       log(`ERROR from OpenCode: ${msg}`);
       if (msg.startsWith("exit:")) {
         const code = msg.replace("exit:", "");
-        win.webContents.send(IPC.STREAM_ERROR, `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart MudrikNow.`);
+        emitStreamError(win, { category: "UNKNOWN", message: `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart MudrikNow.`, recoveryAction: "retry" });
       } else {
-        win.webContents.send(IPC.STREAM_ERROR, msg.length > 120 ? "Something went wrong. Please try again." : msg);
+        emitStreamError(win, { category: "UNKNOWN", message: msg.length > 120 ? "Something went wrong. Please try again." : msg, recoveryAction: "retry" });
       }
     }
   });
@@ -2121,6 +2271,15 @@ function execOpenCode(bin: string, cliArgs: string[], options: any): Promise<str
   });
 }
 
+/** Send a structured STREAM_ERROR so the renderer can render category-aware
+ *  recovery (auth → "Fix in Settings" banner; transient → retry button). */
+function emitStreamError(
+  win: BrowserWindow,
+  payload: { category: string; message: string; recoveryAction: string; provider?: string },
+): void {
+  win.webContents.send(IPC.STREAM_ERROR, payload);
+}
+
 function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {
   switch (event.type) {
     case "step_start":
@@ -2188,10 +2347,23 @@ function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {
       }
       break;
 
-    case "error":
-      log(`OpenCode error: ${event.error?.message}`);
-      win.webContents.send(IPC.STREAM_ERROR, event.error?.message || "Unknown error");
+    case "error": {
+      // Provider errors arrive as { error: { name: "APIError", data: { message } } }
+      // — the text is at data.message, not error.message. extractErrorMessage
+      // handles both shapes. When there's genuinely no message, fall back to a
+      // chat-appropriate line instead of a verify-style "couldn't confirm".
+      const raw = extractErrorMessage(event.error);
+      const classified = classifyError(raw);
+      log(`OpenCode error (${classified.category}): ${raw || "(no message)"}`);
+      const provider = appConfig.model ? appConfig.model.split("/")[0] : undefined;
+      emitStreamError(win, {
+        category: classified.category,
+        message: raw ? classified.message : "The AI couldn't respond to this message. Please try again.",
+        recoveryAction: classified.recoveryAction,
+        provider,
+      });
       break;
+    }
 
     default:
       log(`unhandled event type: ${event.type}`);

@@ -304,6 +304,14 @@ export function loadConfig(): Config {
     }
     // Read-only commands are always on — toggle removed for UI simplicity.
     merged.readOnlyCommandsEnabled = true;
+    // Migration: hasConfiguredModel is new. Pre-existing installs (anyone who
+    // already completed welcome OR saved a key) should NOT see the first-run
+    // model wizard on upgrade — only genuinely new users should. Once the
+    // field exists on disk, respect whatever the user/wizard set.
+    if (parsed.hasConfiguredModel === undefined) {
+      merged.hasConfiguredModel =
+        merged.hasCompletedWelcome || Object.keys(merged.apiKeys || {}).length > 0;
+    }
     log(`Config loaded from ${p}`);
     return merged;
   } catch (err: any) {

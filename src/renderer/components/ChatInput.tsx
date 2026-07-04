@@ -4,6 +4,9 @@ import { t as translate, Lang } from "@shared/i18n";
 interface Props {
   onSubmit: (prompt: string) => void;
   disabled: boolean;
+  /** Placeholder shown when `disabled` is true (e.g. "Connect an AI to start").
+   *  When omitted, the normal inputPlaceholder is used. */
+  disabledPlaceholder?: string;
   lang: Lang;
   // Feature toggles — mirror the same Config flags the settings panel edits,
   // so the composer pills and the settings switches stay in sync.
@@ -19,6 +22,7 @@ interface Props {
 export const ChatInput = forwardRef<{ focus: () => void }, Props>(({
   onSubmit,
   disabled,
+  disabledPlaceholder,
   lang,
   contextCaptured,
   onCapture,
@@ -85,7 +89,7 @@ export const ChatInput = forwardRef<{ focus: () => void }, Props>(({
           onKeyDown={handleKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder={tp("inputPlaceholder")}
+          placeholder={disabled && disabledPlaceholder ? disabledPlaceholder : tp("inputPlaceholder")}
           disabled={disabled}
           rows={2}
         />

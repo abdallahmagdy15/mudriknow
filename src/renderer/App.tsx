@@ -7,6 +7,7 @@ import { Markdown } from "./components/Markdown";
 import { MessageCopyButton } from "./components/MessageCopyButton";
 import { CopyIcon } from "./components/icons";
 import { parseMessageContent } from "./utils/message-content";
+import { ModelSettings } from "./settings/ModelSettings";
 import { ContextPayload, Action } from "@shared/types";
 import { t as translate, Lang } from "@shared/i18n";
 
@@ -20,7 +21,7 @@ declare global {
       onStreamToken: (cb: (token: string) => void) => void;
       onStreamTextReset: (cb: () => void) => void;
       onStreamDone: (cb: () => void) => void;
-      onStreamError: (cb: (err: string) => void) => void;
+      onStreamError: (cb: (payload: any) => void) => void;
       onToolUse: (cb: (event: any) => void) => void;
       onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) => void;
       executeAction: (action: any) => void;
@@ -45,8 +46,13 @@ declare global {
       getRecentChats: () => Promise<{ id: string; title: string; created: number }[]>;
       stopResponse: () => void;
       validateModel: (model: string) => Promise<{ valid: boolean; modelId?: string; error?: string; suggestions?: string[]; needsAuth?: boolean; provider?: string }>;
-      saveApiKey: (provider: string, key: string) => Promise<{ ok: boolean; error?: string }>;
+      saveApiKey: (provider: string, key: string, verify?: boolean) => Promise<{ ok: boolean; code?: string; error?: string; message?: string }>;
       removeModel: (modelId: string) => Promise<any>;
+      // Stage B: model-connection UX (wrap OpenCode's own provider/auth machinery).
+      listProviders: () => Promise<any[]>;
+      listModels: (providerId: string) => Promise<any[]>;
+      verifyKey: (providerId: string, key: string) => Promise<{ ok: boolean; category?: string; message?: string }>;
+      removeApiKey: (providerId: string) => Promise<{ ok: boolean; error?: string }>;
       onContextLoading: (cb: (loading: boolean) => void) => void;
       guideUserChoice: (option: string) => void;
       hidePanel: () => void;
@@ -108,15 +114,13 @@ export function App() {
   const [actionsEnabled, setActionsEnabled] = useState(true);
   const [currentModel, setCurrentModel] = useState("ollama-cloud/gemini-3-flash-preview");
   const [recentModels, setRecentModels] = useState<string[]>(["ollama-cloud/gemini-3-flash-preview"]);
-  const [customModelInput, setCustomModelInput] = useState("");
-  const [modelValidationError, setModelValidationError] = useState<string | null>(null);
-  const [modelValidating, setModelValidating] = useState(false);
-  // When validation fails because a provider isn't authed, the main process
-  // sets needsAuth + provider. We surface an inline API-key input so the user
-  // can paste a key and retry without leaving the panel.
-  const [authPromptProvider, setAuthPromptProvider] = useState<string | null>(null);
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiKeySaving, setApiKeySaving] = useState(false);
+  // Stage C: model-connection UX state.
+  const [hasConfiguredModel, setHasConfiguredModel] = useState(false);
+  const [currentProviderConnected, setCurrentProviderConnected] = useState<boolean | null>(null);
+  const [authBanner, setAuthBanner] = useState<{ category: string; message: string; provider?: string } | null>(null);
+  /** Briefly true after opening settings via the banner/health-check — pulses
+   *  the "Add a model" button so the user's eye lands on the next action. */
+  const [highlightAddModel, setHighlightAddModel] = useState(false);
   // Collapsible settings groups. Model + Hotkeys default closed (rarely touched
   // once configured); Appearance + Behavior default open (quick tweaks).
   const [openSections, setOpenSections] = useState<{ model: boolean; hotkeys: boolean; appearance: boolean; behavior: boolean }>({
@@ -128,6 +132,23 @@ export function App() {
   const toggleSection = useCallback((key: keyof typeof openSections) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
+
+  /** Fetch the current model's provider auth status from the main process.
+   *  Drives the chat banner + the "chat disabled until connected" gate. */
+  const refreshConnectionState = useCallback(async (model?: string): Promise<boolean> => {
+    const m = model || currentModel;
+    try {
+      const providers = await window.hoverbuddy.listProviders();
+      const pid = m.split("/")[0];
+      const me = (providers || []).find((p: any) => p.id === pid);
+      const connected = !!(me && me.authenticated);
+      setCurrentProviderConnected(connected);
+      return connected;
+    } catch {
+      setCurrentProviderConnected(null);
+      return false;
+    }
+  }, [currentModel]);
   const [restoringSession, setRestoringSession] = useState(false);
   const [hotkeyPointer, setHotkeyPointer] = useState("Alt+Space");
   const [hotkeyArea, setHotkeyArea] = useState("CommandOrControl+Space");
@@ -195,6 +216,13 @@ export function App() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [settingsOpen]);
+
+  // When settings closes, re-check the current provider's connection — the
+  // user may have just saved/removed a key, which flips the banner + the
+  // chat-disabled gate.
+  useEffect(() => {
+    if (!settingsOpen) void refreshConnectionState();
+  }, [settingsOpen, refreshConnectionState]);
 
   // Close recent chats popup on click outside
   useEffect(() => {
@@ -306,10 +334,19 @@ export function App() {
       });
     });
 
-    window.hoverbuddy.onStreamError((err) => {
-      console.log(`[RENDERER] Stream error: ${err}`);
+    window.hoverbuddy.onStreamError((raw) => {
+      // STREAM_ERROR now carries a structured payload {category, message,
+      // provider?, recoveryAction}. Auth/quota errors also raise the chat
+      // banner so the user gets a one-click "Fix in Settings" path.
+      const p = (raw && typeof raw === "object" && "message" in raw)
+        ? raw as { category: string; message: string; provider?: string; recoveryAction: string }
+        : { category: "UNKNOWN", message: typeof raw === "string" ? raw : "", recoveryAction: "none" };
+      console.log(`[RENDERER] Stream error (${p.category}): ${p.message}`);
       setStreaming(false);
-      setError(typeof err === "string" && err.length < MAX_INLINE_ERROR_LEN ? err : t("somethingWentWrong"));
+      setError(p.message || t("somethingWentWrong"));
+      if (p.recoveryAction === "openSettingsModel") {
+        setAuthBanner({ category: p.category, message: p.message, provider: p.provider });
+      }
     });
 
     window.hoverbuddy.onActionResult((result) => {
@@ -433,7 +470,15 @@ if (!data?.hasImage) {
         // Legacy config field — no longer used; ignore.
       }
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
+      if (cfg?.hasConfiguredModel !== undefined) setHasConfiguredModel(cfg.hasConfiguredModel);
       configLoadedRef.current = true;
+      // R4 health check: if first-run or the current model's provider isn't
+      // connected, open the setup wizard so the user is never left in a
+      // "can't send" state without guidance.
+      const configured = !!cfg?.hasConfiguredModel;
+      void refreshConnectionState(cfg.model).then((connected) => {
+        if (!configured || !connected) openSettingsModel();
+      });
     });
   }, []);
 
@@ -500,6 +545,13 @@ if (!data?.hasImage) {
 
   const handleSubmit = useCallback((prompt: string) => {
     console.log(`[RENDERER] Submit prompt: "${prompt}"`);
+    // Defense guard: if the current provider isn't connected, route to the
+    // wizard instead of sending (the chat input is also disabled in this case).
+    if (currentProviderConnected === false) {
+      openSettingsModel();
+      return;
+    }
+    setAuthBanner(null);
     // During an active guide step, user's typed text is a custom guide
     // choice (they chose "Something else…" to type freely). Route through
     // guideUserChoice so the guide controller handles the recapture.
@@ -518,13 +570,14 @@ if (!data?.hasImage) {
     setActionResults([]);
     setScreenshotAttached(false);
     window.hoverbuddy.sendPrompt(prompt);
-  }, [screenshotAttached]);
+  }, [screenshotAttached, currentProviderConnected]);
 
   const handleRetry = useCallback(() => {
     const prompt = lastPromptRef.current;
     if (!prompt || streaming) return;
     console.log(`[RENDERER] Retry: re-sending "${prompt}"`);
     setError(null);
+    setAuthBanner(null);
     setCurrentResponse("");
     setActionResults([]);
     setStreaming(true);
@@ -707,113 +760,43 @@ if (!data?.hasImage) {
   const handleSwitchModel = useCallback((model: string) => {
     console.log(`[RENDERER] Switching model to: ${model}`);
     setCurrentModel(model);
-    setCustomModelInput("");
-    setModelValidationError(null);
+    setAuthBanner(null);
+    // Manually picking a model (via settings) counts as completing setup.
+    if (!hasConfiguredModel) {
+      window.hoverbuddy.setConfig({ hasConfiguredModel: true });
+      setHasConfiguredModel(true);
+    }
     window.hoverbuddy.setConfig({ model }).then((cfg: any) => {
       if (cfg?.recentModels) setRecentModels(cfg.recentModels);
       if (cfg?.model) setCurrentModel(cfg.model);
+      void refreshConnectionState(cfg?.model || model);
     });
-  }, []);
-
-  const handleCustomModelSubmit = useCallback(async () => {
-    const modelId = customModelInput.trim();
-    if (!modelId) return;
-    setModelValidating(true);
-    setModelValidationError(null);
-    setAuthPromptProvider(null);
-    try {
-      const result = await window.hoverbuddy.validateModel(modelId);
-      if (result.valid && result.modelId) {
-        handleSwitchModel(result.modelId);
-        setApiKeyInput("");
-      } else if (result.needsAuth && result.provider) {
-        // Provider not authenticated — reveal the inline API-key input.
-        setAuthPromptProvider(result.provider);
-        setModelValidationError(result.error || `API key required for ${result.provider}`);
-      } else {
-        setModelValidationError(
-          result.suggestions?.length
-            ? `${result.error}\nAvailable: ${result.suggestions.join(", ")}`
-            : (result.error || t("modelNotFound")),
-        );
-      }
-    } catch (err: any) {
-      setModelValidationError(err.message);
-    }
-    setModelValidating(false);
-  }, [customModelInput, handleSwitchModel]);
-
-  /**
-   * Save the API key and switch to the requested model. OpenCode has no way
-   * to pre-validate a key, so we trust the user's input — if the key is bad,
-   * the first message send surfaces the real error from the provider. This
-   * is simpler and honest: every "validate" would just be a second shot at
-   * the same failing call.
-   */
-  const handleSaveApiKey = useCallback(async () => {
-    const provider = authPromptProvider;
-    const key = apiKeyInput.trim();
-    const modelId = customModelInput.trim();
-    if (!provider || !key) return;
-    setApiKeySaving(true);
-    setModelValidationError(null);
-    try {
-      const saved = await window.hoverbuddy.saveApiKey(provider, key);
-      if (!saved.ok) {
-        setModelValidationError(saved.error || t("failedToSaveKey"));
-        setApiKeySaving(false);
-        return;
-      }
-      // Save the key, then switch to whatever model is currently in the
-      // input. Both the "type a new custom model" flow and the "✎ edit key"
-      // flow populate customModelInput, so the behaviour is uniform: what
-      // you see in the input is the model you'll be on after Save. If the
-      // input matches the active model already, the switch is a no-op.
-      if (modelId) {
-        handleSwitchModel(modelId);
-        setCustomModelInput("");
-      }
-      setAuthPromptProvider(null);
-      setApiKeyInput("");
-    } catch (err: any) {
-      setModelValidationError(err.message);
-    }
-    setApiKeySaving(false);
-  }, [authPromptProvider, apiKeyInput, customModelInput, handleSwitchModel]);
+  }, [refreshConnectionState, hasConfiguredModel]);
 
   /**
    * Remove a model from the recent list. Main-process handler picks the
    * next recent as the new active model if the removed entry was current.
-   * Disabled (via filtered click handler) when only one model remains.
+   * The caller (ModelSettings) is responsible for guarding against emptying
+   * the list and for stopping event propagation.
    */
-  const handleRemoveModel = useCallback(async (modelToRemove: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  /** Open settings expanded to the Model section + pulse the "Add a model"
+   *  button so the user's eye lands on the next action. Used by the banner
+   *  (Fix in Settings / Set up) and the first-run health check — replaces the
+   *  old standalone wizard, which just duplicated the settings flow. */
+  const openSettingsModel = useCallback(() => {
+    setAuthBanner(null);
+    setOpenSections((s) => ({ ...s, model: true }));
+    setSettingsOpen(true);
+    setHighlightAddModel(true);
+    setTimeout(() => setHighlightAddModel(false), 3200);
+  }, []);
+
+  const handleRemoveModel = useCallback(async (modelToRemove: string) => {
     if (recentModels.length <= 1) return;
     const cfg = await window.hoverbuddy.removeModel(modelToRemove);
     if (cfg?.recentModels) setRecentModels(cfg.recentModels);
     if (cfg?.model) setCurrentModel(cfg.model);
   }, [recentModels.length]);
-
-  /**
-   * Open the API-key input for an existing model's provider without changing
-   * the selected model. Used when a saved key turns out to be wrong and the
-   * user needs to replace it — a common case since we can't pre-validate
-   * keys against the provider. `handleSaveApiKey` detects this entry point
-   * (empty customModelInput) and skips the model-switch step.
-   */
-  const handleEditProviderKey = useCallback((modelId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const provider = modelId.split("/")[0];
-    setAuthPromptProvider(provider);
-    setApiKeyInput("");
-    setModelValidationError(null);
-    // Show which model the key edit targets so the user can confirm. On Save
-    // we'll also switch to this model — same behaviour as typing the model
-    // by hand and clicking Set, which keeps the flow predictable.
-    setCustomModelInput(modelId);
-    // Ensure Model section is open so the input is visible.
-    setOpenSections((prev) => ({ ...prev, model: true }));
-  }, []);
 
   // msgKey disambiguates chips across messages — e.g. two separate replies
   // can each have a <!--COPY:pwd--> chip without sharing highlight state.
@@ -940,93 +923,14 @@ if (!data?.hasImage) {
             </button>
             {openSections.model && (
               <div className="settings-section-body">
-                {recentModels.map((m) => (
-                  <div
-                    key={m}
-                    className={`model-option ${m === currentModel ? "model-active" : ""}`}
-                    onClick={() => handleSwitchModel(m)}
-                  >
-                    <span className="model-name">{m.split("/").pop()}</span>
-                    <span className="model-provider">{m.split("/")[0]}</span>
-                    {m === currentModel && <span className="model-check"><i className="fa-solid fa-check"></i></span>}
-                    <button
-                      type="button"
-                      className="model-edit-key"
-                      onClick={(e) => handleEditProviderKey(m, e)}
-                      title={`Edit API key for ${m.split("/")[0]}`}
-                      aria-label={`Edit key for ${m.split("/")[0]}`}
-                    >
-                      <i className="fa-solid fa-pen"></i>
-                    </button>
-                    {recentModels.length > 1 && (
-                      <button
-                        type="button"
-                        className="model-remove"
-                        onClick={(e) => handleRemoveModel(m, e)}
-                        title={`Remove ${m} from recent models`}
-                        aria-label={`Remove ${m}`}
-                      >
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <div className="settings-sublabel">Custom</div>
-                <div className="model-input-row">
-                  <input
-                    className="model-input"
-                    type="text"
-                    placeholder="provider/model-name"
-                    value={customModelInput}
-                    onChange={(e) => { setCustomModelInput(e.target.value); setModelValidationError(null); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleCustomModelSubmit(); }}
-                    disabled={modelValidating}
-                  />
-                  <button className="model-input-btn" onClick={handleCustomModelSubmit} disabled={modelValidating || !customModelInput.trim()}>
-                    {modelValidating ? "..." : t("set")}
-                  </button>
-                </div>
-                {modelValidationError && <div className="model-error">{modelValidationError}</div>}
-                {authPromptProvider && (
-                  <div className="api-key-prompt">
-                    <div className="api-key-label">
-                      {customModelInput.trim() ? t("apiKeyFor") : t("replaceKeyFor")}
-                      <span className="api-key-provider">{authPromptProvider}</span>
-                    </div>
-                    <div className="model-input-row">
-                      <input
-                        className="model-input"
-                        type="password"
-                        placeholder={t("pasteKeyHint")}
-                        value={apiKeyInput}
-                        onChange={(e) => setApiKeyInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleSaveApiKey(); }}
-                        disabled={apiKeySaving}
-                        autoComplete="new-password"
-                        spellCheck={false}
-                        autoFocus
-                      />
-                      <button
-                        className="model-input-btn"
-                        onClick={handleSaveApiKey}
-                        disabled={apiKeySaving || !apiKeyInput.trim()}
-                      >
-                        {apiKeySaving ? "..." : t("save")}
-                      </button>
-                      <button
-                        className="model-input-btn model-input-btn-secondary"
-                        onClick={() => { setAuthPromptProvider(null); setApiKeyInput(""); setModelValidationError(null); }}
-                        disabled={apiKeySaving}
-                        title={t("cancel")}
-                      >
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
-                    </div>
-                    <div className="api-key-hint">
-                      {t("storedLocally")}
-                    </div>
-                  </div>
-                )}
+                <ModelSettings
+                  currentModel={currentModel}
+                  recentModels={recentModels}
+                  onSwitchModel={handleSwitchModel}
+                  onRemoveModel={handleRemoveModel}
+                  highlightAdd={highlightAddModel}
+                  t={t}
+                />
               </div>
             )}
           </div>
@@ -1293,20 +1197,43 @@ if (!data?.hasImage) {
             />
           </React.Suspense>
         )}
-        <ChatInput
-          ref={chatInputRef}
-          onSubmit={handleSubmit}
-          disabled={streaming || contextLoading}
-          lang={lang}
-          contextCaptured={contextCaptured}
-          onCapture={handleCaptureContext}
-          onRelease={handleReleaseContext}
-          actionsEnabled={actionsEnabled}
-          onToggleActions={handleToggleActionsEnabled}
-          autoGuideEnabled={autoGuideEnabled}
-          onToggleGuide={handleToggleAutoGuideEnabled}
-        />
-      </div>
+        {(() => {
+          const chatDisabled = currentProviderConnected === false;
+          return (
+            <>
+              {(chatDisabled || authBanner) && (
+                <div className={`conn-banner${authBanner ? " conn-banner-err" : ""}`}>
+                  <div className="conn-banner-msg">
+                    <i className={`fa-solid ${authBanner ? "fa-triangle-exclamation" : "fa-plug-circle-exclamation"}`}></i>
+                    {authBanner ? authBanner.message : t("modelNeedsKey")}
+                  </div>
+                  <button
+                    type="button"
+                    className="conn-banner-btn"
+                    onClick={openSettingsModel}
+                  >
+                    {authBanner ? t("fixInSettings") : t("setUpBtn")}
+                  </button>
+                </div>
+              )}
+              <ChatInput
+                ref={chatInputRef}
+                onSubmit={handleSubmit}
+                disabled={streaming || contextLoading || chatDisabled}
+                disabledPlaceholder={chatDisabled ? t("connectToStart") : undefined}
+                lang={lang}
+                contextCaptured={contextCaptured}
+                onCapture={handleCaptureContext}
+                onRelease={handleReleaseContext}
+                actionsEnabled={actionsEnabled}
+                onToggleActions={handleToggleActionsEnabled}
+                autoGuideEnabled={autoGuideEnabled}
+                onToggleGuide={handleToggleAutoGuideEnabled}
+              />
+            </>
+          );
+        })(        )}
+        </div>
       </div>
       {copyToast && (
         <div className="copy-toast">
