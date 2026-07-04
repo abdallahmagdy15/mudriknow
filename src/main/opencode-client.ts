@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as os from "os";
 import { log } from "./logger";
 import { buildCleanOpenCodeEnv } from "../shared/providers";
+import { extractErrorMessage } from "../shared/error-classifier";
 import { debugLog } from "./debug-timing";
 
 export interface OpenCodeEvent {
@@ -490,7 +491,13 @@ export class OpenCodeClient {
             // line so future debugging has SOMETHING to look at.
             if (event.type === "error") {
               lastErrorEvent = event;
-              if (!event.error?.message) {
+              // A real error event means the run failed. Mark errorOccurred
+              // so the close handler resolves (error already surfaced via
+              // onEvent) instead of rejecting with a misleading "exit:N"
+              // that would overwrite the real provider error.
+              errorOccurred = true;
+              const extracted = extractErrorMessage(event.error);
+              if (!extracted) {
                 log(`OpenCode error event with no message — raw line: ${trimmed.slice(0, 500)}`);
               }
             }
@@ -560,7 +567,7 @@ export class OpenCodeClient {
           log(`Process was killed by user/timeout — skipping silent-failure diagnostic`);
         } else if (!textWasStreamed && !errorOccurred && (code === 0 || code === null)) {
           const stderrTail = stderrBuf.trim().slice(-800);
-          const errorMsgFromEvent = lastErrorEvent?.error?.message;
+          const errorMsgFromEvent = extractErrorMessage(lastErrorEvent?.error);
           let diagnostic: string;
           // Lead with the MOST COMMON cause: transient provider issue.
           // OpenCode internally retries 5xx / network errors; if it

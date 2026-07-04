@@ -67,9 +67,14 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
   getRecentChats: () => ipcRenderer.invoke("get-recent-chats"),
   stopResponse: () => ipcRenderer.send("stop-response"),
   validateModel: (model: string) => ipcRenderer.invoke("validate-model", model),
-  saveApiKey: (provider: string, key: string) =>
-    ipcRenderer.invoke("save-api-key", provider, key),
+  saveApiKey: (provider: string, key: string, verify?: boolean) =>
+    ipcRenderer.invoke("save-api-key", provider, key, verify),
   removeModel: (modelId: string) => ipcRenderer.invoke("remove-model", modelId),
+  // Model-connection UX — wrap OpenCode's own provider/auth/model machinery.
+  listProviders: () => ipcRenderer.invoke("list-providers"),
+  listModels: (providerId: string) => ipcRenderer.invoke("list-models", providerId),
+  verifyKey: (providerId: string, key: string) => ipcRenderer.invoke("verify-key", providerId, key),
+  removeApiKey: (providerId: string) => ipcRenderer.invoke("remove-api-key", providerId),
   onCursorPos: (cb: (pos: { x: number; y: number }) => void) =>
     ipcRenderer.on("cursor-pos", (_e, pos) => cb(pos)),
   guideUserChoice: (option: string) =>

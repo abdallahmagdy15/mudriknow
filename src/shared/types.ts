@@ -166,6 +166,11 @@ export interface Config {
    *  bash tool. Enforced by OpenCode pattern permissions (before execution)
    *  + kill-switch operator/prefix filter. Off by default — user opts in. */
   readOnlyCommandsEnabled: boolean;
+  /** True once the user has completed the first-run model setup wizard (or
+   *  skipped it with the free default). Gates whether the wizard auto-shows
+   *  on launch. Pre-existing installs are treated as configured (migrated
+   *  true in config-store). */
+  hasConfiguredModel: boolean;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -187,6 +192,7 @@ export const DEFAULT_CONFIG: Config = {
   restoreSessionOnActivate: false,
   autoGuideEnabled: true,
   readOnlyCommandsEnabled: true,
+  hasConfiguredModel: false,
 };
 
 export interface WindowInfo {
@@ -249,6 +255,13 @@ export const IPC = {
   VALIDATE_MODEL: "validate-model",
   SAVE_API_KEY: "save-api-key",
   REMOVE_MODEL: "remove-model",
+  // Model-connection UX (Phase A). These wrap OpenCode's own provider/auth/
+  // model machinery + the models.dev catalog so MudrikNow doesn't maintain a
+  // parallel provider model.
+  LIST_PROVIDERS: "list-providers",
+  LIST_MODELS: "list-models",
+  VERIFY_KEY: "verify-key",
+  REMOVE_API_KEY: "remove-api-key",
   CURSOR_POS: "cursor-pos",
   REMOVE_SCREENSHOT: "remove-screenshot",
   GUIDE_USER_CHOICE: "guide-user-choice",
@@ -264,4 +277,62 @@ export interface RecentChat {
   id: string;
   title: string;
   created: number;
+}
+
+// ── Model-connection UX types ──────────────────────────────────────────────
+
+/** Where a provider's credential was detected, if at all. */
+export type CredentialSource = "auth.json" | "env" | "none";
+
+/** A provider row in the provider chooser, with live auth status. */
+export interface ProviderStatus {
+  id: string;
+  name: string;
+  logoUrl: string;
+  keyUrl: string;
+  /** True when an API key for this provider is present (auth.json or env). */
+  authenticated: boolean;
+  source: CredentialSource;
+  /** True for free hosted providers that need no user-supplied key. */
+  free: boolean;
+}
+
+/** A model row in the model picker. Metadata comes from `opencode models
+ *  --verbose` when available, else from the catalog snapshot. */
+export interface ModelDisplay {
+  /** Full id in `provider/model` form. */
+  id: string;
+  /** Human-readable display name. */
+  name: string;
+  provider: string;
+  /** Accepts image/PDF attachments. */
+  attachment: boolean;
+  /** Supports reasoning/thinking output. */
+  reasoning: boolean;
+  /** Supports tool calls. */
+  toolCall: boolean;
+  /** Optional cost per 1M tokens (USD). */
+  cost?: { input: number; output: number };
+  /** Optional context window in tokens. */
+  contextLimit?: number;
+  /** True when this entry came from the catalog fallback rather than a live
+   *  `opencode models` call (i.e. the provider may not be connected yet). */
+  authRequired: boolean;
+}
+
+/** Result of a real pre-flight key verification (see VERIFY_KEY). */
+export interface VerifyResult {
+  ok: boolean;
+  category?: string;
+  message?: string;
+}
+
+/** Structured error payload sent on STREAM_ERROR so the renderer can render
+ *  category-aware recovery affordances (e.g. "Fix in Settings" for auth). */
+export interface StreamErrorPayload {
+  category: string;
+  message: string;
+  /** Provider id when the error could be attributed to the current model's provider. */
+  provider?: string;
+  recoveryAction: string;
 }
