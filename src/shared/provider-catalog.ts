@@ -97,10 +97,13 @@ export function pickTestModel(providerId: string, catalog: Catalog): string | un
   return `${p.id}/${cheap || ids[0]}`;
 }
 
-/** Provider ids in popularity order, for pinning to the top of the chooser. */
+/** Provider ids in popularity order, for pinning to the top of the chooser.
+ *  NVIDIA leads — it offers a generous, genuinely-usable free tier for every
+ *  user, so the setup wizard recommends it as the default first connection. */
 export const POPULAR_PROVIDER_IDS: readonly string[] = [
-  "opencode", "ollama-cloud", "anthropic", "openai", "google", "deepseek",
-  "openrouter", "groq", "mistral", "xai", "kimi-for-coding", "cerebras",
+  "nvidia", "anthropic", "openai", "google", "deepseek", "openrouter",
+  "groq", "mistral", "xai", "kimi-for-coding", "cerebras",
+  "opencode", "ollama-cloud",
 ];
 
 /** Free providers that need no API key from the user — the wizard skips the

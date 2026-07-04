@@ -32,8 +32,8 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
     ipcRenderer.on("stream-text-reset", () => cb()),
   onStreamDone: (cb: () => void) =>
     ipcRenderer.on("stream-done", () => cb()),
-  onStreamError: (cb: (err: string) => void) =>
-    ipcRenderer.on("stream-error", (_e, err) => cb(err)),
+  onStreamError: (cb: (payload: any) => void) =>
+    ipcRenderer.on("stream-error", (_e, payload) => cb(payload)),
   onToolUse: (cb: (event: any) => void) =>
     ipcRenderer.on("tool-use", (_e, event) => cb(event)),
   onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) =>

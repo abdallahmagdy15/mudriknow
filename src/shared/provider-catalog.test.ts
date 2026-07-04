@@ -73,8 +73,8 @@ describe("provider-catalog - helpers", () => {
     expect(providerDisplayName("mystery-provider")).toBe("mystery-provider");
   });
 
-  it("POPULAR_PROVIDER_IDS leads with the free hosted providers", () => {
-    expect(POPULAR_PROVIDER_IDS[0]).toBe("opencode");
+  it("POPULAR_PROVIDER_IDS leads with NVIDIA (recommended generous free tier)", () => {
+    expect(POPULAR_PROVIDER_IDS[0]).toBe("nvidia");
     expect(POPULAR_PROVIDER_IDS).toContain("anthropic");
   });
 });

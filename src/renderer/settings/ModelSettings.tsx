@@ -9,6 +9,8 @@ interface Props {
   recentModels: string[];
   onSwitchModel: (model: string) => void;
   onRemoveModel: (model: string) => void;
+  /** Briefly true to pulse the "Add a model" button (banner/health-check nudge). */
+  highlightAdd?: boolean;
   t: (key: any) => string;
 }
 
@@ -24,7 +26,7 @@ type View = "recent" | "providers" | "keycard" | "models" | "manage";
  * status dots on the recent-models list. The App parent only supplies the
  * current model, the recent list, and switch/remove callbacks.
  */
-export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRemoveModel, t }: Props) {
+export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRemoveModel, highlightAdd, t }: Props) {
   const [view, setView] = useState<View>("recent");
   const [providers, setProviders] = useState<ProviderStatus[] | null>(null);
   const [providersLoading, setProvidersLoading] = useState(false);
@@ -76,7 +78,7 @@ export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRem
 
   const pickProvider = (p: ProviderStatus) => {
     setSel(p);
-    if (p.free || p.authenticated) {
+    if (p.authenticated) {
       void openModels(p.id);
     } else {
       setKeycardFrom("providers");
@@ -123,7 +125,7 @@ export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRem
             {recentModels.map((m) => {
               const pid = m.split("/")[0];
               const st = authMap[pid];
-              const ok = st ? st.free || st.authenticated : false;
+              const ok = st ? st.authenticated : false;
               return (
                 <div
                   key={m}
@@ -163,7 +165,7 @@ export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRem
               );
             })}
           </div>
-          <button type="button" className="ms-add" onClick={() => { void fetchProviders(); setView("providers"); }}>
+          <button type="button" className={`ms-add${highlightAdd ? " highlight" : ""}`} onClick={() => { void fetchProviders(); setView("providers"); }}>
             <i className="fa-solid fa-plus"></i> {t("addModel")}
           </button>
         </>
@@ -204,8 +206,8 @@ export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRem
           </button>
           <div className="settings-sublabel">{t("manageProvider")} · {sel.name}</div>
           <div className="manage-status">
-            <span className={`status-dot ${sel.free || sel.authenticated ? "dot-ok" : "dot-needs"}`}></span>
-            {sel.free ? t("free") : sel.authenticated ? t("connected") : t("needsKey")}
+            <span className={`status-dot ${sel.authenticated ? "dot-ok" : "dot-needs"}`}></span>
+            {sel.authenticated ? t("connected") : t("needsKey")}
           </div>
           <div className="manage-actions">
             <button type="button" className="manage-action" onClick={() => void openModels(sel.id)}>

@@ -21,7 +21,7 @@ declare global {
       onStreamToken: (cb: (token: string) => void) => void;
       onStreamTextReset: (cb: () => void) => void;
       onStreamDone: (cb: () => void) => void;
-      onStreamError: (cb: (err: string) => void) => void;
+      onStreamError: (cb: (payload: any) => void) => void;
       onToolUse: (cb: (event: any) => void) => void;
       onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) => void;
       executeAction: (action: any) => void;
@@ -114,6 +114,13 @@ export function App() {
   const [actionsEnabled, setActionsEnabled] = useState(true);
   const [currentModel, setCurrentModel] = useState("ollama-cloud/gemini-3-flash-preview");
   const [recentModels, setRecentModels] = useState<string[]>(["ollama-cloud/gemini-3-flash-preview"]);
+  // Stage C: model-connection UX state.
+  const [hasConfiguredModel, setHasConfiguredModel] = useState(false);
+  const [currentProviderConnected, setCurrentProviderConnected] = useState<boolean | null>(null);
+  const [authBanner, setAuthBanner] = useState<{ category: string; message: string; provider?: string } | null>(null);
+  /** Briefly true after opening settings via the banner/health-check — pulses
+   *  the "Add a model" button so the user's eye lands on the next action. */
+  const [highlightAddModel, setHighlightAddModel] = useState(false);
   // Collapsible settings groups. Model + Hotkeys default closed (rarely touched
   // once configured); Appearance + Behavior default open (quick tweaks).
   const [openSections, setOpenSections] = useState<{ model: boolean; hotkeys: boolean; appearance: boolean; behavior: boolean }>({
@@ -125,6 +132,23 @@ export function App() {
   const toggleSection = useCallback((key: keyof typeof openSections) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
+
+  /** Fetch the current model's provider auth status from the main process.
+   *  Drives the chat banner + the "chat disabled until connected" gate. */
+  const refreshConnectionState = useCallback(async (model?: string): Promise<boolean> => {
+    const m = model || currentModel;
+    try {
+      const providers = await window.hoverbuddy.listProviders();
+      const pid = m.split("/")[0];
+      const me = (providers || []).find((p: any) => p.id === pid);
+      const connected = !!(me && me.authenticated);
+      setCurrentProviderConnected(connected);
+      return connected;
+    } catch {
+      setCurrentProviderConnected(null);
+      return false;
+    }
+  }, [currentModel]);
   const [restoringSession, setRestoringSession] = useState(false);
   const [hotkeyPointer, setHotkeyPointer] = useState("Alt+Space");
   const [hotkeyArea, setHotkeyArea] = useState("CommandOrControl+Space");
@@ -192,6 +216,13 @@ export function App() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [settingsOpen]);
+
+  // When settings closes, re-check the current provider's connection — the
+  // user may have just saved/removed a key, which flips the banner + the
+  // chat-disabled gate.
+  useEffect(() => {
+    if (!settingsOpen) void refreshConnectionState();
+  }, [settingsOpen, refreshConnectionState]);
 
   // Close recent chats popup on click outside
   useEffect(() => {
@@ -303,10 +334,19 @@ export function App() {
       });
     });
 
-    window.hoverbuddy.onStreamError((err) => {
-      console.log(`[RENDERER] Stream error: ${err}`);
+    window.hoverbuddy.onStreamError((raw) => {
+      // STREAM_ERROR now carries a structured payload {category, message,
+      // provider?, recoveryAction}. Auth/quota errors also raise the chat
+      // banner so the user gets a one-click "Fix in Settings" path.
+      const p = (raw && typeof raw === "object" && "message" in raw)
+        ? raw as { category: string; message: string; provider?: string; recoveryAction: string }
+        : { category: "UNKNOWN", message: typeof raw === "string" ? raw : "", recoveryAction: "none" };
+      console.log(`[RENDERER] Stream error (${p.category}): ${p.message}`);
       setStreaming(false);
-      setError(typeof err === "string" && err.length < MAX_INLINE_ERROR_LEN ? err : t("somethingWentWrong"));
+      setError(p.message || t("somethingWentWrong"));
+      if (p.recoveryAction === "openSettingsModel") {
+        setAuthBanner({ category: p.category, message: p.message, provider: p.provider });
+      }
     });
 
     window.hoverbuddy.onActionResult((result) => {
@@ -430,7 +470,15 @@ if (!data?.hasImage) {
         // Legacy config field — no longer used; ignore.
       }
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
+      if (cfg?.hasConfiguredModel !== undefined) setHasConfiguredModel(cfg.hasConfiguredModel);
       configLoadedRef.current = true;
+      // R4 health check: if first-run or the current model's provider isn't
+      // connected, open the setup wizard so the user is never left in a
+      // "can't send" state without guidance.
+      const configured = !!cfg?.hasConfiguredModel;
+      void refreshConnectionState(cfg.model).then((connected) => {
+        if (!configured || !connected) openSettingsModel();
+      });
     });
   }, []);
 
@@ -497,6 +545,13 @@ if (!data?.hasImage) {
 
   const handleSubmit = useCallback((prompt: string) => {
     console.log(`[RENDERER] Submit prompt: "${prompt}"`);
+    // Defense guard: if the current provider isn't connected, route to the
+    // wizard instead of sending (the chat input is also disabled in this case).
+    if (currentProviderConnected === false) {
+      openSettingsModel();
+      return;
+    }
+    setAuthBanner(null);
     // During an active guide step, user's typed text is a custom guide
     // choice (they chose "Something else…" to type freely). Route through
     // guideUserChoice so the guide controller handles the recapture.
@@ -515,13 +570,14 @@ if (!data?.hasImage) {
     setActionResults([]);
     setScreenshotAttached(false);
     window.hoverbuddy.sendPrompt(prompt);
-  }, [screenshotAttached]);
+  }, [screenshotAttached, currentProviderConnected]);
 
   const handleRetry = useCallback(() => {
     const prompt = lastPromptRef.current;
     if (!prompt || streaming) return;
     console.log(`[RENDERER] Retry: re-sending "${prompt}"`);
     setError(null);
+    setAuthBanner(null);
     setCurrentResponse("");
     setActionResults([]);
     setStreaming(true);
@@ -704,11 +760,18 @@ if (!data?.hasImage) {
   const handleSwitchModel = useCallback((model: string) => {
     console.log(`[RENDERER] Switching model to: ${model}`);
     setCurrentModel(model);
+    setAuthBanner(null);
+    // Manually picking a model (via settings) counts as completing setup.
+    if (!hasConfiguredModel) {
+      window.hoverbuddy.setConfig({ hasConfiguredModel: true });
+      setHasConfiguredModel(true);
+    }
     window.hoverbuddy.setConfig({ model }).then((cfg: any) => {
       if (cfg?.recentModels) setRecentModels(cfg.recentModels);
       if (cfg?.model) setCurrentModel(cfg.model);
+      void refreshConnectionState(cfg?.model || model);
     });
-  }, []);
+  }, [refreshConnectionState, hasConfiguredModel]);
 
   /**
    * Remove a model from the recent list. Main-process handler picks the
@@ -716,6 +779,18 @@ if (!data?.hasImage) {
    * The caller (ModelSettings) is responsible for guarding against emptying
    * the list and for stopping event propagation.
    */
+  /** Open settings expanded to the Model section + pulse the "Add a model"
+   *  button so the user's eye lands on the next action. Used by the banner
+   *  (Fix in Settings / Set up) and the first-run health check — replaces the
+   *  old standalone wizard, which just duplicated the settings flow. */
+  const openSettingsModel = useCallback(() => {
+    setAuthBanner(null);
+    setOpenSections((s) => ({ ...s, model: true }));
+    setSettingsOpen(true);
+    setHighlightAddModel(true);
+    setTimeout(() => setHighlightAddModel(false), 3200);
+  }, []);
+
   const handleRemoveModel = useCallback(async (modelToRemove: string) => {
     if (recentModels.length <= 1) return;
     const cfg = await window.hoverbuddy.removeModel(modelToRemove);
@@ -853,6 +928,7 @@ if (!data?.hasImage) {
                   recentModels={recentModels}
                   onSwitchModel={handleSwitchModel}
                   onRemoveModel={handleRemoveModel}
+                  highlightAdd={highlightAddModel}
                   t={t}
                 />
               </div>
@@ -1121,20 +1197,43 @@ if (!data?.hasImage) {
             />
           </React.Suspense>
         )}
-        <ChatInput
-          ref={chatInputRef}
-          onSubmit={handleSubmit}
-          disabled={streaming || contextLoading}
-          lang={lang}
-          contextCaptured={contextCaptured}
-          onCapture={handleCaptureContext}
-          onRelease={handleReleaseContext}
-          actionsEnabled={actionsEnabled}
-          onToggleActions={handleToggleActionsEnabled}
-          autoGuideEnabled={autoGuideEnabled}
-          onToggleGuide={handleToggleAutoGuideEnabled}
-        />
-      </div>
+        {(() => {
+          const chatDisabled = currentProviderConnected === false;
+          return (
+            <>
+              {(chatDisabled || authBanner) && (
+                <div className={`conn-banner${authBanner ? " conn-banner-err" : ""}`}>
+                  <div className="conn-banner-msg">
+                    <i className={`fa-solid ${authBanner ? "fa-triangle-exclamation" : "fa-plug-circle-exclamation"}`}></i>
+                    {authBanner ? authBanner.message : t("modelNeedsKey")}
+                  </div>
+                  <button
+                    type="button"
+                    className="conn-banner-btn"
+                    onClick={openSettingsModel}
+                  >
+                    {authBanner ? t("fixInSettings") : t("setUpBtn")}
+                  </button>
+                </div>
+              )}
+              <ChatInput
+                ref={chatInputRef}
+                onSubmit={handleSubmit}
+                disabled={streaming || contextLoading || chatDisabled}
+                disabledPlaceholder={chatDisabled ? t("connectToStart") : undefined}
+                lang={lang}
+                contextCaptured={contextCaptured}
+                onCapture={handleCaptureContext}
+                onRelease={handleReleaseContext}
+                actionsEnabled={actionsEnabled}
+                onToggleActions={handleToggleActionsEnabled}
+                autoGuideEnabled={autoGuideEnabled}
+                onToggleGuide={handleToggleAutoGuideEnabled}
+              />
+            </>
+          );
+        })(        )}
+        </div>
       </div>
       {copyToast && (
         <div className="copy-toast">

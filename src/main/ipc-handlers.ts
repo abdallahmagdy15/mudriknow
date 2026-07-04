@@ -1510,7 +1510,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         timeoutFired = true;
         log(`TIMEOUT: No AI activity for ${IDLE_TIMEOUT_MS / 1000}s — killing process`);
         client.kill();
-        win.webContents.send(IPC.STREAM_ERROR, `AI hasn't responded in ${IDLE_TIMEOUT_MS / 60000} minutes. Likely a transient provider issue — please try sending again.`);
+        emitStreamError(win, { category: "UNKNOWN", message: `AI hasn't responded in ${IDLE_TIMEOUT_MS / 60000} minutes. Likely a transient provider issue — please try sending again.`, recoveryAction: "retry" });
       }, IDLE_TIMEOUT_MS);
     };
     const stopIdleTimer = () => {
@@ -1583,7 +1583,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
           log("No text received — but client already surfaced a specific error, skipping generic fallback");
         } else {
           log("No text received — sending friendly error");
-          win.webContents.send(IPC.STREAM_ERROR, "No response was received from the AI. Please try again — if this keeps happening, restart MudrikNow.");
+          emitStreamError(win, { category: "UNKNOWN", message: "No response was received from the AI. Please try again — if this keeps happening, restart MudrikNow.", recoveryAction: "retry" });
         }
         return;
       }
@@ -1653,9 +1653,9 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       log(`ERROR from OpenCode: ${msg}`);
       if (msg.startsWith("exit:")) {
         const code = msg.replace("exit:", "");
-        win.webContents.send(IPC.STREAM_ERROR, `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart MudrikNow.`);
+        emitStreamError(win, { category: "UNKNOWN", message: `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart MudrikNow.`, recoveryAction: "retry" });
       } else {
-        win.webContents.send(IPC.STREAM_ERROR, msg.length > 120 ? "Something went wrong. Please try again." : msg);
+        emitStreamError(win, { category: "UNKNOWN", message: msg.length > 120 ? "Something went wrong. Please try again." : msg, recoveryAction: "retry" });
       }
     }
   });
@@ -2271,6 +2271,15 @@ function execOpenCode(bin: string, cliArgs: string[], options: any): Promise<str
   });
 }
 
+/** Send a structured STREAM_ERROR so the renderer can render category-aware
+ *  recovery (auth → "Fix in Settings" banner; transient → retry button). */
+function emitStreamError(
+  win: BrowserWindow,
+  payload: { category: string; message: string; recoveryAction: string; provider?: string },
+): void {
+  win.webContents.send(IPC.STREAM_ERROR, payload);
+}
+
 function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {
   switch (event.type) {
     case "step_start":
@@ -2346,7 +2355,13 @@ function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {
       const raw = extractErrorMessage(event.error);
       const classified = classifyError(raw);
       log(`OpenCode error (${classified.category}): ${raw || "(no message)"}`);
-      win.webContents.send(IPC.STREAM_ERROR, raw ? classified.message : "The AI couldn't respond to this message. Please try again.");
+      const provider = appConfig.model ? appConfig.model.split("/")[0] : undefined;
+      emitStreamError(win, {
+        category: classified.category,
+        message: raw ? classified.message : "The AI couldn't respond to this message. Please try again.",
+        recoveryAction: classified.recoveryAction,
+        provider,
+      });
       break;
     }
 

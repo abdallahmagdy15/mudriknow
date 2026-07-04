@@ -70,7 +70,7 @@ export function ProviderPicker({ providers, loading, onPick, onEditKey, t }: Pro
               }}
             />
             <span className="provider-row-name">{p.name}</span>
-            {p.authenticated && !p.free && (
+            {p.authenticated && (
               <button
                 type="button"
                 className="provider-edit-key"
@@ -81,8 +81,8 @@ export function ProviderPicker({ providers, loading, onPick, onEditKey, t }: Pro
                 <i className="fa-solid fa-key"></i>
               </button>
             )}
-            <span className={`status-badge ${p.free ? "badge-free" : p.authenticated ? "badge-ok" : "badge-needs"}`}>
-              {p.free ? t("free") : p.authenticated ? t("connected") : t("needsKey")}
+            <span className={`status-badge ${p.authenticated ? "badge-ok" : "badge-needs"}`}>
+              {p.authenticated ? t("connected") : t("needsKey")}
             </span>
           </button>
         ))}
