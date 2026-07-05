@@ -4,6 +4,16 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-07-05
+
+### Fixed
+- **Read-only queries (system status, etc.) no longer false-positive blocked.** The bash kill-switch's raw-line scan was matching blocked operators (`;` `&` `|` `>` `<`) anywhere in the JSON event line — including the tool's **output**. Commands like `systeminfo` and `tasklist` print output that legitimately contains `;`, which killed the session mid-answer. The scan now extracts and checks **only the command-input value**, so legitimate single commands work while genuinely chained/pipe/redirected commands are still blocked. (Regression test added from a real failing session.)
+- **Blocked-action errors are now clear.** A kill-switch termination surfaces as *"The AI tried to run a command that isn't allowed in read-only mode. Try rephrasing your request."* instead of the generic *"Something went wrong"*, and no longer emits a duplicate error.
+
+### Changed
+- **Logs now land in `mudriknow/mudriknow.log`** (matching the rebrand) instead of the legacy `mudrik/hoverbuddy.log`; stale logs in the old `mudrik/` and `hoverbuddy/` dirs are cleaned up.
+- **More sessions retained** (30, was 5) by the startup cleanup.
+
 ## [2.1.0] - 2026-07-05
 
 ### Added
@@ -342,6 +352,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[2.1.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.15.0...v2.0.0
 [1.11.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.10.0...v1.11.0
