@@ -18,6 +18,7 @@ export type ErrorCategory =
   | "MODEL_NOT_FOUND"
   | "NETWORK"
   | "PROVIDER_DOWN"
+  | "BLOCKED"
   | "INCONCLUSIVE"
   | "UNKNOWN";
 
@@ -62,6 +63,14 @@ export function extractErrorMessage(error: unknown): string {
 
 // Ordered from most specific to least. The first matching rule wins.
 const RULES: Rule[] = [
+  {
+    // Kill-switch terminated the session (the AI tried a blocked tool/operator
+    // in read-only mode). Surfaced as a clear, actionable message rather than
+    // a generic "something went wrong".
+    category: "BLOCKED",
+    test: includes("blocked:", "session terminated for safety", "blocked operator", "read-only mode"),
+    message: "The AI tried to run a command that isn't allowed in read-only mode. Try rephrasing your request.",
+  },
   {
     category: "AUTH_MISSING",
     // OpenCode emits "Provider not found: <p>" when the provider has no
@@ -126,6 +135,7 @@ const RECOVERY: Record<ErrorCategory, RecoveryAction> = {
   RATE_LIMIT: "retry",
   NETWORK: "retry",
   PROVIDER_DOWN: "retry",
+  BLOCKED: "retry",
   INCONCLUSIVE: "none",
   UNKNOWN: "none",
 };
@@ -138,6 +148,7 @@ const FRIENDLY: Record<ErrorCategory, string> = {
   RATE_LIMIT: "Rate limit hit. Wait a moment and try again.",
   NETWORK: "Couldn't reach the provider. Check your connection.",
   PROVIDER_DOWN: "The provider seems to be having trouble right now.",
+  BLOCKED: "The AI tried to run a command that isn't allowed in read-only mode. Try rephrasing your request.",
   INCONCLUSIVE: "Couldn't confirm the connection. You can save the key and try sending a message.",
   UNKNOWN: "Something went wrong.",
 };

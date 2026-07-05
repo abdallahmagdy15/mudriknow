@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { OpenCodeClient } from "./opencode-client";
+import { OpenCodeClient, detectDisallowedBashCommand, _testDetectDisallowedBashInRawLine } from "./opencode-client";
 import * as childProcess from "child_process";
 import * as providers from "../shared/providers";
 
@@ -204,5 +204,36 @@ describe("OpenCodeClient", () => {
     if (errorHandler) errorHandler(new Error("ENOENT"));
 
     await expect(promise).rejects.toThrow("ENOENT");
+  });
+});
+
+describe("read-only bash kill-switch", () => {
+  it("blocks a genuinely chained command (operator in the command input)", () => {
+    expect(detectDisallowedBashCommand("Get-Process; Get-Service")).toMatch(/blocked operator ";"/);
+    expect(detectDisallowedBashCommand("cmd1 | cmd2")).toMatch(/blocked operator "\|"/);
+    expect(detectDisallowedBashCommand("whoami > out.txt")).toMatch(/blocked operator ">"/);
+  });
+
+  it("allows single read-only commands", () => {
+    expect(detectDisallowedBashCommand("systeminfo")).toBeNull();
+    expect(detectDisallowedBashCommand("Get-CimInstance Win32_OperatingSystem")).toBeNull();
+    expect(detectDisallowedBashCommand("git status")).toBeNull();
+  });
+
+  it("raw-line scan does NOT false-positive on operators in tool OUTPUT (systeminfo regression)", () => {
+    // Real shape: a tool result event line contains "bash", the command, AND
+    // an output field whose text contains ";". The whole-line scan used to
+    // block this; the fix scans only the command value.
+    const resultLine = `{"type":"tool_use","part":{"tool":"bash","state":{"status":"completed","input":{"command":"systeminfo"},"output":"\\r\\nHost Name: SH28052025\\r\\nOS Name: Microsoft Windows; Version 10.0;"}}}`;
+    expect(_testDetectDisallowedBashInRawLine(resultLine, true)).toBeNull();
+  });
+
+  it("raw-line scan still blocks when the COMMAND itself chains", () => {
+    const callLine = `{"type":"tool_use","part":{"tool":"bash","state":{"status":"running","input":{"command":"Get-Process; Get-Service"}}}}`;
+    expect(_testDetectDisallowedBashInRawLine(callLine, true)).toMatch(/blocked operator ";"/);
+  });
+
+  it("raw-line scan is inert when read-only commands are disabled", () => {
+    expect(_testDetectDisallowedBashInRawLine('{"tool":"bash","command":"a; b"}', false)).toBeNull();
   });
 });

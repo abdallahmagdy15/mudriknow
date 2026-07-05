@@ -1655,7 +1655,10 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         const code = msg.replace("exit:", "");
         emitStreamError(win, { category: "UNKNOWN", message: `Oops! The AI engine crashed (exit code ${code}). Please try again — if this keeps happening, restart MudrikNow.`, recoveryAction: "retry" });
       } else {
-        emitStreamError(win, { category: "UNKNOWN", message: msg.length > 120 ? "Something went wrong. Please try again." : msg, recoveryAction: "retry" });
+        // Classify so a kill-switch block surfaces as "try rephrasing" (BLOCKED)
+        // instead of a generic "something went wrong".
+        const c = classifyError(msg);
+        emitStreamError(win, { category: c.category, message: c.message, recoveryAction: c.recoveryAction });
       }
     }
   });
@@ -2157,7 +2160,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
   cleanupOldSessions();
 }
 
-const MAX_SESSIONS = 5;
+const MAX_SESSIONS = 30;
 
 function cleanupOldSessions(): void {
   const opencodeBin = findOpenCodeBin();

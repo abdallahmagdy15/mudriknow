@@ -246,10 +246,15 @@ function detectDisallowedTool(event: OpenCodeEvent, readOnlyCommandsEnabled: boo
 }
 
 /**
- * Raw-line safety scan. If the JSON line contains a bash tool reference AND
- * a blocked operator character, kill immediately. This is a last-resort
- * catch for cases where the structured event doesn't expose the command
- * string at check time (race between event phases).
+ * Raw-line safety scan (last-resort backstop for the structured check).
+ *
+ * IMPORTANT: extract and inspect ONLY the bash command-input value — never the
+ * surrounding tool OUTPUT. Read-only commands like `systeminfo` / `tasklist`
+ * produce output that legitimately contains operators (e.g. ";" appears in
+ * Windows OS-info text), and scanning the whole raw line killed those
+ * legitimate queries on their own output. By checking just the command
+ * string we still catch a genuinely chained/pipe/redirected command while
+ * ignoring whatever the command prints.
  *
  * Only fires when readOnlyCommandsEnabled is true.
  */
@@ -258,14 +263,22 @@ function detectDisallowedBashInRawLine(line: string, readOnlyCommandsEnabled: bo
   // Quick check: must mention bash and a command field
   if (!line.includes('"bash"')) return null;
   if (!line.includes('"command"')) return null;
-  // Scan for blocked operators in the raw line
-  for (const op of BLOCKED_OPERATORS) {
-    if (line.includes(op)) {
-      return `bash:raw line contains blocked operator "${op}"`;
+  // Extract each "command":"..." value and check ONLY those for operators.
+  const re = /"command"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line)) !== null) {
+    let cmd = m[1];
+    try { cmd = JSON.parse('"' + m[1] + '"'); } catch { /* keep raw */ }
+    for (const op of BLOCKED_OPERATORS) {
+      if (cmd.includes(op)) {
+        return `bash:raw command contains blocked operator "${op}"`;
+      }
     }
   }
   return null;
 }
+/** Exported for unit tests (raw-line bash backstop). */
+export const _testDetectDisallowedBashInRawLine = detectDisallowedBashInRawLine;
 
 export class OpenCodeClient {
   private sessionId: string | null = null;
@@ -464,11 +477,16 @@ export class OpenCodeClient {
                 this.freshSession = true;
                 log("Session reset after bash block — next message starts fresh (prevents AI hallucinating from stale pre-block context)");
               }
-              onEvent({ type: "error", error: { message: msg, data: { blockedTool } } });
               try { proc.kill("SIGKILL"); } catch (e: any) { log(`kill failed: ${e.message}`); }
         this.activeProcess = null;
         debugLog("opencode:total", performance.now() - tSpawn);
               errorOccurred = true;
+              // Reject (don't resolve) so SEND_PROMPT's catch surfaces the
+              // block via a single classified STREAM_ERROR. We deliberately do
+              // NOT also emit via onEvent here — the rejection carries the
+              // reason and the catch classifies it (BLOCKED) so the user sees
+              // one clear "try rephrasing" message, not a duplicate generic
+              // "something went wrong".
               if (!resolved) {
                 resolved = true;
                 reject(new Error(msg));
