@@ -1382,7 +1382,48 @@ body {
   font-size: var(--font-size-base);
   line-height: 1.55;
   margin: 0;
+  /* Respect the per-message dir attribute (set in App.tsx from lang): in
+     Arabic the text aligns right; in English left. Without this, mixed
+     Arabic/English responses can render with the wrong alignment/order. */
+  text-align: start;
 }
+
+/* Per-message direction: a message whose content is mostly Arabic gets
+   dir="rtl" (detected in App.tsx), independently of the app language. Keep
+   code blocks / inline code LTR so snippets stay readable, and flip list +
+   blockquote indentation to the right for RTL messages. */
+.message-content[dir="rtl"].md pre,
+.message-content[dir="rtl"].md code {
+  direction: ltr;
+  text-align: left;
+}
+.message-content[dir="rtl"].md ul,
+.message-content[dir="rtl"].md ol { padding-left: 0; padding-right: 1.4em; }
+.message-content[dir="rtl"].md blockquote { border-left: none; border-right: 3px solid var(--border); padding-left: 0; padding-right: 10px; }
+
+/* Model variant selector in composer (separate group beside toggles) */
+.variant-group { position: relative; }
+.vg-btn span {
+  max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.variant-menu {
+  position: absolute; bottom: calc(100% + 5px); left: 0;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 3px;
+  box-shadow: var(--header-shadow); z-index: 10;
+  min-width: 90px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.variant-menu .vg-opt {
+  display: block; width: 100%;
+  padding: 4px 8px; background: none; border: none; border-radius: 3px;
+  color: var(--text); font-size: 11px; font-family: inherit; cursor: pointer;
+  text-align: left; text-transform: capitalize;
+}
+.variant-menu .vg-opt:hover { background: rgba(116, 153, 194, 0.12); }
+.variant-menu .vg-opt.sel { color: var(--cyan); font-weight: 600; }
+.app[dir="rtl"] .variant-menu { left: auto; right: 0; }
+.app[dir="rtl"] .variant-menu .vg-opt { text-align: right; }
 
 .response-error {
   display: flex;
@@ -2262,6 +2303,16 @@ body {
   font-size: 9px; color: var(--text-muted);
 }
 .model-row-meta .muted { opacity: 0.6; }
+.model-row-variants {
+  display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px;
+}
+.var-chip {
+  padding: 1px 6px; font-size: 9px; font-family: inherit; cursor: pointer;
+  background: var(--bg-inset); border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: 8px; text-transform: capitalize;
+  transition: all 0.12s var(--ease-out);
+}
+.var-chip:hover { border-color: var(--cyan); color: var(--cyan); }
 .tag-rec {
   margin-left: auto; color: var(--cyan); font-weight: 600;
   background: rgba(116, 153, 194, 0.14); padding: 0 5px; border-radius: 7px;

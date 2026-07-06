@@ -53,6 +53,7 @@ declare global {
       listModels: (providerId: string) => Promise<any[]>;
       verifyKey: (providerId: string, key: string) => Promise<{ ok: boolean; category?: string; message?: string }>;
       removeApiKey: (providerId: string) => Promise<{ ok: boolean; error?: string }>;
+      getModelEffortOptions: (modelId: string) => Promise<string[]>;
       onContextLoading: (cb: (loading: boolean) => void) => void;
       guideUserChoice: (option: string) => void;
       hidePanel: () => void;
@@ -91,6 +92,20 @@ interface ActionResultEntry {
  */
 const MAX_INLINE_ERROR_LEN = 120;
 
+/**
+ * Detect a message's reading direction from its CONTENT (not the app language).
+ * The AI may reply in Arabic or English regardless of the UI lang; each message
+ * should flip RTL/LTR based on which script dominates. Counts Arabic letters
+ * vs Latin letters — Arabic-majority → RTL. Code blocks naturally push Latin up,
+ * so a mostly-Arabic prose reply still wins as RTL.
+ */
+function detectTextDir(text: string): "rtl" | "ltr" {
+  if (!text) return "ltr";
+  const arabic = (text.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return arabic > latin ? "rtl" : "ltr";
+}
+
 export function App() {
   const [context, setContext] = useState<ContextPayload | null>(null);
   const [contextLoading, setContextLoading] = useState(false);
@@ -114,6 +129,10 @@ export function App() {
   const [actionsEnabled, setActionsEnabled] = useState(true);
   const [currentModel, setCurrentModel] = useState("ollama-cloud/gemini-3-flash-preview");
   const [recentModels, setRecentModels] = useState<string[]>(["ollama-cloud/gemini-3-flash-preview"]);
+  const [modelVariant, setModelVariant] = useState("");
+  /** Supported reasoning-effort variants for the current model (e.g. ["low","medium","high"]).
+   *  Empty → variant selector hidden. Fetched from the catalog on model switch. */
+  const [effortOptions, setEffortOptions] = useState<string[]>([]);
   // Stage C: model-connection UX state.
   const [hasConfiguredModel, setHasConfiguredModel] = useState(false);
   const [currentProviderConnected, setCurrentProviderConnected] = useState<boolean | null>(null);
@@ -471,6 +490,7 @@ if (!data?.hasImage) {
       }
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
       if (cfg?.hasConfiguredModel !== undefined) setHasConfiguredModel(cfg.hasConfiguredModel);
+      if (cfg?.modelVariant !== undefined) setModelVariant(cfg.modelVariant);
       configLoadedRef.current = true;
       // R4 health check: if first-run or the current model's provider isn't
       // connected, open the setup wizard so the user is never left in a
@@ -757,6 +777,23 @@ if (!data?.hasImage) {
     }
   }, []);
 
+  /** Fetch the supported reasoning-effort variants for the given model id.
+   *  If the model has none, the composer's variant selector is hidden. */
+  const refreshEffortOptions = useCallback(async (modelId: string) => {
+    try {
+      const opts = await window.hoverbuddy.getModelEffortOptions(modelId);
+      const arr = Array.isArray(opts) && opts.length ? opts : [];
+      setEffortOptions(arr);
+      // If the current variant isn't in the new set, reset to default.
+      if (arr.length && modelVariant && !arr.includes(modelVariant)) {
+        setModelVariant("");
+      }
+    } catch { setEffortOptions([]); }
+  }, [modelVariant]);
+
+  // Refresh the available variant buttons whenever the current model changes.
+  useEffect(() => { void refreshEffortOptions(currentModel); }, [currentModel, refreshEffortOptions]);
+
   const handleSwitchModel = useCallback((model: string) => {
     console.log(`[RENDERER] Switching model to: ${model}`);
     setCurrentModel(model);
@@ -789,6 +826,13 @@ if (!data?.hasImage) {
     setSettingsOpen(true);
     setHighlightAddModel(true);
     setTimeout(() => setHighlightAddModel(false), 3200);
+  }, []);
+
+  /** Persist the selected reasoning-effort variant for the current model.
+   *  Passed to OpenCode as `--variant` on the next send. */
+  const handleVariantChange = useCallback((newVariant: string) => {
+    setModelVariant(newVariant);
+    window.hoverbuddy.setConfig({ modelVariant: newVariant });
   }, []);
 
   const handleRemoveModel = useCallback(async (modelToRemove: string) => {
@@ -1129,7 +1173,10 @@ if (!data?.hasImage) {
                 </div>
               )}
             </div>
-            <div className={`message-content ${msg.role === "assistant" ? "md" : ""}`}>
+            <div
+              className={`message-content ${msg.role === "assistant" ? "md" : ""}`}
+              dir={detectTextDir(msg.content)}
+            >
               {msg.role === "assistant" ? renderSegments(msg.content, `m${i}`) : msg.content}
             </div>
             <MessageCopyButton
@@ -1149,7 +1196,7 @@ if (!data?.hasImage) {
         {currentResponse && (
           <div className="message message-assistant">
             <div className="message-role">{t("appTitle")}</div>
-            <div className="message-content md">{renderSegments(currentResponse, "streaming")}</div>
+            <div className="message-content md" dir={detectTextDir(currentResponse)}>{renderSegments(currentResponse, "streaming")}</div>
             {streaming && <span className="cursor-blink">|</span>}
             {streaming && <button className="btn-stop-inline" onClick={handleStopResponse}>{t("stop")}</button>}
           </div>
@@ -1229,6 +1276,9 @@ if (!data?.hasImage) {
                 onToggleActions={handleToggleActionsEnabled}
                 autoGuideEnabled={autoGuideEnabled}
                 onToggleGuide={handleToggleAutoGuideEnabled}
+                variant={modelVariant}
+                effortOptions={effortOptions}
+                onVariantChange={handleVariantChange}
               />
             </>
           );
