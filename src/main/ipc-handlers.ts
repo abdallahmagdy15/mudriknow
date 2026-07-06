@@ -5,7 +5,7 @@ import { buildSystemPrompt } from "../shared/prompts";
 import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames, envVarForProvider } from "../shared/providers";
 import { classifyError, extractErrorMessage } from "../shared/error-classifier";
 import {
-  getKeyUrl, getLogoUrl, isFreeProvider, providerDisplayName, envVarFromCatalog,
+  getKeyUrl, getLogoUrl, isFreeProvider, providerDisplayName, envVarFromCatalog, getEffortOptions,
 } from "../shared/provider-catalog";
 import { getCatalog } from "./catalog-store";
 import { verifyProviderKey } from "./key-verifier";
@@ -926,6 +926,9 @@ export function registerIpcHandlers(
       config.recentModels = updated;
       client.updateModel(newConfig.model);
     }
+    if (Object.prototype.hasOwnProperty.call(newConfig, "modelVariant")) {
+      client.updateModelVariant(newConfig.modelVariant || "");
+    }
     Object.assign(config, newConfig, { recentModels: config.recentModels });
     if (newConfig.workingDir) {
       const isolated = ensureIsolatedOpenCodeConfig(config.workingDir);
@@ -1185,6 +1188,7 @@ export function registerIpcHandlers(
         reasoning: mm.reasoning,
         toolCall: true,
         authRequired: true,
+        effortOptions: mm.effortOptions,
       }));
     };
 
@@ -1203,11 +1207,15 @@ export function registerIpcHandlers(
         const { execFile } = require("child_process");
         execFile(cmd, args, { env, encoding: "utf-8", timeout: 30000, maxBuffer: 5 * 1024 * 1024, cwd: appConfig.workingDir || os.homedir() }, (err: any, stdout: string) => err ? rej(err) : res(stdout));
       });
-      const parsed = parseVerboseModels(raw, pid);
+      let parsed = parseVerboseModels(raw, pid);
+      // Enrich with effort options from the catalog (verbose doesn't carry them).
+      for (const m of parsed) {
+        m.effortOptions = getEffortOptions(catalog, m.id);
+      }
       // If the provider isn't authenticated, opencode prints an error to
       // stderr and stdout is empty → fall back to catalog so the UI can show
       // models with an "auth required" nudge.
-      const models = parsed.length > 0 ? parsed : fallbackFromCatalog();
+      let models: ModelDisplay[] = parsed.length > 0 ? parsed : fallbackFromCatalog();
       modelsCache.set(pid, { at: Date.now(), models });
       return models;
     } catch (err: any) {
@@ -1230,6 +1238,17 @@ export function registerIpcHandlers(
     const workingDir = appConfig.workingDir || app.getPath("userData");
     const isolatedConfigDir = ensureIsolatedOpenCodeConfig(workingDir);
     return verifyProviderKey(providerId, key, catalog, workingDir, isolatedConfigDir);
+  });
+
+  /**
+   * Look up the supported reasoning-effort variants for a model id
+   * (`provider/model`) from the models.dev catalog. The composer variant picker
+   * uses this to decide whether to show + what options to list. Returns []
+   * when the model has no effort variants (picker hidden).
+   */
+  ipcMain.handle(IPC.GET_MODEL_EFFORT_OPTIONS, async (_e, modelId: string): Promise<string[]> => {
+    const catalog = await getCatalog();
+    return getEffortOptions(catalog, modelId || "") || [];
   });
 
   ipcMain.on(IPC.NEW_SESSION, () => {

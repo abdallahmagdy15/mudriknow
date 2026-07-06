@@ -100,7 +100,10 @@ export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRem
     else setView("recent");
   };
 
-  const pickModel = (modelId: string) => {
+  const pickModel = (modelId: string, variant?: string) => {
+    if (variant) {
+      window.hoverbuddy.setConfig({ modelVariant: variant });
+    }
     onSwitchModel(modelId);
     setView("recent");
   };

@@ -21,6 +21,10 @@ export interface CatalogModel {
   name: string;
   attachment: boolean;
   reasoning: boolean;
+  /** Supported reasoning-effort variants (e.g. ["low","medium","high"]),
+   *  from models.dev `reasoning_options[type=effort].values`. undefined when
+   *  the model has no effort variants. Drives the composer's variant picker. */
+  effortOptions?: string[];
 }
 export interface CatalogProvider {
   id: string;
@@ -119,4 +123,32 @@ export function isFreeProvider(providerId: string): boolean {
 export function providerDisplayName(providerId: string, catalog: Catalog = SNAPSHOT_CATALOG): string {
   const p = catalog[(providerId || "").toLowerCase()];
   return (p && p.name) || providerId;
+}
+
+/**
+ * Look up the supported reasoning-effort variants for a full model id
+ * (`provider/model`). Returns undefined when the model isn't in the catalog.
+ * If the model has explicit effort options (from reasoning_options) they're
+ * used; otherwise, if the model supports reasoning at all, a standard set
+ * `["low","medium","high"]` is returned so the variant picker is always
+ * available for reasoning models. Returns undefined for non-reasoning models.
+ */
+export function getEffortOptions(catalog: Catalog, fullModelId: string): string[] | undefined {
+  const slash = fullModelId.indexOf("/");
+  if (slash === -1) return undefined;
+  const pid = fullModelId.slice(0, slash).toLowerCase();
+  const mid = fullModelId.slice(slash + 1);
+  const p = catalog[pid];
+  if (!p) return undefined;
+  let m = p.models[mid];
+  if (!m) {
+    const key = Object.keys(p.models).find((k) => k.toLowerCase() === mid.toLowerCase());
+    if (key) m = p.models[key];
+  }
+  if (!m) return undefined;
+  // Explicit effort options (source: models.dev reasoning_options[type=effort].values).
+  if (Array.isArray(m.effortOptions) && m.effortOptions.length) return m.effortOptions;
+  // No explicit options, but the model supports reasoning → offer the standard set.
+  if (m.reasoning) return ["low", "medium", "high"];
+  return undefined;
 }

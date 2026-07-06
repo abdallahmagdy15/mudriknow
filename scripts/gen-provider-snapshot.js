@@ -24,11 +24,17 @@ for (const id of want) {
   let i = 0;
   for (const [mid, m] of Object.entries(p.models || {})) {
     if (i++ >= 10) break;
+    const ro = m.reasoning_options || [];
+    const effort = ro.find((r) => r && r.type === "effort");
+    const effortOptions = effort && Array.isArray(effort.values) && effort.values.length
+      ? effort.values.map(String)
+      : undefined;
     models[mid] = {
       id: m.id,
       name: m.name,
       attachment: !!m.attachment,
       reasoning: !!m.reasoning,
+      ...(effortOptions ? { effortOptions } : {}),
     };
   }
   out2[id] = { id: p.id, name: p.name, env: p.env || [], doc: p.doc || "", npm: p.npm || "", models };

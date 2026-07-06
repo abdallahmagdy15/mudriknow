@@ -300,6 +300,9 @@ export class OpenCodeClient {
   // Read live at event-inspection time so toggling the config flag takes
   // effect on the next message send.
   private readOnlyCommandsEnabled: boolean = false;
+  /** Reasoning-effort variant passed as `--variant` to OpenCode. Empty string
+   *  = provider default (no `--variant` arg). */
+  private modelVariant: string = "";
   // True when the active process was killed via `kill()` (user clicked
   // Stop, or the idle-timeout fired). The close handler uses this to
   // suppress the silent-failure diagnostic — surfacing "model
@@ -337,6 +340,13 @@ export class OpenCodeClient {
   updateReadOnlyCommands(enabled: boolean): void {
     this.readOnlyCommandsEnabled = enabled;
     log(`readOnlyCommandsEnabled updated: ${enabled}`);
+  }
+
+  /** Set the reasoning-effort variant for the current model. Takes effect on
+   *  the next message send. Pass "" to use the provider default. */
+  updateModelVariant(variant: string): void {
+    this.modelVariant = variant || "";
+    log(`Model variant updated: ${this.modelVariant || "(default)"}`);
   }
 
   resetSession(): void {
@@ -377,6 +387,10 @@ export class OpenCodeClient {
         "--model", this.model,
         "--agent", "readonly",
       ];
+
+      if (this.modelVariant) {
+        args.push("--variant", this.modelVariant);
+      }
 
       if (this.sessionId) {
         args.push("--session", this.sessionId);

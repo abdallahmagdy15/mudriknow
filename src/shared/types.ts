@@ -171,6 +171,10 @@ export interface Config {
    *  on launch. Pre-existing installs are treated as configured (migrated
    *  true in config-store). */
   hasConfiguredModel: boolean;
+  /** Selected reasoning-effort variant for the current model
+   *  (e.g. "low"/"medium"/"high"), or "" for the provider default. Passed to
+   *  OpenCode as `--variant`. Ignored by models without effort variants. */
+  modelVariant: string;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -193,6 +197,7 @@ export const DEFAULT_CONFIG: Config = {
   autoGuideEnabled: true,
   readOnlyCommandsEnabled: true,
   hasConfiguredModel: false,
+  modelVariant: "",
 };
 
 export interface WindowInfo {
@@ -262,6 +267,7 @@ export const IPC = {
   LIST_MODELS: "list-models",
   VERIFY_KEY: "verify-key",
   REMOVE_API_KEY: "remove-api-key",
+  GET_MODEL_EFFORT_OPTIONS: "get-model-effort-options",
   CURSOR_POS: "cursor-pos",
   REMOVE_SCREENSHOT: "remove-screenshot",
   GUIDE_USER_CHOICE: "guide-user-choice",
@@ -318,6 +324,9 @@ export interface ModelDisplay {
   /** True when this entry came from the catalog fallback rather than a live
    *  `opencode models` call (i.e. the provider may not be connected yet). */
   authRequired: boolean;
+  /** Supported reasoning-effort variants (e.g. ["low","medium","high"]),
+   *  sourced from the catalog. Empty / undefined = no variants. */
+  effortOptions?: string[];
 }
 
 /** Result of a real pre-flight key verification (see VERIFY_KEY). */

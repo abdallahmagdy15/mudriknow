@@ -76,6 +76,8 @@ const en = {
   // Model-connection UX (Stage B)
   addModel: "Add a model",
   loadMore: "Load more",
+  variant: "Variant",
+  defaultVariant: "Default",
   // Stage C: wizard + connection banner
   connectToStart: "Connect an AI to start chatting",
   setUpBtn: "Set up",
@@ -194,6 +196,8 @@ const ar: Record<Key, string> = {
   // Model-connection UX (Stage B)
   addModel: "أضف نموذجًا",
   loadMore: "تحميل المزيد",
+  variant: "البديل",
+  defaultVariant: "افتراضي",
   // Stage C: wizard + connection banner
   connectToStart: "اتصل بنموذج ذكاء اصطناعي لبدء الدردشة",
   setUpBtn: "إعداد",

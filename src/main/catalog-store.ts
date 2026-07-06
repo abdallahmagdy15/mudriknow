@@ -41,11 +41,20 @@ function normalise(raw: any): Catalog {
     if (p.models && typeof p.models === "object") {
       for (const [mid, m] of Object.entries(p.models) as [string, any]) {
         if (!m || typeof m !== "object") continue;
+        // Reasoning-effort variants (low/medium/high/...) from reasoning_options.
+        let effortOptions: string[] | undefined;
+        if (Array.isArray(m.reasoning_options)) {
+          const effort = m.reasoning_options.find((r: any) => r && r.type === "effort");
+          if (effort && Array.isArray(effort.values) && effort.values.length) {
+            effortOptions = effort.values.map(String);
+          }
+        }
         models[mid] = {
           id: m.id || mid,
           name: m.name || mid,
           attachment: !!m.attachment,
           reasoning: !!m.reasoning,
+          effortOptions,
         };
       }
     }

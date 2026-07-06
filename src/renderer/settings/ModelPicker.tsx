@@ -5,7 +5,9 @@ interface Props {
   providerId: string;
   models: ModelDisplay[] | null;
   loading: boolean;
-  onPick: (modelId: string) => void;
+  /** Called when a model is picked. An optional variant picks the reasoning
+   *  effort level (e.g. "low"/"medium"/"high") along with the model. */
+  onPick: (modelId: string, variant?: string) => void;
   t: (key: any) => string;
 }
 
@@ -70,6 +72,21 @@ export function ModelPicker({ providerId, models, loading, onPick, t }: Props) {
               )}
               {filtered.indexOf(m) === 0 && !m.authRequired && <span className="tag-rec">{t("recommended")}</span>}
             </div>
+            {m.effortOptions && m.effortOptions.length > 0 && !m.authRequired && (
+              <div className="model-row-variants">
+                {m.effortOptions.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className="var-chip"
+                    onClick={(e) => { e.stopPropagation(); onPick(m.id, v); }}
+                    title={v}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            )}
           </button>
         ))}
       </div>

@@ -75,6 +75,7 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
   listModels: (providerId: string) => ipcRenderer.invoke("list-models", providerId),
   verifyKey: (providerId: string, key: string) => ipcRenderer.invoke("verify-key", providerId, key),
   removeApiKey: (providerId: string) => ipcRenderer.invoke("remove-api-key", providerId),
+  getModelEffortOptions: (modelId: string) => ipcRenderer.invoke("get-model-effort-options", modelId),
   onCursorPos: (cb: (pos: { x: number; y: number }) => void) =>
     ipcRenderer.on("cursor-pos", (_e, pos) => cb(pos)),
   guideUserChoice: (option: string) =>
