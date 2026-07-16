@@ -3,6 +3,20 @@ import { ProviderStatus, ModelDisplay } from "@shared/types";
 import { ProviderPicker } from "./ProviderPicker";
 import { ModelPicker } from "./ModelPicker";
 import { ApiKeyCard } from "./ApiKeyCard";
+import { SNAPSHOT_CATALOG } from "@shared/provider-catalog";
+
+/** Quick check: does this model id support image input? Looks up the bundled
+ *  snapshot (25 popular providers). Returns false if unknown (not in snapshot). */
+function modelSupportsImages(fullModelId: string): boolean {
+  const slash = fullModelId.indexOf("/");
+  if (slash === -1) return false;
+  const pid = fullModelId.slice(0, slash).toLowerCase();
+  const mid = fullModelId.slice(slash + 1);
+  const p = SNAPSHOT_CATALOG[pid];
+  if (!p) return false;
+  const m = p.models[mid] || p.models[Object.keys(p.models).find((k) => k.toLowerCase() === mid.toLowerCase()) || ""];
+  return !!(m && m.attachment);
+}
 
 interface Props {
   currentModel: string;
@@ -139,8 +153,11 @@ export function ModelSettings({ currentModel, recentModels, onSwitchModel, onRem
                     className={`status-dot ${ok ? "dot-ok" : "dot-needs"}`}
                     title={ok ? t("connected") : t("needsKey")}
                   ></span>
-                  <span className="model-name">{m.split("/").pop()}</span>
-                  <span className="model-provider">{pid}</span>
+                <span className="model-name">{m.split("/").pop()}</span>
+                {modelSupportsImages(m) && (
+                  <i className="fa-solid fa-image model-img-icon" title={t("multimodalHint")}></i>
+                )}
+                <span className="model-provider">{pid}</span>
                   {m === currentModel && (
                     <span className="model-check"><i className="fa-solid fa-check"></i></span>
                   )}

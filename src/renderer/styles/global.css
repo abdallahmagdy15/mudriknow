@@ -569,6 +569,7 @@ body {
 }
 
 .model-name { font-weight: 500; }
+.model-img-icon { font-size: 10px; color: var(--cyan); margin-inline-start: 4px; }
 
 .model-provider {
   font-size: 10px;

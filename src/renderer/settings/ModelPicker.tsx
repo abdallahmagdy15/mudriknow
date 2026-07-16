@@ -75,7 +75,7 @@ export function ModelPicker({ providerId, models, loading, onPick, t }: Props) {
               ) : (
                 <span className="muted">—</span>
               )}
-              {filtered.indexOf(m) === 0 && !m.authRequired && <span className="tag-rec">{t("recommended")}</span>}
+                {m.attachment && !m.authRequired && <span className="tag-rec">{t("recommended")}</span>}
             </div>
             {m.effortOptions && m.effortOptions.length > 0 && !m.authRequired && (
               <div className="model-row-variants">
