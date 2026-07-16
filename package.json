@@ -1,6 +1,6 @@
 {
   "name": "mudriknow",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "MudrikNow — a Windows tray AI assistant that perceives the UI element under your cursor and acts on it via UI Automation.",
   "main": "dist/main.js",
   "scripts": {
