@@ -78,6 +78,7 @@ const en = {
   loadMore: "Load more",
   variant: "Variant",
   defaultVariant: "Default",
+  multimodalHint: "Models with image support give the best experience — MudrikNow sends screenshots for context.",
   // Stage C: wizard + connection banner
   connectToStart: "Connect an AI to start chatting",
   setUpBtn: "Set up",
@@ -198,6 +199,7 @@ const ar: Record<Key, string> = {
   loadMore: "تحميل المزيد",
   variant: "البديل",
   defaultVariant: "افتراضي",
+  multimodalHint: "النماذج التي تدعم الصور تمنح أفضل تجربة — مدرك يرسل لقطات شاشة للسياق.",
   // Stage C: wizard + connection banner
   connectToStart: "اتصل بنموذج ذكاء اصطناعي لبدء الدردشة",
   setUpBtn: "إعداد",

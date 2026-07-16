@@ -2286,6 +2286,14 @@ body {
   display: flex; align-items: center; gap: 5px;
   font-size: 10px; color: var(--gold); padding: 2px 2px;
 }
+.mp-multimodal-hint {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; color: var(--cyan); padding: 5px 8px;
+  background: rgba(116, 153, 194, 0.08);
+  border: 1px solid rgba(116, 153, 194, 0.2);
+  border-radius: var(--radius-xs); line-height: 1.4;
+}
+.mp-multimodal-hint i { flex-shrink: 0; }
 .model-list { display: flex; flex-direction: column; gap: 3px; max-height: 360px; overflow-y: auto; padding-right: 2px; }
 .model-row {
   display: flex; flex-direction: column; gap: 2px;

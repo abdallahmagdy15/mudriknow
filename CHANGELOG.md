@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - **Arabic RTL per-message.** AI responses now auto-detect their reading direction from content (Arabic-majority → RTL, Latin-majority → LTR), independently of the app language. Code blocks stay LTR inside RTL messages so snippets remain readable.
 - **Model variant selector.** A new ⚙ button in the composer (separate group, sliders icon) lets you pick a reasoning-effort variant (`low`/`medium`/`high`) for the current model — persisted through `Config.modelVariant` and passed to OpenCode as `--variant`. Appears for ALL reasoning models (explicit effort options from models.dev win; otherwise a standard set is offered). Variant chip tags in the model picker let you pick a model + variant in one click from ⚙ → Model.
+- **Multimodal recommendation.** The model picker now shows a "📷 image support" hint recommending multimodal models — MudrikNow captures screenshots for context, so a model that can see images gives the best experience.
 
 ## [2.1.1] - 2026-07-05
 

@@ -43,6 +43,11 @@ export function ModelPicker({ providerId, models, loading, onPick, t }: Props) {
       </div>
       {loading && <div className="pp-empty">{t("loadingDots")}</div>}
       {!loading && filtered.length === 0 && <div className="pp-empty">{t("noModels")}</div>}
+      {filtered.some((m) => m.attachment && !m.authRequired) && (
+        <div className="mp-multimodal-hint">
+          <i className="fa-solid fa-image"></i> {t("multimodalHint")}
+        </div>
+      )}
       {filtered.some((m) => m.authRequired) && (
         <div className="mp-auth-hint"><i className="fa-solid fa-lock"></i> {t("needsKey")}</div>
       )}
