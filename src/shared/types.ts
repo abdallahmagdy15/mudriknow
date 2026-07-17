@@ -167,9 +167,11 @@ export interface Config {
    *  + kill-switch operator/prefix filter. Off by default — user opts in. */
   readOnlyCommandsEnabled: boolean;
   /** True once the user has completed the first-run model setup wizard (or
-   *  skipped it with the free default). Gates whether the wizard auto-shows
-   *  on launch. Pre-existing installs are treated as configured (migrated
-   *  true in config-store). */
+   *  skipped it with the default model). Gates whether the wizard auto-shows
+   *  on launch. The fresh-install default is `google/gemini-3.1-flash-lite`
+   *  (multimodal, free AI Studio tier — requires a free Google API key, which
+   *  the wizard walks the user through). Pre-existing installs are treated as
+   *  configured (migrated true in config-store). */
   hasConfiguredModel: boolean;
   /** Selected reasoning-effort variant for the current model
    *  (e.g. "low"/"medium"/"high"), or "" for the provider default. Passed to
@@ -178,10 +180,10 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  model: "ollama-cloud/gemini-3-flash-preview",
+  model: "google/gemini-3.1-flash-lite",
   workingDir: "",
   actionsEnabled: false,
-  recentModels: ["ollama-cloud/gemini-3-flash-preview"],
+  recentModels: ["google/gemini-3.1-flash-lite"],
   apiKeys: {},
   hotkeyPointer: "Alt+Space",
   hotkeyArea: "CommandOrControl+Space",

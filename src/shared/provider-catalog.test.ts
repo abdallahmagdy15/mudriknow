@@ -73,8 +73,9 @@ describe("provider-catalog - helpers", () => {
     expect(providerDisplayName("mystery-provider")).toBe("mystery-provider");
   });
 
-  it("POPULAR_PROVIDER_IDS leads with NVIDIA (recommended generous free tier)", () => {
-    expect(POPULAR_PROVIDER_IDS[0]).toBe("nvidia");
+  it("POPULAR_PROVIDER_IDS leads with Google (default install model provider)", () => {
+    expect(POPULAR_PROVIDER_IDS[0]).toBe("google");
+    expect(POPULAR_PROVIDER_IDS).toContain("nvidia");
     expect(POPULAR_PROVIDER_IDS).toContain("anthropic");
   });
 });

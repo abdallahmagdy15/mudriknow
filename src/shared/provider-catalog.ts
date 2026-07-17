@@ -102,10 +102,10 @@ export function pickTestModel(providerId: string, catalog: Catalog): string | un
 }
 
 /** Provider ids in popularity order, for pinning to the top of the chooser.
- *  NVIDIA leads — it offers a generous, genuinely-usable free tier for every
- *  user, so the setup wizard recommends it as the default first connection. */
+ *  Google leads — the fresh-install default model is `google/gemini-3.1-flash-lite`
+ *  (multimodal, free AI Studio tier), so the setup wizard opens on it. */
 export const POPULAR_PROVIDER_IDS: readonly string[] = [
-  "nvidia", "anthropic", "openai", "google", "deepseek", "openrouter",
+  "google", "nvidia", "anthropic", "openai", "deepseek", "openrouter",
   "groq", "mistral", "xai", "kimi-for-coding", "cerebras",
   "opencode", "ollama-cloud",
 ];

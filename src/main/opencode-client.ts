@@ -311,7 +311,7 @@ export class OpenCodeClient {
   private killedByUser: boolean = false;
 
   constructor(
-    model: string = "ollama-cloud/gemini-3-flash-preview",
+    model: string = "google/gemini-3.1-flash-lite",
     workingDir?: string,
     apiKeys?: Record<string, string>,
     isolatedConfigDir?: string,

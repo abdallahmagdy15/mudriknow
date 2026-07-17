@@ -858,7 +858,7 @@ export function registerIpcHandlers(
   migrateIsolatedOpenCodeDataToDefault(workingDir);
   const allApiKeys = mergedApiKeys(config.apiKeys || {});
   client = new OpenCodeClient(
-    config.model || "ollama-cloud/gemini-3-flash-preview",
+    config.model || "google/gemini-3.1-flash-lite",
     workingDir,
     allApiKeys,
     isolatedOpenCodeConfig,
