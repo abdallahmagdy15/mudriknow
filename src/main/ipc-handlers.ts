@@ -2150,17 +2150,20 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       if (!opencodeBin) { log("getRecentChats: bin not found"); return []; }
       const cwd = config.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "5"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
+      const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "100"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
       const sessions = JSON.parse(listRaw);
       if (!Array.isArray(sessions) || sessions.length === 0) { log("getRecentChats: no sessions"); return []; }
       const ourSessions = sessions
         .filter((s: any) => s.directory === cwd)
         .sort((a: any, b: any) => b.updated - a.updated)
-        .slice(0, 5);
+        .slice(0, 100);
       if (ourSessions.length === 0) { log(`getRecentChats: no sessions for directory ${cwd}`); return []; }
       const result = ourSessions.map((s: any) => ({
         id: s.id,
-        title: (s.title && !s.title.startsWith("New session") ? s.title : new Date(s.created).toLocaleString()).slice(0, 42),
+        // Keep the real title separate from the date so the UI can render
+        // both. Empty string when the session has no meaningful title yet
+        // (OpenCode defaults to "New session" until the first message).
+        title: ((s.title && !s.title.startsWith("New session")) ? s.title : "").slice(0, 60),
         created: s.created,
       }));
       recentChatsCache = result;
@@ -2179,7 +2182,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
   cleanupOldSessions();
 }
 
-const MAX_SESSIONS = 30;
+const MAX_SESSIONS = 100;
 
 function cleanupOldSessions(): void {
   const opencodeBin = findOpenCodeBin();

@@ -217,7 +217,7 @@ body {
   position: absolute;
   top: 64px;
   right: 12px;
-  width: 260px;
+  width: 320px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -268,7 +268,7 @@ body {
 }
 
 .recent-chats-list {
-  max-height: 240px;
+  max-height: 340px;
   overflow-y: auto;
   padding: 4px;
 }
@@ -302,6 +302,39 @@ body {
 
 .recent-chat-title {
   font-weight: 500;
+  color: var(--text);
+}
+
+.recent-chat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.recent-chat-date {
+  font-size: 10px;
+  color: var(--text-subtle);
+  font-weight: 400;
+}
+
+.recent-chats-load-more {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 4px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.12s var(--ease-out);
+}
+
+.recent-chats-load-more:hover {
+  background: rgba(116, 153, 194, 0.08);
   color: var(--text);
 }
 

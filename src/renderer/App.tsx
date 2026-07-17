@@ -126,6 +126,7 @@ export function App() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [recentChats, setRecentChats] = useState<{ id: string; title: string; created: number }[]>([]);
   const [recentChatsLoading, setRecentChatsLoading] = useState(false);
+  const [recentChatsPage, setRecentChatsPage] = useState(1);
   const [actionsEnabled, setActionsEnabled] = useState(true);
   const [currentModel, setCurrentModel] = useState("ollama-cloud/gemini-3-flash-preview");
   const [recentModels, setRecentModels] = useState<string[]>(["ollama-cloud/gemini-3-flash-preview"]);
@@ -683,6 +684,7 @@ if (!data?.hasImage) {
     setRecentChatsOpen((prev) => {
       const opening = !prev;
       if (opening) {
+        setRecentChatsPage(1);
         setRecentChatsLoading(true);
         window.hoverbuddy.getRecentChats().then((chats) => {
           setRecentChats(chats);
@@ -927,16 +929,26 @@ if (!data?.hasImage) {
             ) : recentChats.length === 0 ? (
               <div className="recent-chats-empty">{t("noRecentChats")}</div>
             ) : (
-              recentChats.map((chat) => (
-                <button
-                  key={chat.id}
-                  className="recent-chat-item"
-                  onClick={() => handleRestoreChat(chat.id)}
-                >
-                  <span className="recent-chat-title">{chat.title}</span>
-                  <span className="recent-chat-arrow"><i className="fa-solid fa-chevron-right"></i></span>
-                </button>
-              ))
+              <>
+                {recentChats.slice(0, recentChatsPage * 10).map((chat) => (
+                  <button
+                    key={chat.id}
+                    className="recent-chat-item"
+                    onClick={() => handleRestoreChat(chat.id)}
+                  >
+                    <span className="recent-chat-content">
+                      <span className="recent-chat-title">{chat.title || t("newChat")}</span>
+                      <span className="recent-chat-date">{new Date(chat.created).toLocaleString()}</span>
+                    </span>
+                    <span className="recent-chat-arrow"><i className="fa-solid fa-chevron-right"></i></span>
+                  </button>
+                ))}
+                {recentChats.length > recentChatsPage * 10 && (
+                  <button className="recent-chats-load-more" onClick={() => setRecentChatsPage((p) => p + 1)}>
+                    {t("loadMore")}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
