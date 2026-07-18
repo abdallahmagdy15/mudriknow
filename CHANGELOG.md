@@ -4,6 +4,12 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.5] - 2026-07-17
+
+### Changed
+- **Fresh-install default model is now `google/gemini-3.1-flash-lite`** (was `ollama-cloud/gemini-3-flash-preview`). Gemini 3.1 Flash Lite is multimodal (image attachments) and reasoning-capable, on Google AI Studio's free tier (~500 req/day). The setup wizard now leads with Google so new users land on it and are walked through getting a free key.
+- Note: unlike the previous keyless default, the new default requires a free Google API key (pasted in the first-run wizard).
+
 ## [2.1.4] - 2026-07-17
 
 ### Added
@@ -374,6 +380,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[2.1.5]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.1...v2.1.2
