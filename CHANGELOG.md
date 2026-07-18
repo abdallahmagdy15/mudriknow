@@ -4,6 +4,11 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.6] - 2026-07-19
+
+### Removed
+- **`migrateLegacyConfig` removed.** The one-shot rebrand migration (`%APPDATA%\hoverbuddy\` → `%APPDATA%\mudriknow\`) has shipped since v1.9.0 and is no longer needed. Previously, any time `mudriknow\config.json` was absent (fresh install, manual reset, testing), the app silently resurrected stale pre-rebrand config from the legacy `hoverbuddy` folder — breaking first-run detection and model setup. Fresh installs now start truly fresh.
+
 ## [2.1.5] - 2026-07-17
 
 ### Changed
@@ -380,6 +385,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[2.1.6]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.2...v2.1.3
