@@ -845,7 +845,7 @@ if (!data?.hasImage) {
   }, [recentModels.length]);
 
   // msgKey disambiguates chips across messages — e.g. two separate replies
-  // can each have a <!--COPY:pwd--> chip without sharing highlight state.
+  // can each have a <!--COPY_BEGIN-->...<!--COPY_END--> chip without sharing highlight state.
   const renderSegments = useCallback((content: string, _msgKey: string) => {
     const segments = parseMessageContent(content);
     return segments.map((seg, i) => {
