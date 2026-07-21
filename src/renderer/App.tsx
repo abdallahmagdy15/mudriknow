@@ -5,6 +5,7 @@ import { ChatInput } from "./components/ChatInput";
 import { ResponseView } from "./components/ResponseView";
 import { Markdown } from "./components/Markdown";
 import { MessageCopyButton } from "./components/MessageCopyButton";
+import { CollapsibleBody } from "./components/CollapsibleBody";
 import { CopyIcon } from "./components/icons";
 import { parseMessageContent } from "./utils/message-content";
 import { ModelSettings } from "./settings/ModelSettings";
@@ -1185,12 +1186,14 @@ if (!data?.hasImage) {
                 </div>
               )}
             </div>
-            <div
-              className={`message-content ${msg.role === "assistant" ? "md" : ""}`}
-              dir={detectTextDir(msg.content)}
-            >
-              {msg.role === "assistant" ? renderSegments(msg.content, `m${i}`) : msg.content}
-            </div>
+            <CollapsibleBody showLabel={t("showMore")} hideLabel={t("showLess")}>
+              <div
+                className={`message-content ${msg.role === "assistant" ? "md" : ""}`}
+                dir={detectTextDir(msg.content)}
+              >
+                {msg.role === "assistant" ? renderSegments(msg.content, `m${i}`) : msg.content}
+              </div>
+            </CollapsibleBody>
             <MessageCopyButton
               content={msg.content}
               variant={msg.role === "assistant" ? "ai" : "user"}

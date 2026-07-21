@@ -1435,6 +1435,47 @@ body {
 .message-content[dir="rtl"].md ol { padding-left: 0; padding-right: 1.4em; }
 .message-content[dir="rtl"].md blockquote { border-left: none; border-right: 3px solid var(--border); padding-left: 0; padding-right: 10px; }
 
+/* ── Collapsible long message bodies ── */
+.collapsible-body {
+  position: relative;
+}
+.collapsible-body-inner {
+  overflow: hidden;
+  /* Smooth expand/collapse. transition on max-height animates between the
+     collapsed preview height and the measured full height (set inline). */
+  transition: max-height 0.25s var(--ease-out, ease-out);
+}
+.collapsible-body.is-collapsed .collapsible-body-inner::after {
+  /* Fade the clipped edge so the user can tell there is more below. */
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 32px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--bg-surface));
+}
+.collapsible-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-subtle);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s var(--ease-out, ease-out);
+}
+.collapsible-toggle:hover {
+  background: rgba(116, 153, 194, 0.08);
+  color: var(--text);
+  border-color: var(--accent, var(--border));
+}
+.collapsible-toggle i { font-size: 9px; }
+.app[dir="rtl"] .collapsible-toggle i { transform: scaleX(-1); }
+
 /* Model variant selector in composer (separate group beside toggles) */
 .variant-group { position: relative; }
 .vg-btn span {
