@@ -277,6 +277,7 @@ export const IPC = {
   CONTEXT_LOADING: "context-loading",
   GET_RECENT_CHATS: "get-recent-chats",
   TOGGLE_MAXIMIZE: "toggle-maximize",
+  RESIZE_PANEL: "resize-panel",
   ACRYLIC_STATE: "acrylic-state",
   OPEN_EXTERNAL: "open-external",
 } as const;

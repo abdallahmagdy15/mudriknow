@@ -1476,6 +1476,52 @@ body {
 /* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
 .app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
 
+/* ── Explicit resize grips (frameless panel; native gutter disabled) ──
+   The grips sit in the bottom + bottom-right where the floating composer's
+   12px margin leaves room, so they don't overlap the send button or the
+   message scrollbar (right edge). `touch-action: none` stops the browser
+   from hijacking the drag as a scroll/pan gesture. */
+.resize-grips {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+.resize-grip {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+  z-index: 9;
+}
+/* Bottom edge: thin strip along the bottom, full width minus the corner. */
+.resize-grip.rg-bottom {
+  left: 0;
+  right: 14px;
+  bottom: 0;
+  height: 7px;
+}
+/* Bottom-right corner handle: a small visible affordance (two diagonal
+   lines) so the user can find the resize grip without guessing. */
+.resize-grip.rg-corner {
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+}
+.resize-grip.rg-corner::before {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-ghost);
+  border-bottom: 2px solid var(--text-ghost);
+  opacity: 0.55;
+  transition: opacity 0.15s var(--ease-out);
+}
+.resize-grip.rg-corner:hover::before { opacity: 1; }
+
 /* Model variant selector in composer (separate group beside toggles) */
 .variant-group { position: relative; }
 .vg-btn span {

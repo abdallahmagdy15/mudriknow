@@ -243,14 +243,14 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
     hasShadow: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    // User-resizable. A frameless resizable window has an invisible
-    // ~6px edge-resize gutter on all sides â€” settings items that sit
-    // close to the right edge used to accidentally trigger a native
-    // edge-resize on long-click. We mitigate that with explicit
-    // min/max dimensions below + the header is a drag region, so the
-    // gutter is the only resize affordance. Final size is persisted
-    // via the `resize` / `close` handlers further down.
-    resizable: true,
+    // Window resize is handled by EXPLICIT grips rendered in the renderer
+    // (ResizeGrips.tsx — a bottom edge + bottom-right corner handle), NOT by
+    // the native Windows edge gutter. `resizable: false` removes the
+    // invisible ~6px native gutter on all sides that used to intercept
+    // scroll/clicks near the panel edges. The renderer drives resize via the
+    // RESIZE_PANEL IPC (clamped below in ipc-handlers to the min/max here);
+    // setBounds works regardless of the resizable flag.
+    resizable: false,
     minWidth: 320,
     minHeight: 360,
     maxWidth: 900,

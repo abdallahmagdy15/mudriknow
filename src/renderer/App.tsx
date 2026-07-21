@@ -6,6 +6,7 @@ import { ResponseView } from "./components/ResponseView";
 import { Markdown } from "./components/Markdown";
 import { MessageCopyButton } from "./components/MessageCopyButton";
 import { CollapsibleUserMessage } from "./components/CollapsibleUserMessage";
+import { ResizeGrips } from "./components/ResizeGrips";
 import { CopyIcon } from "./components/icons";
 import { parseMessageContent } from "./utils/message-content";
 import { ModelSettings } from "./settings/ModelSettings";
@@ -31,6 +32,7 @@ declare global {
       dismiss: () => void;
       minimize: () => void;
       toggleMaximize: () => void;
+  resizePanel: (width: number, height: number) => void;
       windowMove: (deltaX: number, deltaY: number) => void;
       newSession: () => void;
       onFocusInput: (cb: () => void) => void;
@@ -881,6 +883,7 @@ if (!data?.hasImage) {
 
   return (
     <div className="app" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <ResizeGrips />
       <div className="app-header">
         <div className="app-brand">
           <OwlMascot

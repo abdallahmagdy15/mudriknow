@@ -886,6 +886,20 @@ export function registerIpcHandlers(
     hidePanel();
   });
 
+  // Driven by the renderer's explicit resize grips (ResizeGrips.tsx). The
+  // panel is anchored top-left (cursor-first), so we keep x/y fixed and grow
+  // down/right. Clamp to the same min/max enforced on the BrowserWindow so
+  // the grips can't under/overshoot the layout. Width-only / height-only
+  // grips send the unchanged axis as-is.
+  ipcMain.on(IPC.RESIZE_PANEL, (_e, width: number, height: number) => {
+    const win = getPanelWindow();
+    if (!win || win.isDestroyed()) return;
+    const [x, y] = win.getPosition();
+    const w = Math.max(320, Math.min(900, Math.round(width)));
+    const h = Math.max(360, Math.round(height));
+    win.setBounds({ x, y, width: w, height: h });
+  });
+
   ipcMain.on(IPC.TOGGLE_MAXIMIZE, () => {
     const win = getPanelWindow();
     if (!win || win.isDestroyed()) return;
