@@ -43,7 +43,7 @@
   /* Inner-shadow color for collapsed message bodies. Subtle fade towards
      black in light mode, towards white in dark mode — reads as a soft
      recession indicating hidden content, not a hard line. */
-  --collapse-shadow: rgba(0, 0, 0, 0.28);
+  --collapse-shadow: rgba(0, 0, 0, 0.15);
 
   /* Syntax highlighting (light) */
   --syntax-text: #1a2530;
@@ -130,7 +130,7 @@
   --error: #b05050;
 
   /* Collapsed-body inner shadow: fade towards white in dark mode. */
-  --collapse-shadow: rgba(255, 255, 255, 0.22);
+  --collapse-shadow: rgba(255, 255, 255, 0.12);
 
   /* Syntax highlighting (dark) */
   --syntax-text: #d8e2eb;

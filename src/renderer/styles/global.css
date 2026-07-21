@@ -1450,7 +1450,11 @@ body {
    including its padding. Shadow color is theme-aware (--collapse-shadow):
    fades towards black in light mode, white in dark mode. */
 .message:has(.msg-clip.is-collapsed) {
-  box-shadow: inset 0 -30px 22px -16px var(--collapse-shadow);
+  /* When collapsed the clipped content should reach the bottom border with
+     no padding gap — the fade/dots sit right at the edge. Expanded messages
+     keep their normal padding (set on .message). */
+  padding-bottom: 0;
+  box-shadow: inset 0 -24px 18px -14px var(--collapse-shadow);
 }
 .message:has(.msg-clip.is-collapsed)::after {
   content: "⋯";
@@ -1462,6 +1466,12 @@ body {
   font-weight: 700;
   letter-spacing: 2px;
   pointer-events: none;
+  transition: opacity 0.15s var(--ease-out);
+}
+/* Hide the dots once the actions row is revealed on hover so they don't
+   overlap the copy/arrow buttons. */
+.message:has(.msg-clip.is-collapsed):hover::after {
+  opacity: 0;
 }
 /* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
 .app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
