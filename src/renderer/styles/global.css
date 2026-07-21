@@ -1445,16 +1445,18 @@ body {
 .msg-clip.is-collapsed {
   overflow: hidden;
 }
-/* Centered 3-dot indicator with a vertical fade covering the last visible
-   line — tells the user there is hidden content below. Fades to the user
-   message's own background (primary-faded) so it blends. */
-.msg-clip.is-collapsed::after {
+/* Inner shadow + centered 3-dot indicator live on the PARENT .message
+   container (not the inner clip), so the fade spans the full bubble
+   including its padding. Shadow color is theme-aware (--collapse-shadow):
+   fades towards black in light mode, white in dark mode. */
+.message:has(.msg-clip.is-collapsed) {
+  box-shadow: inset 0 -30px 22px -16px var(--collapse-shadow);
+}
+.message:has(.msg-clip.is-collapsed)::after {
   content: "⋯";
   position: absolute;
-  left: 0; right: 0; bottom: 0;
+  left: 0; right: 0; bottom: 2px;
   text-align: center;
-  padding: 22px 0 4px;
-  background: linear-gradient(to bottom, transparent, var(--primary-faded) 72%);
   color: var(--text-subtle);
   font-size: 14px;
   font-weight: 700;
@@ -1462,9 +1464,6 @@ body {
   pointer-events: none;
 }
 /* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
-.collapse-toggle {
-  /* inherits .copy-action sizing; just swaps the cursor hint */
-}
 .app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
 
 /* Model variant selector in composer (separate group beside toggles) */
