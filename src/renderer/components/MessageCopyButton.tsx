@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { getRawCopyText } from "../utils/message-content";
 import { CopyIcon, MarkdownIcon } from "./icons";
 
@@ -6,9 +6,12 @@ interface Props {
   content: string;
   variant: "ai" | "user";
   onCopy: (text: string, label: "text" | "md") => void;
+  /** Optional extra action rendered inside the actions row (e.g. a collapse
+   *  toggle), so it shares the same hover-reveal + row as the copy button. */
+  extraAction?: ReactNode;
 }
 
-export function MessageCopyButton({ content, variant, onCopy }: Props) {
+export function MessageCopyButton({ content, variant, onCopy, extraAction }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +48,7 @@ export function MessageCopyButton({ content, variant, onCopy }: Props) {
 
   return (
     <div className="message-actions" ref={containerRef}>
+      {extraAction}
       {variant === "ai" && (
         <div className="copy-split-wrap">
           <button className="copy-action" title="Copy" onClick={copyText}>

@@ -5,7 +5,7 @@ import { ChatInput } from "./components/ChatInput";
 import { ResponseView } from "./components/ResponseView";
 import { Markdown } from "./components/Markdown";
 import { MessageCopyButton } from "./components/MessageCopyButton";
-import { CollapsibleBody } from "./components/CollapsibleBody";
+import { CollapsibleUserMessage } from "./components/CollapsibleUserMessage";
 import { CopyIcon } from "./components/icons";
 import { parseMessageContent } from "./utils/message-content";
 import { ModelSettings } from "./settings/ModelSettings";
@@ -1186,19 +1186,26 @@ if (!data?.hasImage) {
                 </div>
               )}
             </div>
-            <CollapsibleBody showLabel={t("showMore")} hideLabel={t("showLess")}>
-              <div
-                className={`message-content ${msg.role === "assistant" ? "md" : ""}`}
-                dir={detectTextDir(msg.content)}
-              >
-                {msg.role === "assistant" ? renderSegments(msg.content, `m${i}`) : msg.content}
-              </div>
-            </CollapsibleBody>
-            <MessageCopyButton
-              content={msg.content}
-              variant={msg.role === "assistant" ? "ai" : "user"}
-              onCopy={(text, label) => copyToClipboard(text, label === "md" ? "Copied markdown" : "Copied text")}
-            />
+            {msg.role === "user" ? (
+              <CollapsibleUserMessage
+                content={msg.content}
+                onCopy={(text, label) => copyToClipboard(text, label === "md" ? "Copied markdown" : "Copied text")}
+              />
+            ) : (
+              <>
+                <div
+                  className="message-content md"
+                  dir={detectTextDir(msg.content)}
+                >
+                  {renderSegments(msg.content, `m${i}`)}
+                </div>
+                <MessageCopyButton
+                  content={msg.content}
+                  variant="ai"
+                  onCopy={(text, label) => copyToClipboard(text, label === "md" ? "Copied markdown" : "Copied text")}
+                />
+              </>
+            )}
             {streaming && !currentResponse && msg.role === "user" && i === messages.length - 1 && (
               <div className="loading-bar-container">
                 <div className="loading-bar" />

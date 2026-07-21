@@ -1435,46 +1435,37 @@ body {
 .message-content[dir="rtl"].md ol { padding-left: 0; padding-right: 1.4em; }
 .message-content[dir="rtl"].md blockquote { border-left: none; border-right: 3px solid var(--border); padding-left: 0; padding-right: 10px; }
 
-/* ── Collapsible long message bodies ── */
-.collapsible-body {
+/* ── Collapsible user message body ── */
+.msg-clip {
   position: relative;
+  /* Same fast ease as the actions-row hover reveal so expand/collapse
+     feels like the same gesture, not a separate slow animation. */
+  transition: max-height 0.15s var(--ease-out, ease-out);
 }
-.collapsible-body-inner {
+.msg-clip.is-collapsed {
   overflow: hidden;
-  /* Smooth expand/collapse. transition on max-height animates between the
-     collapsed preview height and the measured full height (set inline). */
-  transition: max-height 0.25s var(--ease-out, ease-out);
 }
-.collapsible-body.is-collapsed .collapsible-body-inner::after {
-  /* Fade the clipped edge so the user can tell there is more below. */
-  content: "";
+/* Centered 3-dot indicator with a vertical fade covering the last visible
+   line — tells the user there is hidden content below. Fades to the user
+   message's own background (primary-faded) so it blends. */
+.msg-clip.is-collapsed::after {
+  content: "⋯";
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 32px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--bg-surface));
-}
-.collapsible-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 3px 10px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  text-align: center;
+  padding: 22px 0 4px;
+  background: linear-gradient(to bottom, transparent, var(--primary-faded) 72%);
   color: var(--text-subtle);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s var(--ease-out, ease-out);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  pointer-events: none;
 }
-.collapsible-toggle:hover {
-  background: rgba(116, 153, 194, 0.08);
-  color: var(--text);
-  border-color: var(--accent, var(--border));
+/* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
+.collapse-toggle {
+  /* inherits .copy-action sizing; just swaps the cursor hint */
 }
-.collapsible-toggle i { font-size: 9px; }
-.app[dir="rtl"] .collapsible-toggle i { transform: scaleX(-1); }
+.app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
 
 /* Model variant selector in composer (separate group beside toggles) */
 .variant-group { position: relative; }
