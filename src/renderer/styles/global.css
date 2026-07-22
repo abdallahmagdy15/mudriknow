@@ -403,28 +403,6 @@ body {
   color: var(--text);
 }
 
-.settings-close {
-  background: none;
-  border: 1px solid transparent;
-  color: var(--text-ghost);
-  font-size: 15px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--radius-xs);
-  transition: all 0.15s var(--ease-out);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-inline-start: auto;
-  -webkit-app-region: no-drag;
-}
-
-.settings-close:hover {
-  color: var(--error);
-  border-color: rgba(196, 90, 90, 0.2);
-  background: rgba(196, 90, 90, 0.06);
-}
-
 .settings-panel-title {
   font-size: 15px;
   font-weight: 700;

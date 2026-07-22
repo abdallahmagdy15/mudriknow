@@ -964,9 +964,6 @@ if (!data?.hasImage) {
               <i className="fa-solid fa-arrow-left"></i>
             </button>
             <span className="settings-panel-title">Settings</span>
-            <button className="settings-close" onClick={() => { setSettingsOpen(false); window.hoverbuddy.dismiss(); }} title={t("close")}>
-              <i className="fa-solid fa-xmark"></i>
-            </button>
           </div>
           <div className="settings-panel-body">
           <div className={`settings-section ${openSections.model ? "open" : "closed"}`}>
