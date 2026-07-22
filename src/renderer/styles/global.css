@@ -30,14 +30,20 @@ body {
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
+/* Solid base color with a slight transparency (~20%) so the thumb stays
+   clearly visible against the light chat bg without looking heavy. */
 ::-webkit-scrollbar-thumb {
-  background: rgba(116, 153, 194, 0.2);
+  background: rgba(107, 127, 148, 0.8);
   border-radius: 3px;
-  border: 2px solid transparent;
-  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(116, 153, 194, 0.35);
+  background: rgba(90, 111, 128, 0.9);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(138, 160, 181, 0.8);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(154, 170, 191, 0.9);
 }
 
 .app {
@@ -1185,7 +1191,10 @@ body {
 
 .messages::-webkit-scrollbar { width: 6px; }
 .messages::-webkit-scrollbar-thumb {
-  background: rgba(116, 153, 194, 0.2); border-radius: 3px;
+  background: rgba(107, 127, 148, 0.8); border-radius: 3px;
+}
+[data-theme="dark"] .messages::-webkit-scrollbar-thumb {
+  background: rgba(138, 160, 181, 0.8);
 }
 
 .messages::before { content: none; }
