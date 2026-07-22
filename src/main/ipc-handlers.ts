@@ -886,6 +886,21 @@ export function registerIpcHandlers(
     hidePanel();
   });
 
+  // Real minimize to the Windows taskbar — NOT tray-hide. The panel normally
+  // runs skipTaskbar:true (floating overlay). To let the user click the
+  // taskbar to restore, we un-skip the taskbar so a button appears while
+  // minimized; the `restore` listener (wired in createWindow) flips it back
+  // to skipTaskbar:true so the panel returns to its tray-centric floating
+  // mode once focused again. Chat/session state is untouched (the window is
+  // minimized, not hidden/destroyed).
+  ipcMain.on(IPC.MINIMIZE_TO_TASKBAR, () => {
+    const win = getPanelWindow();
+    if (!win || win.isDestroyed()) return;
+    win.setSkipTaskbar(false);
+    win.minimize();
+    log("MINIMIZE_TO_TASKBAR: minimized to taskbar");
+  });
+
   // Driven by the renderer's explicit resize grips (ResizeGrips.tsx). The
   // panel is anchored top-left (cursor-first), so we keep x/y fixed and grow
   // down/right. Clamp to the same min/max enforced on the BrowserWindow so

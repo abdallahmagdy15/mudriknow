@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
   minimize: () => ipcRenderer.send("minimize"),
   toggleMaximize: () => ipcRenderer.send("toggle-maximize"),
   resizePanel: (width: number, height: number) => ipcRenderer.send("resize-panel", width, height),
+  minimizeToTaskbar: () => ipcRenderer.send("minimize-to-taskbar"),
   windowMove: (deltaX: number, deltaY: number) => ipcRenderer.send("window-move", deltaX, deltaY),
   newSession: () => ipcRenderer.send("new-session"),
   onFocusInput: (cb: () => void) =>

@@ -278,6 +278,7 @@ export const IPC = {
   GET_RECENT_CHATS: "get-recent-chats",
   TOGGLE_MAXIMIZE: "toggle-maximize",
   RESIZE_PANEL: "resize-panel",
+  MINIMIZE_TO_TASKBAR: "minimize-to-taskbar",
   ACRYLIC_STATE: "acrylic-state",
   OPEN_EXTERNAL: "open-external",
 } as const;

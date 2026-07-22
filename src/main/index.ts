@@ -284,7 +284,7 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
   const startCursorPolling = () => {
     if (cursorTimer) return;
     cursorTimer = setInterval(() => {
-      if (win.isDestroyed() || !win.isVisible()) return;
+      if (win.isDestroyed() || !win.isVisible() || win.isMinimized()) return;
       const pos = electronScreen.getCursorScreenPoint();
       win.webContents.send(IPC.CURSOR_POS, pos);
     }, 33);
@@ -298,6 +298,12 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
   win.on("show", startCursorPolling);
   win.on("hide", stopCursorPolling);
   win.on("close", stopCursorPolling);
+  // After a taskbar-minimize (MINIMIZE_TO_TASKBAR un-skips the taskbar so a
+  // restorable button appears), return the panel to its normal tray-centric
+  // floating mode (skipTaskbar:true) once the user restores it.
+  win.on("restore", () => {
+    try { win.setSkipTaskbar(true); } catch { /* window gone */ }
+  });
 
   log(`Loading index.html from ${path.join(__dirname, "index.html")}`);
   log(`dist dir contents: ${fs.readdirSync(path.join(__dirname)).join(", ")}`);

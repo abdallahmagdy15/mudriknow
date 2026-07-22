@@ -33,6 +33,7 @@ declare global {
       minimize: () => void;
       toggleMaximize: () => void;
   resizePanel: (width: number, height: number) => void;
+  minimizeToTaskbar: () => void;
       windowMove: (deltaX: number, deltaY: number) => void;
       newSession: () => void;
       onFocusInput: (cb: () => void) => void;
@@ -910,6 +911,9 @@ if (!data?.hasImage) {
           </button>
           <button className="btn-icon btn-settings" onClick={() => setSettingsOpen(!settingsOpen)} title={t("settings")}>
             <i className="fa-solid fa-gear"></i>
+          </button>
+          <button className="btn-icon btn-minimize" onClick={() => window.hoverbuddy.minimizeToTaskbar()} title={t("minimize")}>
+            <i className="fa-solid fa-window-minimize"></i>
           </button>
           <button className="btn-icon btn-maximize" onClick={handleToggleMaximize} title={isMaximized ? t("restore") : t("maximize")}>
             <i className={`fa-solid ${isMaximized ? "fa-window-restore" : "fa-window-maximize"}`}></i>
