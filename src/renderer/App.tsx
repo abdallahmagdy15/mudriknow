@@ -26,6 +26,7 @@ declare global {
       onStreamError: (cb: (payload: any) => void) => void;
       onToolUse: (cb: (event: any) => void) => void;
       onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) => void;
+  onScrollToLatest: (cb: () => void) => void;
       executeAction: (action: any) => void;
       onActionResult: (cb: (result: any) => void) => void;
       retryAction: (action: any) => void;
@@ -263,6 +264,7 @@ export function App() {
   const [fontSize, setFontSize] = useState(14);
   const [restoreSessionOnActivate, setRestoreSessionOnActivate] = useState(true);
   const [autoGuideEnabled, setAutoGuideEnabled] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [guideState, setGuideState] = useState<any | null>(null);
   // Mirror guideState into a ref so the main mount-effect's closures
   // (onContext, onStreamDone, etc.) can read the latest phase without
@@ -494,6 +496,7 @@ if (!data?.hasImage) {
         // Legacy config field — no longer used; ignore.
       }
       if (cfg?.autoGuideEnabled !== undefined) setAutoGuideEnabled(cfg.autoGuideEnabled);
+      if (cfg?.notificationsEnabled !== undefined) setNotificationsEnabled(cfg.notificationsEnabled);
       if (cfg?.hasConfiguredModel !== undefined) setHasConfiguredModel(cfg.hasConfiguredModel);
       if (cfg?.modelVariant !== undefined) setModelVariant(cfg.modelVariant);
       configLoadedRef.current = true;
@@ -544,6 +547,13 @@ if (!data?.hasImage) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, currentResponse, actionResults]);
+
+  // Toast-click (response-ready notification) → scroll to the fresh response.
+  useEffect(() => {
+    window.hoverbuddy.onScrollToLatest(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+  }, []);
 
   // Escape, captured at the window so focus state doesn't matter. Priority:
   //   1. Active guide (UI visible)  → cancel the guide
@@ -761,6 +771,12 @@ if (!data?.hasImage) {
     setAutoGuideEnabled(newVal);
     window.hoverbuddy.setConfig({ autoGuideEnabled: newVal });
   }, [autoGuideEnabled]);
+
+  const handleToggleNotifications = useCallback(() => {
+    const newVal = !notificationsEnabled;
+    setNotificationsEnabled(newVal);
+    window.hoverbuddy.setConfig({ notificationsEnabled: newVal });
+  }, [notificationsEnabled]);
 
   const handleSetTheme = useCallback((newTheme: "system" | "light" | "dark") => {
     setTheme(newTheme);
@@ -1111,6 +1127,12 @@ if (!data?.hasImage) {
                 <label className="settings-toggle" title={t("enableAutoGuideHint")}>
                   <span>{t("enableAutoGuide")}</span>
                   <div className={`toggle-switch ${autoGuideEnabled ? "on" : ""}`} onClick={handleToggleAutoGuideEnabled}>
+                    <div className="toggle-knob" />
+                  </div>
+                </label>
+                <label className="settings-toggle" title={t("enableNotificationsHint")}>
+                  <span>{t("enableNotifications")}</span>
+                  <div className={`toggle-switch ${notificationsEnabled ? "on" : ""}`} onClick={handleToggleNotifications}>
                     <div className="toggle-knob" />
                   </div>
                 </label>

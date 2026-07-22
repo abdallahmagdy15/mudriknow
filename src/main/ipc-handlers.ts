@@ -100,7 +100,7 @@ function writeOpenCodeAuth(provider: string, key: string | null): void {
  *  it; surfacing a generic error would be misleading). */
 let userStoppedCurrentResponse = false;
 import { executeAction, parseActionsFromResponse, ActionResult, setLastContextElement, validateAction, isInteractiveAction } from "./action-executor";
-import { showNotification } from "./tray";
+import { notifyResponseReady } from "./notifier";
 import { cleanupImage, captureAndOptimize } from "./vision";
 import { saveConfig, ensureIsolatedOpenCodeConfig, migrateIsolatedOpenCodeDataToDefault, ensureAgentInWorkingDir } from "./config-store";
 import { spawn } from "child_process";
@@ -2383,21 +2383,17 @@ function handleOpenCodeEvent(event: OpenCodeEvent, win: BrowserWindow): void {
     case "step_finish":
       log(`step_finish: reason=${event.part?.reason || "unknown"}`);
       if (event.part?.reason === "stop") {
-        if (!win.isVisible() && lastContext) {
-          // Don't auto-show during an active guide — the panel was likely
-          // hidden because the user is interacting with the underlying app
-          // for the current step, and re-showing here fires CONTEXT_READY
-          // which resets the renderer's chat state, making the user think a
-          // new conversation started. The guide controller manages its own
-          // visibility expectations via state updates.
-          if (guideIsActive()) {
-            log("Panel hidden during active guide — skipping auto-show");
-          } else {
-            log("Panel was hidden — auto-showing with last context");
-            showPanelFn?.(lastContext);
-          }
+        // Notify ONLY when the panel is not visible to the user — hidden to
+        // tray or minimized to taskbar. Never while visible. The toast
+        // replaces the old auto-show behaviour; clicking it restores the
+        // panel + scrolls to the response. notificationsEnabled is read
+        // live so a mid-session Settings toggle applies to the next one.
+        if ((!win.isVisible() || win.isMinimized()) && appConfig?.notificationsEnabled !== false) {
+          notifyResponseReady(win, fullResponseText, {
+            showPanel: () => { if (lastContext) showPanelFn?.(lastContext); },
+            scrollToLatest: () => { try { win.webContents.send(IPC.SCROLL_TO_LATEST); } catch { /* window gone */ } },
+          });
         }
-        showNotification("MudrikNow", "AI response is ready");
       }
       break;
 

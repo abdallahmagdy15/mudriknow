@@ -166,6 +166,11 @@ export interface Config {
    *  bash tool. Enforced by OpenCode pattern permissions (before execution)
    *  + kill-switch operator/prefix filter. Off by default — user opts in. */
   readOnlyCommandsEnabled: boolean;
+  /** When true, show a Windows toast notification when an AI response
+   *  finishes while the panel is hidden (tray) or minimized to the taskbar.
+   *  Never fires while the panel is visible. Read live at fire time, so a
+   *  mid-session toggle takes effect on the next notification. Default on. */
+  notificationsEnabled: boolean;
   /** True once the user has completed the first-run model setup wizard (or
    *  skipped it with the default model). Gates whether the wizard auto-shows
    *  on launch. The fresh-install default is `google/gemini-3.1-flash-lite`
@@ -198,6 +203,7 @@ export const DEFAULT_CONFIG: Config = {
   restoreSessionOnActivate: false,
   autoGuideEnabled: true,
   readOnlyCommandsEnabled: true,
+  notificationsEnabled: true,
   hasConfiguredModel: false,
   modelVariant: "",
 };
@@ -279,6 +285,7 @@ export const IPC = {
   TOGGLE_MAXIMIZE: "toggle-maximize",
   RESIZE_PANEL: "resize-panel",
   MINIMIZE_TO_TASKBAR: "minimize-to-taskbar",
+  SCROLL_TO_LATEST: "scroll-to-latest",
   ACRYLIC_STATE: "acrylic-state",
   OPEN_EXTERNAL: "open-external",
 } as const;

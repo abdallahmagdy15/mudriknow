@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
     ipcRenderer.on("tool-use", (_e, event) => cb(event)),
   onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) =>
     ipcRenderer.on("session-reset", (_e, data) => cb(data)),
+  onScrollToLatest: (cb: () => void) =>
+    ipcRenderer.on("scroll-to-latest", () => cb()),
   executeAction: (action: any) =>
     ipcRenderer.send("execute-action", action),
   onActionResult: (cb: (result: any) => void) =>

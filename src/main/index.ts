@@ -10,6 +10,7 @@ import { Config, DEFAULT_CONFIG, ContextPayload, IPC } from "../shared/types";
 import { registerIpcHandlers, setContext, setAreaContext, getLastContext, patchConfigPersistOnly, attachAutoScreenshot, setScreenshotMode } from "./ipc-handlers";
 import { startHotkeyListener, stopHotkeyListener, applyHotkeys } from "./hotkey";
 import { loadConfig, saveConfig, isFirstRun, ensureAgentInWorkingDir } from "./config-store";
+import { setToastAppId } from "./notifier";
 import { initUpdater, stopUpdater } from "./updater";
 import { readContextAtPoint } from "./context-reader";
 import { startAreaSelection } from "./area-selector";
@@ -24,6 +25,10 @@ import { showSplashScreen, closeSplashScreen } from "./splash/splash-window";
 import { showCaptureScreen, hideCaptureScreen } from "./guide/guide-overlay";
 
 const gotTheLock = app.requestSingleInstanceLock();
+// Set the AppUserModelID early so modern Windows toasts (response-ready
+// notifications) carry the right app identity + icon. Must run before any
+// Notification is created.
+setToastAppId();
 if (!gotTheLock) {
   app.quit();
 } else {
