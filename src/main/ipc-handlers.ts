@@ -910,7 +910,7 @@ export function registerIpcHandlers(
     const win = getPanelWindow();
     if (!win || win.isDestroyed()) return;
     const [x, y] = win.getPosition();
-    const w = Math.max(320, Math.min(900, Math.round(width)));
+    const w = Math.max(560, Math.min(900, Math.round(width)));
     const h = Math.max(360, Math.round(height));
     win.setBounds({ x, y, width: w, height: h });
   });

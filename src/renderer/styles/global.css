@@ -33,11 +33,11 @@ body {
 /* Solid base color with a slight transparency (~20%) so the thumb stays
    clearly visible against the light chat bg without looking heavy. */
 ::-webkit-scrollbar-thumb {
-  background: rgba(107, 127, 148, 0.8);
+  background: rgba(107, 127, 148, 0.6);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(90, 111, 128, 0.9);
+  background: rgba(90, 111, 128, 0.7);
 }
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
   background: rgba(138, 160, 181, 0.8);
@@ -1169,7 +1169,7 @@ body {
 
 .messages::-webkit-scrollbar { width: 6px; }
 .messages::-webkit-scrollbar-thumb {
-  background: rgba(107, 127, 148, 0.8); border-radius: 3px;
+  background: rgba(107, 127, 148, 0.6); border-radius: 3px;
 }
 [data-theme="dark"] .messages::-webkit-scrollbar-thumb {
   background: rgba(138, 160, 181, 0.8);
@@ -1759,6 +1759,11 @@ body {
   min-width: 0;
   flex-wrap: wrap;
 }
+/* All composer controls keep their natural width — none squish. The panel's
+   min-width (enforced in main) guarantees they fit on one row; this just
+   makes the flexbox degrade gracefully (buttons stay legible, only the
+   textarea flexes) rather than collapsing into a squished mess. */
+.composer-bar > *, .toggles > * { flex-shrink: 0; }
 
 /* Capture group — capture/recapture pill + release × sit tightly together,
    visually separated from the Act/Guide feature toggles by a hairline. */

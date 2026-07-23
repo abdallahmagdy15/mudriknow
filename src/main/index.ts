@@ -168,9 +168,9 @@ function calculatePanelPosition(cursorX: number, cursorY: number): { x: number; 
   const rightEdge = workArea.x + workArea.width;
   const bottomEdge = workArea.y + workArea.height;
 
-  // Panel size as percentage of display
-  const panelWidth = Math.round(workArea.width * 0.38);
-  const panelHeight = Math.round(workArea.height * 0.74);
+  // Panel size as percentage of display work area.
+  const panelWidth = Math.round(workArea.width * 0.43);
+  const panelHeight = Math.round(workArea.height * 0.80);
 
   const PADDING = 8;
   const halfWidth = workArea.width / 2;
@@ -256,7 +256,7 @@ function createWindow(cursorX: number, cursorY: number): BrowserWindow {
     // RESIZE_PANEL IPC (clamped below in ipc-handlers to the min/max here);
     // setBounds works regardless of the resizable flag.
     resizable: false,
-    minWidth: 320,
+    minWidth: 560,
     minHeight: 360,
     maxWidth: 900,
     show: false,
