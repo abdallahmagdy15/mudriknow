@@ -4,6 +4,21 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-07-23
+
+### Added
+- **Minimize-to-taskbar.** A real minimize button (header, beside maximize) sends the panel to the Windows taskbar — not tray-hide. Click the taskbar to reopen and continue the chat; session state preserved. Tray-hide remains a separate option.
+- **Windows toast notifications.** When an AI response finishes while the panel is hidden (tray) or minimized to taskbar, a concise toast appears with a short snippet. Never fires while the panel is visible. Click the toast to restore the panel and scroll to the response. Toggle in Settings → Behavior (default on); respects Windows Focus Assist.
+- **Explicit resize grips.** A bottom-edge + bottom-right corner handle replace the native edge gutter, so scrolling near the panel edges no longer triggers an accidental resize.
+
+### Changed
+- **Larger default panel + enforced minimum width.** The panel opens ~18% wider and ~8% taller; it can no longer be resized below 560px, so composer controls never overflow. CSS keeps buttons at their natural width (the textarea flexes) — no JS measurement.
+- **Settings header** now has only a back button (the × close button was removed); Esc / tray still dismiss the panel.
+- **Scrollbar** is clearer in light mode and slightly more transparent for a softer look.
+
+### Fixed
+- **Edge-drag scroll vs window-resize conflict** — the invisible native resize gutter no longer intercepts scrolls/clicks near the panel edges.
+
 ## [2.2.0] - 2026-07-21
 
 ### Added
@@ -394,6 +409,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[2.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.6...v2.2.0
 [2.1.6]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.5...v2.1.6
 [2.1.5]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.4...v2.1.5
