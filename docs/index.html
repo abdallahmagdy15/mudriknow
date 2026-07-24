@@ -1,364 +1,761 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<!doctype html>
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MudrikNow · Windows AI Assistant</title>
-  <meta name="description" content="Stop pasting screenshots into AI chats. MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task." />
-  <link rel="icon" type="image/png" href="assets/mascot.png" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MudrikNow — Windows AI Assistant</title>
+<meta name="description" content="MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.">
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://abdallahmagdy15.github.io/mudriknow/" />
+<link rel="icon" type="image/png" href="assets/mascot.png" />
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="MudrikNow · Windows AI Assistant" />
+<meta property="og:description" content="An open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task." />
+<meta property="og:url" content="https://abdallahmagdy15.github.io/mudriknow/" />
+<meta property="og:image" content="https://abdallahmagdy15.github.io/mudriknow/assets/mascot.png" />
+<meta property="og:site_name" content="MudrikNow" />
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="MudrikNow · Windows AI Assistant" />
+<meta name="twitter:description" content="An open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task." />
+<meta name="twitter:image" content="https://abdallahmagdy15.github.io/mudriknow/assets/mascot.png" />
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "MudrikNow",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "description": "An open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.",
+  "url": "https://abdallahmagdy15.github.io/mudriknow/",
+  "downloadUrl": "https://github.com/abdallahmagdy15/mudriknow/releases/latest",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://github.com/abdallahmagdy15/mudriknow/blob/master/LICENSE"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f8fb;
+    --card:#fdfeff;
+    --ink:#132530;
+    --ink-2:#5c7281;
+    --line:#dde8f0;
+    --accent:#d9820b;
+    --accent-strong:#f5a623;
+    --accent-soft:#fdf3dc;
+    --blue:#4e82ab;
+    --blue-soft:#e3eef7;
+    --pill:#ffffff;
+    --ok:#16a34a; --ok-bg:#e6f6ec;
+    --off:#dc2626; --off-bg:#fbeaea;
+    --amber:#c2740a; --amber-bg:#fdf1de;
+    --radius:20px;
+  }
+  [data-theme="dark"]{
+    --bg:#0d1720;
+    --card:#13202b;
+    --ink:#eef5fa;
+    --ink-2:#93a8b6;
+    --line:#1f303d;
+    --accent:#ffb22e;
+    --accent-strong:#ffb22e;
+    --accent-soft:#33270f;
+    --blue:#7fb2d9;
+    --blue-soft:#16283a;
+    --pill:#15232e;
+    --ok:#4ade80; --ok-bg:#122b1a;
+    --off:#f87171; --off-bg:#2f1414;
+    --amber:#fbbf24; --amber-bg:#2b2110;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif;
+    font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    transition:background .25s ease,color .25s ease;
+  }
+  html[lang="ar"] body{font-family:"IBM Plex Sans Arabic","Inter",system-ui,sans-serif}
+  html[lang="ar"] .mono,html[lang="ar"] .code,html[lang="ar"] kbd{font-family:"JetBrains Mono",ui-monospace,monospace}
+  html[lang="ar"] .dcard-body,html[lang="ar"] .dcard-body .chip{font-family:"IBM Plex Sans Arabic",sans-serif}
+  html[lang="ar"] h1,html[lang="ar"] h2,html[lang="ar"] .fcard h3,html[lang="ar"] .tstep h3{letter-spacing:0}
+  html[lang="ar"] .eyebrow,html[lang="ar"] .m-label,html[lang="ar"] .who,html[lang="ar"] .fcard h3 .cat{letter-spacing:0}
+  ::selection{background:var(--accent-strong);color:#241a04}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  main,footer{position:relative;z-index:1}
+
+  /* ---------------- mesh (top of page, flows behind nav) ---------------- */
+  .mesh{
+    position:absolute;top:0;left:0;right:0;height:880px;
+    z-index:0;pointer-events:none;overflow:hidden;
+  }
+  .mesh::before,.mesh::after{content:"";position:absolute;border-radius:50%;filter:blur(90px)}
+  .mesh::before{
+    width:660px;height:480px;left:6%;top:-180px;
+    background:radial-gradient(closest-side,rgba(255,204,112,.55),transparent);
+  }
+  .mesh::after{
+    width:740px;height:520px;right:2%;top:-140px;
+    background:radial-gradient(closest-side,rgba(158,203,240,.5),transparent);
+  }
+  [data-theme="dark"] .mesh::before{background:radial-gradient(closest-side,rgba(245,166,35,.15),transparent)}
+  [data-theme="dark"] .mesh::after{background:radial-gradient(closest-side,rgba(78,130,171,.18),transparent)}
+
+  /* ---------------- nav (glass bar) ---------------- */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(180deg,
+      color-mix(in srgb,var(--bg) 55%,transparent) 0%,
+      color-mix(in srgb,var(--bg) 22%,transparent) 100%);
+    backdrop-filter:blur(18px) saturate(1.5);
+    -webkit-backdrop-filter:blur(18px) saturate(1.5);
+    padding:12px 0;
+  }
+  .nav .wrap{display:flex;align-items:center;gap:14px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;letter-spacing:-.02em}
+  html[lang="ar"] .brand{letter-spacing:0}
+  .capsule{
+    margin:0 auto;display:flex;align-items:center;gap:4px;
+    background:color-mix(in srgb,var(--pill) 42%,transparent);
+    border:1px solid color-mix(in srgb,var(--line) 70%,transparent);
+    border-radius:999px;padding:5px;
+  }
+  .capsule a{
+    font-size:13.5px;font-weight:500;color:var(--ink-2);
+    padding:7px 14px;border-radius:999px;
+  }
+  .capsule a:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  .navright{display:flex;align-items:center;gap:8px}
+  .ghostbtn{
+    font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;
+    background:none;border:1px solid var(--line);color:var(--ink-2);
+    padding:7px 12px;border-radius:999px;
+  }
+  .ghostbtn:hover{color:var(--ink);border-color:var(--ink-2)}
+  .pillbtn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(180deg,#ffc44d,#f09a0a);color:#2b1d04;font-size:13.5px;font-weight:700;
+    padding:9px 18px;border-radius:999px;border:1px solid #e08c06;
+  }
+  .pillbtn:hover{filter:brightness(1.04)}
+
+  /* burger (animated) + mobile panel */
+  .burger{display:none}
+  .mpanel{display:none}
+  @media (max-width:880px){
+    .capsule{display:none}
+    .navright{margin-inline-start:auto}
+    .navright .themebtn,.navright .pillbtn{display:none}
+    .burger{
+      display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:5px;min-width:38px;min-height:38px;
+    }
+    .burger span{
+      display:block;width:16px;height:1.8px;border-radius:2px;background:currentColor;
+      transition:transform .28s ease;
+    }
+    .nav.open .burger span:first-child{transform:translateY(3.4px) rotate(45deg)}
+    .nav.open .burger span:last-child{transform:translateY(-3.4px) rotate(-45deg)}
+    .mpanel{
+      display:flex;flex-direction:column;
+      position:absolute;top:100%;left:0;right:0;
+      background:color-mix(in srgb,var(--bg) 94%,transparent);
+      backdrop-filter:blur(20px) saturate(1.5);
+      -webkit-backdrop-filter:blur(20px) saturate(1.5);
+      border-bottom:1px solid var(--line);
+      box-shadow:0 24px 40px -20px rgba(19,37,48,.18);
+      padding:10px 24px 20px;
+      opacity:0;transform:translateY(-10px);visibility:hidden;
+      transition:opacity .28s ease,transform .28s ease,visibility .28s;
+    }
+    .nav.open .mpanel{opacity:1;transform:none;visibility:visible}
+    .mpanel a.mlink{
+      font-size:16px;font-weight:500;padding:13px 2px;
+      border-bottom:1px solid var(--line);
+    }
+    .mpanel .mrow{display:flex;gap:10px;margin-top:16px}
+    .mpanel .mrow .pillbtn{flex:1;justify-content:center}
+    .mpanel .mrow .ghostbtn{flex:none}
+  }
+
+  /* ---------------- hero ---------------- */
+  .hero{padding:96px 0 90px;text-align:center}
+  .eyebrow{
+    font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:22px;
+  }
+  .hint{
+    display:inline-block;font-size:13px;color:var(--ink-2);
+    border:1px solid var(--line);background:var(--pill);
+    padding:7px 15px;border-radius:999px;margin-bottom:30px;
+  }
+  .hint b{color:var(--ink);font-weight:500}
+  h1{
+    font-size:clamp(46px,7.2vw,88px);
+    line-height:1.03;letter-spacing:-.045em;font-weight:800;
+  }
+  h1 .l2{
+    background:linear-gradient(100deg,#f7bd45,#e88a08);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    letter-spacing:-.045em;
+  }
+  html[lang="ar"] h1 .l2{letter-spacing:0}
+  .hero .sub{color:var(--ink-2);max-width:600px;margin:26px auto 36px;font-size:17px}
+  .cta{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:15px;font-weight:600;padding:14px 28px;border-radius:999px;
+    border:1px solid var(--ink);
+  }
+  .btn.solid{background:linear-gradient(180deg,#ffc44d,#f09a0a);color:#2b1d04;border-color:#e08c06}
+  .btn.solid:hover{filter:brightness(1.04)}
+  .btn.ghost{background:var(--pill);color:var(--ink);border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--ink-2)}
+  .hero .meta{margin-top:20px;font-size:13px;color:var(--ink-2)}
+
+  /* marquee */
+  .marquee-sec{padding:26px 0 10px;text-align:center}
+  .m-label{font-size:11.5px;font-weight:600;letter-spacing:.18em;color:var(--ink-2);text-transform:uppercase;margin-bottom:20px}
+  .marquee{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}
+  .mtrack{display:flex;gap:52px;width:max-content;animation:slide 30s linear infinite}
+  .mtrack span{
+    font-family:"JetBrains Mono",monospace;font-size:14.5px;color:var(--ink-2);
+    opacity:.75;white-space:nowrap;display:flex;align-items:center;gap:8px;
+  }
+  .mtrack span::before{content:"◆";font-size:8px;opacity:.5}
+  @keyframes slide{to{transform:translateX(-50%)}}
+
+  /* session diagram */
+  .diagram{padding:30px 0 100px}
+  .dwrap{max-width:760px;margin:0 auto;position:relative}
+  .dpill{
+    width:max-content;margin:0 auto 26px;
+    display:flex;align-items:center;gap:9px;
+    background:var(--pill);border:1px solid var(--line);border-radius:999px;
+    padding:9px 18px;font-size:13.5px;
+  }
+  .dpill .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .dcard{
+    background:var(--card);border:1.5px dashed color-mix(in srgb,var(--ink-2) 45%,transparent);
+    border-radius:var(--radius);padding:6px;
+    box-shadow:0 24px 60px -28px rgba(19,37,48,.2);
+  }
+  .dcard-in{background:var(--pill);border-radius:calc(var(--radius) - 6px);overflow:hidden}
+  .dcard-bar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:13px 18px;border-bottom:1px solid var(--line);font-size:13px;
+  }
+  .dcard-bar .grow{flex:1;color:var(--ink-2)}
+  .status{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:3px 11px;border-radius:999px}
+  .status i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+  .st-ok{color:var(--ok);background:var(--ok-bg)}
+  .st-off{color:var(--off);background:var(--off-bg)}
+  .st-amber{color:var(--amber);background:var(--amber-bg)}
+  .dcard-body{padding:20px 22px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:2;overflow-x:auto}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px}
+  .chip{
+    font-size:11.5px;border:1px solid var(--line);color:var(--ink-2);
+    padding:3px 10px;border-radius:999px;background:var(--card);
+  }
+  .you,.owl{display:flex;gap:10px;align-items:baseline}
+  .who{
+    font-size:10.5px;font-weight:700;letter-spacing:.08em;flex:none;
+    padding:1px 8px;border-radius:999px;
+  }
+  .you .who{background:var(--ink);color:var(--bg)}
+  .owl .who{background:var(--accent-soft);color:var(--accent)}
+  .dim{color:var(--ink-2)}
+  .caret{display:inline-block;width:8px;height:14px;background:var(--accent);vertical-align:-2px;animation:blink 1.1s steps(1) infinite;border-radius:2px}
+  @keyframes blink{50%{opacity:0}}
+
+  /* sections */
+  section{padding:100px 0}
+  .shead{text-align:center;max-width:680px;margin:0 auto 60px}
+  .shead .eyebrow{margin-bottom:14px}
+  h2{font-size:clamp(32px,4.6vw,52px);line-height:1.08;letter-spacing:-.04em;font-weight:800}
+  .shead p{color:var(--ink-2);margin-top:16px;font-size:16.5px}
+
+  /* install timeline */
+  .timeline{max-width:720px;margin:0 auto;position:relative}
+  .timeline::before{
+    content:"";position:absolute;inset-inline-start:23px;top:10px;bottom:10px;width:1.5px;
+    background:var(--line);
+  }
+  .tstep{position:relative;padding:0 0 44px 84px}
+  [dir="rtl"] .tstep{padding:0 84px 44px 0}
+  .tstep:last-child{padding-bottom:0}
+  .tnum{
+    position:absolute;inset-inline-start:0;top:-4px;width:48px;height:48px;border-radius:50%;
+    background:var(--pill);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:500;color:var(--ink-2);
+  }
+  .tstep h3{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:7px}
+  .tstep p{color:var(--ink-2);font-size:14.5px;max-width:520px;margin-bottom:14px}
+  .code{
+    display:inline-flex;align-items:center;gap:14px;max-width:100%;
+    background:var(--ink);color:var(--bg);border-radius:12px;
+    padding:12px 16px;font-family:"JetBrains Mono",monospace;font-size:13.5px;
+  }
+  .code .dollar{opacity:.5;margin-inline-end:9px}
+  .copy{
+    font-family:"Inter",sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;
+    background:none;border:1px solid color-mix(in srgb,var(--bg) 35%,transparent);
+    color:var(--bg);padding:4px 11px;border-radius:999px;
+  }
+  .copy:hover{background:color-mix(in srgb,var(--bg) 14%,transparent)}
+  .linkpill{
+    display:inline-block;font-size:14px;font-weight:500;
+    border:1px solid var(--line);background:var(--pill);
+    padding:9px 18px;border-radius:999px;
+  }
+  .linkpill:hover{border-color:var(--ink)}
+  .note{
+    max-width:720px;margin:34px auto 0;font-size:13px;color:var(--ink-2);
+    background:var(--pill);border:1px solid var(--line);border-radius:14px;padding:14px 18px;
+  }
+  .note b{color:var(--ink)}
+
+  /* features grid */
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .fcard{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 26px;transition:transform .18s ease,box-shadow .18s ease;
+  }
+  .fcard:hover{transform:translateY(-3px);box-shadow:0 18px 44px -22px rgba(19,37,48,.22)}
+  .fcard .fnum{
+    font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-2);margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .fcard .fnum i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+  .fcard h3{font-size:19px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+  .fcard h3 .cat{display:block;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .fcard p{color:var(--ink-2);font-size:14px}
+  @media (max-width:900px){ .fgrid{grid-template-columns:1fr 1fr} }
+  @media (max-width:620px){ .fgrid{grid-template-columns:1fr} }
+
+  /* hotkeys */
+  .keys{max-width:760px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .krow{display:flex;gap:24px;align-items:center;padding:20px 26px;border-bottom:1px solid var(--line)}
+  .krow:last-child{border-bottom:none}
+  .krow .kb{flex:none;width:170px}
+  .krow p{color:var(--ink-2);font-size:14px}
+  kbd{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;
+    background:var(--pill);border:1px solid var(--line);border-bottom-width:2.5px;
+    padding:4px 10px;border-radius:8px;
+  }
+  .plus{color:var(--ink-2);margin:0 5px}
+  @media (max-width:620px){ .krow{flex-direction:column;align-items:flex-start;gap:10px} }
+
+  /* privacy */
+  .priv{display:grid;grid-template-columns:1fr 1.1fr;gap:60px;align-items:center}
+  .priv h2{margin-bottom:16px}
+  .priv .lead{color:var(--ink-2);font-size:15.5px;max-width:460px}
+  .priv .linkpill{margin-top:26px}
+  .sbox{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 26px}
+  .srow{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:15px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:500}
+  .srow:last-child{border-bottom:none}
+  @media (max-width:860px){ .priv{grid-template-columns:1fr;gap:36px} }
+
+  /* about */
+  .about{text-align:center}
+  .about p{color:var(--ink-2);max-width:560px;margin:18px auto 0;font-size:16.5px}
+  .socials{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:32px}
+
+  /* big cta */
+  .bigcta{padding:20px 0 100px}
+  .cta-panel{
+    background:#171310;color:#f5efe6;border-radius:32px;
+    padding:80px 40px;text-align:center;position:relative;overflow:hidden;
+  }
+  .cta-panel::before{
+    content:"";position:absolute;width:600px;height:300px;border-radius:50%;
+    left:50%;bottom:-190px;transform:translateX(-50%);
+    background:radial-gradient(closest-side,rgba(245,166,35,.42),transparent);filter:blur(50px);
+  }
+  .cta-panel h2{position:relative}
+  .cta-panel p{position:relative;color:#b8ad9e;margin:18px auto 34px;max-width:480px}
+  .cta-panel .btn{position:relative;background:linear-gradient(180deg,#ffc44d,#f09a0a);color:#2b1d04;border-color:#e08c06;font-weight:700}
+  .cta-panel .btn:hover{filter:brightness(1.05)}
+
+  /* footer */
+  footer{padding:40px 0 50px;color:var(--ink-2);font-size:13px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+  footer .fbrand{display:flex;align-items:center;gap:9px;color:var(--ink);font-weight:700}
+  footer a{border-bottom:1px solid var(--line)}
+  footer a:hover{border-bottom-color:var(--ink);color:var(--ink)}
+
+  .rise{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+  .rise.in{opacity:1;transform:none}
+
+  /* demo video modal */
+  .vmodal{
+    position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:rgba(13,23,32,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s;
+  }
+  .vmodal.show{opacity:1;visibility:visible}
+  .vmodal-box{position:relative;width:min(960px,100%);border-radius:16px;overflow:hidden;background:#000;box-shadow:0 40px 90px -30px rgba(0,0,0,.5)}
+  .vmodal-box video{display:block;width:100%;height:auto}
+  .vmodal-x{
+    position:absolute;top:10px;inset-inline-end:10px;z-index:2;width:34px;height:34px;border-radius:50%;
+    border:none;cursor:pointer;background:rgba(0,0,0,.55);color:#fff;font-size:14px;
+  }
+  .vmodal-x:hover{background:rgba(0,0,0,.8)}
+</style>
 </head>
 <body>
 
-  <!-- ============ Header ============ -->
-  <header class="site-header">
+<div class="mesh" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="MudrikNow home">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M5 4 L7.5 7 M19 4 L16.5 7" stroke-linecap="round"/>
+        <rect x="4.5" y="6" width="15" height="14" rx="7"/>
+        <circle cx="9" cy="11.5" r="2.6"/><circle cx="15" cy="11.5" r="2.6"/>
+        <circle cx="9" cy="11.5" r="0.7" fill="currentColor" stroke="none"/>
+        <circle cx="15" cy="11.5" r="0.7" fill="currentColor" stroke="none"/>
+        <path d="M12 13.5 L11 15.2 L13 15.2 Z" fill="var(--accent-strong)" stroke="none"/>
+      </svg>
+      <span>mudrik<b style="color:var(--accent-strong)">now</b></span>
+    </a>
+    <nav class="capsule">
+      <a href="#install" data-en="Install" data-ar="التثبيت">Install</a>
+      <a href="#features" data-en="Features" data-ar="المميزات">Features</a>
+      <a href="#hotkeys" data-en="Hotkeys" data-ar="الاختصارات">Hotkeys</a>
+      <a href="#privacy" data-en="Privacy" data-ar="الخصوصية">Privacy</a>
+      <a href="#about" data-en="About" data-ar="عن المطور">About</a>
+      <a href="https://github.com/abdallahmagdy15/mudriknow">GitHub</a>
+    </nav>
+    <div class="navright">
+      <button class="ghostbtn langbtn" type="button">EN | AR</button>
+      <button class="ghostbtn themebtn" type="button" aria-label="Toggle theme">◐</button>
+      <a class="pillbtn" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="↓ Download" data-ar="↓ تحميل">↓ Download</a>
+      <button class="ghostbtn burger" id="menuBtn" type="button" aria-label="Menu"><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="mpanel" id="mpanel">
+    <a class="mlink" href="#install" data-en="Install" data-ar="التثبيت">Install</a>
+    <a class="mlink" href="#features" data-en="Features" data-ar="المميزات">Features</a>
+    <a class="mlink" href="#hotkeys" data-en="Hotkeys" data-ar="الاختصارات">Hotkeys</a>
+    <a class="mlink" href="#privacy" data-en="Privacy" data-ar="الخصوصية">Privacy</a>
+    <a class="mlink" href="#about" data-en="About" data-ar="عن المطور">About</a>
+    <a class="mlink" href="https://github.com/abdallahmagdy15/mudriknow">GitHub</a>
+    <div class="mrow">
+      <button class="ghostbtn langbtn" type="button">EN | AR</button>
+      <button class="ghostbtn themebtn" type="button" data-en="◐ Display mode" data-ar="◐ وضع العرض">◐ Display mode</button>
+    </div>
+    <div class="mrow">
+      <a class="pillbtn" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="↓ Download for Windows" data-ar="↓ تحميل لويندوز">↓ Download for Windows</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
     <div class="wrap">
-      <a href="#top" class="brand" aria-label="MudrikNow home">
-        <img src="assets/mascot.png" alt="" />
-        <span class="wordmark">MudrikNow</span>
-      </a>
+      <p class="eyebrow rise" data-en="MudrikNow — Open-Source Windows AI" data-ar="مودرك ناو — ذكاء اصطناعي مفتوح المصدر لويندوز">MudrikNow — Open-Source Windows AI</p>
+      <div class="rise"><span class="hint mono"><span data-en="press" data-ar="اضغط">press</span> <b>alt + space</b> <span data-en="— it sees your screen" data-ar="— وهو يرى شاشتك">— it sees your screen</span></span></div>
+      <h1 class="rise"><span data-en="Stop pasting screenshots." data-ar="توقف عن لصق لقطات الشاشة.">Stop pasting screenshots.</span><br><span class="l2" data-en="Your AI sees what you see." data-ar="ذكاؤك الاصطناعي يرى ما تراه.">Your AI sees what you see.</span></h1>
+      <p class="sub rise" data-en="MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task." data-ar="مودرك ناو مساعد ذكاء اصطناعي مفتوح المصدر لنظام ويندوز يرى ما تراه — ويجيب، وينفّذ، أو يرشدك خطوة بخطوة خلال أي مهمة.">MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.</p>
+      <div class="cta rise">
+        <a class="btn solid" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="↓ Download for Windows" data-ar="↓ تحميل لويندوز">↓ Download for Windows</a>
+        <a class="btn ghost" href="https://github.com/abdallahmagdy15/mudriknow" data-en="★ Star on GitHub →" data-ar="★ نجمة على GitHub ←">★ Star on GitHub →</a>
+      </div>
+      <p class="meta rise" data-en="Windows 10/11 · MIT License · v2.3.0" data-ar="Windows 10/11 · رخصة MIT · v2.3.0">Windows 10/11 · MIT License · v2.3.0</p>
+    </div>
+  </section>
 
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#install" data-en="Install" data-ar="التثبيت">Install</a>
-        <a href="#hotkeys" data-en="Hotkeys" data-ar="الاختصارات">Hotkeys</a>
-        <a href="#privacy" data-en="Privacy" data-ar="الخصوصية">Privacy</a>
-        <a href="#about" data-en="About" data-ar="نبذة">About</a>
-      </nav>
-
-      <div class="header-actions">
-        <button class="lang-toggle" id="langToggle" type="button" aria-label="Switch language">
-          <span class="en on">EN</span>
-          <span> | </span>
-          <span class="ar">AR</span>
-        </button>
-        <a class="btn btn-outline btn-sm gh-star" href="https://github.com/abdallahmagdy15/mudriknow" target="_blank" rel="noopener">
-          <span aria-hidden="true">★</span><span data-en="Star on GitHub" data-ar="ضع نجمة على GitHub">Star on GitHub</span>
-        </a>
+  <!-- MARQUEE -->
+  <div class="marquee-sec rise">
+    <p class="m-label" data-en="Bring your own model" data-ar="استخدم نموذجك الخاص">Bring your own model</p>
+    <div class="marquee">
+      <div class="mtrack">
+        <span>Anthropic</span><span>OpenAI</span><span>Google</span><span>Groq</span><span>DeepSeek</span><span>Ollama</span><span>Z.AI</span><span>OpenRouter</span><span>Kimi</span>
+        <span>Anthropic</span><span>OpenAI</span><span>Google</span><span>Groq</span><span>DeepSeek</span><span>Ollama</span><span>Z.AI</span><span>OpenRouter</span><span>Kimi</span>
       </div>
     </div>
-  </header>
+  </div>
 
-  <main id="top">
-
-    <!-- ============ Hero ============ -->
-    <section class="hero">
-      <div class="wrap hero-grid">
-        <img class="hero-mascot" src="assets/mascot.png" alt="MudrikNow mascot — a friendly cyan owl" />
-        <div class="hero-copy">
-          <h1>
-            <span class="wordmark wordmark-lg">MudrikNow</span> <span class="ar" lang="ar">· مدرك</span>
-          </h1>
-          <p class="body"
-             data-en="Stop pasting screenshots into AI chats. MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task."
-             data-ar="وداعاً للنسخ واللصق المتكرر للقطات الشاشة في محادثات الذكاء الاصطناعي. مُدرِك (MudrikNow) هو مساعد ذكي مفتوح المصدر لنظام ويندوز، يرى ما تراه — ويجيبك، أو يتصرف، أو يرشدك خطوة بخطوة عبر أي مهمة.">
-             Stop pasting screenshots into AI chats. MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.
-          </p>
-
-          <div class="hero-ctas">
-            <a class="btn btn-primary" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" target="_blank" rel="noopener">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span data-en="Download for Windows" data-ar="تنزيل لنظام ويندوز">Download for Windows</span>
-            </a>
-            <a class="btn btn-outline" href="https://github.com/abdallahmagdy15/mudriknow" target="_blank" rel="noopener">
-              <span aria-hidden="true">★</span>
-              <span data-en="Star on GitHub" data-ar="ضع نجمة على GitHub">Star on GitHub</span>
-            </a>
-          </div>
-
-          <div class="hero-badges">
-            <span data-en="Windows 10/11" data-ar="ويندوز 10/11">Windows 10/11</span>
-            <span class="dot" aria-hidden="true"></span>
-            <span data-en="MIT License" data-ar="بترخيص MIT">MIT License</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ Demo Video (just below hero, full width container) ============ -->
-    <section class="tight" style="padding-top:0;">
-      <div class="wrap">
-        <div class="demo">
-          <div class="demo-frame" id="demoFrame" data-video-url="assets/Mudrik_demo.mp4" role="button" tabindex="0" aria-label="Play demo video">
-            <div class="poster" aria-hidden="true">
-              <img src="assets/mascot.png" alt="" />
+  <!-- SESSION DIAGRAM -->
+  <div class="diagram">
+    <div class="wrap">
+      <div class="dwrap rise">
+        <div class="dpill mono"><span class="dot"></span><span data-en="alt+space pressed · excel.exe" data-ar="تم الضغط على alt+space · excel.exe">alt+space pressed · excel.exe</span></div>
+        <div class="dcard">
+          <div class="dcard-in">
+            <div class="dcard-bar">
+              <strong>mudriknow — panel</strong>
+              <span class="grow" data-en="docked → right side" data-ar="مثبّت على يمين الشاشة">docked → right side</span>
+              <span class="status st-ok"><i></i><span data-en="Running" data-ar="يعمل">Running</span></span>
             </div>
-            <button class="play-btn" type="button" aria-label="Play video"></button>
-          </div>
-          <p class="demo-caption" data-en="Watch the 10-second demo" data-ar="شاهد العرض التوضيحي (10 ثوانٍ)">Watch the 10-second demo</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ Install ============ -->
-    <section id="install">
-      <div class="wrap">
-        <span class="section-eyebrow" data-en="Get started" data-ar="خطوات البدء">Get started</span>
-        <h2 class="section-title" data-en="Install" data-ar="التثبيت">Install</h2>
-
-        <div class="install-grid">
-          <div class="card install-card">
-            <span class="step-num">1</span>
-            <h3 data-en="Install Node.js ≥ 20" data-ar="تثبيت Node.js ≥ 20">Install Node.js ≥ 20</h3>
-            <p class="grow"
-               data-en="The runtime MudrikNow depends on. Get the LTS installer."
-               data-ar="بيئة التشغيل التي يعتمد عليها مُدرِك. قم بتنزيل إصدار الدعم طويل الأمد (LTS).">
-              The runtime MudrikNow depends on. Get the LTS installer.
-            </p>
-            <div>
-              <a class="btn btn-outline btn-sm" href="https://nodejs.org/" target="_blank" rel="noopener">
-                <span data-en="nodejs.org →" data-ar="nodejs.org ←">nodejs.org →</span>
-              </a>
-            </div>
-          </div>
-
-          <div class="card install-card">
-            <span class="step-num">2</span>
-            <h3 data-en="Install the AI runtime" data-ar="تثبيت محرك الذكاء الاصطناعي">Install the AI runtime</h3>
-            <p
-               data-en="One global npm package. Open PowerShell and run:"
-               data-ar="حزمة npm عالمية واحدة. افتح PowerShell ونفّذ الأمر التالي:">
-              One global npm package. Open PowerShell and run:
-            </p>
-            <div class="code-wrap grow">
-              <pre class="code"><code><span class="tok-c">$</span> npm i -g <span class="tok-s">opencode-ai</span></code></pre>
-              <button class="copy-btn" type="button" data-copy="npm i -g opencode-ai" data-en="Copy" data-ar="نسخ">Copy</button>
-            </div>
-          </div>
-
-          <div class="card install-card">
-            <span class="step-num">3</span>
-            <h3 data-en="Run the MudrikNow installer" data-ar="تشغيل مثبّت MudrikNow">Run the MudrikNow installer</h3>
-            <p class="grow"
-               data-en="Download the installer and double-click."
-               data-ar="قم بتنزيل المثبّت وانقر نقراً مزدوجاً لتشغيله.">
-              Download the installer and double-click.
-            </p>
-            <div class="btn-download-row">
-              <a class="btn btn-primary btn-sm" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" target="_blank" rel="noopener">
-                <span data-en="MudrikNow 2.3.0 installer (.exe)" data-ar="مثبّت MudrikNow 2.3.0 (.exe)">MudrikNow 2.3.0 installer (.exe)</span>
-              </a>
-            </div>
-          </div>
-
-          <div class="card install-card">
-            <span class="step-num">4</span>
-            <h3 data-en="Add your AI model" data-ar="أضف نموذج الذكاء الاصطناعي">Add your AI model</h3>
-            <p class="grow"
-               data-en="Open ⚙ Settings → API Keys → paste a provider key (Anthropic, OpenAI, Kimi, DeepSeek…), then pick a model. Or authenticate via CLI:"
-               data-ar="افتح ⚙ الإعدادات ← مفاتيح API ← الصق مفتاح مزوّد (Anthropic، OpenAI، Kimi، DeepSeek…) ثم اختر نموذجاً. أو سجّل الدخول عبر:">
-              Open ⚙ Settings → API Keys → paste a provider key (Anthropic, OpenAI, Kimi, DeepSeek…), then pick a model. Or authenticate via CLI:
-            </p>
-            <div class="code-wrap">
-              <pre class="code"><code><span class="tok-c">$</span> opencode auth <span class="tok-s">login</span></code></pre>
-              <button class="copy-btn" type="button" data-copy="opencode auth login" data-en="Copy" data-ar="نسخ">Copy</button>
+            <div class="dcard-body">
+              <div class="chips">
+                <span class="chip" data-en="UIA tree · 1,284 nodes" data-ar="شجرة UIA · 1,284 عقدة">UIA tree · 1,284 nodes</span>
+                <span class="chip" data-en="screen context ✓" data-ar="سياق الشاشة ✓">screen context ✓</span>
+                <span class="chip">112ms</span>
+              </div>
+              <div class="you"><span class="who" data-en="YOU" data-ar="أنت">YOU</span><span data-en="why is my pivot showing stale values?" data-ar="لماذا يعرض الجدول المحوري قيمًا قديمة؟">why is my pivot showing stale values?</span></div>
+              <div class="owl"><span class="who" data-en="OWL" data-ar="البومة">OWL</span><span><span data-en="the source range doesn't include the new rows." data-ar="نطاق المصدر لا يشمل الصفوف الجديدة.">the source range doesn't include the new rows.</span><br><span data-en="want me to extend it and refresh?" data-ar="هل أوسّعه وأحدّثه؟">want me to extend it and refresh?</span> <span class="dim" data-en="(y/n)" data-ar="(نعم/لا)">(y/n)</span> <span class="caret"></span></span></div>
             </div>
           </div>
         </div>
-
-        <p class="install-foot"
-           data-en="First launch triggers Windows SmartScreen — More info → Run anyway."
-           data-ar="التشغيل الأول سيُظهر تحذير Windows SmartScreen — انقر على «مزيد من المعلومات» ← «تشغيل على أي حال».">
-           First launch triggers Windows SmartScreen — <em>More info → Run anyway</em>.
-        </p>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- ============ What it does ============ -->
-    <section id="features" class="tight">
-      <div class="wrap">
-        <span class="section-eyebrow" data-en="What it does" data-ar="المميزات">What it does</span>
-        <h2 class="section-title" data-en="Five ways MudrikNow goes beyond chat." data-ar="خمس طرق يتجاوز بها مُدرِك حدود المحادثة.">Five ways MudrikNow goes beyond chat.</h2>
-
-        <div class="features">
-          <div class="card feature">
-            <span class="glyph" aria-hidden="true">🪟</span>
-            <h3 data-en="Sees any Windows app" data-ar="يرى أي تطبيق ويندوز">Sees any Windows app</h3>
-            <p data-en="Reads the full UI tree — buttons, fields, text, menus — through Windows UI Automation. No more pasting screenshots into a chat. Chromium apps get auto-screenshot fallback."
-               data-ar="يقرأ شجرة الواجهة كاملة — الأزرار، الحقول، النصوص، القوائم — عبر Windows UI Automation. وداعاً للصق لقطات الشاشة. تطبيقات Chromium تحصل على لقطة شاشة تلقائية.">
-              Reads the full UI tree — buttons, fields, text, menus — through Windows UI Automation. No more pasting screenshots into a chat. Chromium apps get auto-screenshot fallback.
-            </p>
-          </div>
-
-          <div class="card feature">
-            <span class="glyph" aria-hidden="true">⚡</span>
-            <h3 data-en="Acts on your desktop" data-ar="يتصرف على سطح مكتبك">Acts on your desktop</h3>
-            <p data-en="Not just a chatbot — MudrikNow types, pastes, clicks, fills, and presses keys in your app. Tell it what to do and it does it."
-               data-ar="ليس مجرد روبوت محادثة — MudrikNow يكتب، ويلصق، وينقر، ويملأ الحقول، ويضغط المفاتيح في تطبيقك. أخبره بما تريد وينفّذه.">
-              Not just a chatbot — MudrikNow types, pastes, clicks, fills, and presses keys in your app. Tell it what to do and it does it.
-            </p>
-          </div>
-
-          <div class="card feature">
-            <span class="glyph" aria-hidden="true">🦉</span>
-            <h3 data-en="Auto-Guide" data-ar="المرشد التلقائي">Auto-Guide</h3>
-            <p data-en="MudrikNow walks you step-by-step through multi-step tasks. An owl cursor points to each target with instructions in a speech bubble."
-               data-ar="يرشدك MudrikNow خطوة بخطوة عبر المهام متعددة المراحل. مؤشر بومة يشير لكل هدف مع تعليمات في فقاعة حوارية.">
-              MudrikNow walks you step-by-step through multi-step tasks. An owl cursor points to each target with instructions in a speech bubble.
-            </p>
-          </div>
-
-          <div class="card feature">
-            <span class="glyph" aria-hidden="true">💬</span>
-            <h3 data-en="Quick chat" data-ar="دردشة سريعة">Quick chat</h3>
-            <p data-en="Press Alt+X — the panel opens instantly without scanning your screen. For questions that don't need screen awareness, MudrikNow is always one keystroke away."
-               data-ar="اضغط Alt+X — تنبثق اللوحة فوراً دون فحص شاشتك. للأسئلة التي لا تحتاج لوعي بالشاشة، MudrikNow دائماً على بُعد ضغطة مفتاح.">
-              Press Alt+X — the panel opens instantly without scanning your screen. For questions that don't need screen awareness, MudrikNow is always one keystroke away.
-            </p>
-          </div>
-
-          <div class="card feature">
-            <span class="glyph" aria-hidden="true">🔌</span>
-            <h3 data-en="Bring your own model" data-ar="استخدم نموذج الذكاء الاصطناعي المفضل لديك">Bring your own model</h3>
-            <p data-en="Anthropic, OpenAI, Google, Groq, DeepSeek, Ollama, Z.AI, OpenRouter — paste your key in the settings panel. No terminal auth dance."
-               data-ar="Anthropic، وOpenAI، وGoogle، وGroq، وDeepSeek، وOllama، وZ.AI، وOpenRouter — فقط ألصق مفتاح الـ API الخاص بك في لوحة الإعدادات. لا حاجة لتعقيدات سطر الأوامر.">
-              Anthropic, OpenAI, Google, Groq, DeepSeek, Ollama, Z.AI, OpenRouter — paste your key in the settings panel. No terminal auth dance.
-            </p>
-          </div>
+  <!-- INSTALL -->
+  <section id="install" style="padding-top:40px">
+    <div class="wrap">
+      <div class="shead rise">
+        <p class="eyebrow" data-en="How it works" data-ar="طريقة العمل">How it works</p>
+        <h2 data-en="Install in four steps." data-ar="التثبيت في أربع خطوات.">Install in four steps.</h2>
+        <p data-en="From zero to an AI that sees your screen in about two minutes." data-ar="من الصفر إلى ذكاء اصطناعي يرى شاشتك في دقيقتين تقريبًا.">From zero to an AI that sees your screen in about two minutes.</p>
+      </div>
+      <div class="timeline rise">
+        <div class="tstep">
+          <span class="tnum">01</span>
+          <h3 data-en="Install Node.js ≥ 20" data-ar="ثبّت Node.js ≥ 20">Install Node.js ≥ 20</h3>
+          <p data-en="The runtime MudrikNow depends on. Get the LTS installer." data-ar="بيئة التشغيل التي يعتمد عليها مودرك ناو. احصل على مثبّت LTS.">The runtime MudrikNow depends on. Get the LTS installer.</p>
+          <a class="linkpill" href="https://nodejs.org/">nodejs.org →</a>
+        </div>
+        <div class="tstep">
+          <span class="tnum">02</span>
+          <h3 data-en="Install the AI runtime" data-ar="ثبّت بيئة الذكاء الاصطناعي">Install the AI runtime</h3>
+          <p data-en="One global npm package. Open PowerShell and run:" data-ar="حزمة npm واحدة عامة. افتح PowerShell ونفّذ:">One global npm package. Open PowerShell and run:</p>
+          <div class="code"><span><span class="dollar">$</span>npm i -g opencode-ai</span><button class="copy" type="button" data-copy="npm i -g opencode-ai" data-en="copy" data-ar="نسخ">copy</button></div>
+        </div>
+        <div class="tstep">
+          <span class="tnum">03</span>
+          <h3 data-en="Run the MudrikNow installer" data-ar="شغّل مثبّت مودرك ناو">Run the MudrikNow installer</h3>
+          <p data-en="Download the installer and double-click." data-ar="حمّل المثبّت وانقر عليه مرتين.">Download the installer and double-click.</p>
+          <a class="linkpill" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="MudrikNow 2.3.0 installer (.exe) →" data-ar="مثبّت MudrikNow 2.3.0 (.exe) ←">MudrikNow 2.3.0 installer (.exe) →</a>
+        </div>
+        <div class="tstep">
+          <span class="tnum">04</span>
+          <h3 data-en="Add your AI model" data-ar="أضف نموذج الذكاء الاصطناعي">Add your AI model</h3>
+          <p data-en="Open ⚙ Settings → API Keys → paste a provider key (Anthropic, OpenAI, Kimi, DeepSeek…), then pick a model. Or authenticate via CLI:" data-ar="افتح ⚙ الإعدادات ← مفاتيح API ← الصق مفتاح المزوّد (Anthropic، OpenAI، Kimi، DeepSeek…)، ثم اختر نموذجًا. أو تحقق عبر سطر الأوامر:">Open ⚙ Settings → API Keys → paste a provider key (Anthropic, OpenAI, Kimi, DeepSeek…), then pick a model. Or authenticate via CLI:</p>
+          <div class="code"><span><span class="dollar">$</span>opencode auth login</span><button class="copy" type="button" data-copy="opencode auth login" data-en="copy" data-ar="نسخ">copy</button></div>
         </div>
       </div>
-    </section>
+      <p class="note rise"><span data-en="First launch triggers Windows SmartScreen — " data-ar="عند أول تشغيل يظهر Windows SmartScreen — ">First launch triggers Windows SmartScreen — </span><b data-en="More info → Run anyway" data-ar="معلومات إضافية ← تشغيل على أي حال">More info → Run anyway</b><span data-en="." data-ar=".">.</span></p>
+    </div>
+  </section>
 
-    <!-- ============ Hotkeys ============ -->
-    <section id="hotkeys" class="tight">
-      <div class="wrap">
-        <span class="section-eyebrow" data-en="Hotkeys" data-ar="اختصارات لوحة المفاتيح">Hotkeys</span>
-        <h2 class="section-title" data-en="Press a key, get help." data-ar="اضغط مفتاحاً واحصل على المساعدة.">Press a key, get help.</h2>
-
-        <table class="priv-table hotkeys">
-          <tbody>
-            <tr>
-              <td><kbd>Alt</kbd> + <kbd>Space</kbd></td>
-              <td data-en="Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help."
-                  data-ar="يفحص شجرة واجهة النافذة عند مؤشر الماوس. يفتح MudrikNow في الجانب المقابل، جاهزاً للمساعدة.">
-                Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help.
-              </td>
-            </tr>
-            <tr>
-              <td><kbd>Alt</kbd> + <kbd>X</kbd></td>
-              <td data-en="Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness."
-                  data-ar="محادثة سريعة — يفتح اللوحة فوراً دون التقاط سياق. للأسئلة التي لا تحتاج لوعي بالشاشة.">
-                Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness.
-              </td>
-            </tr>
-            <tr>
-              <td><kbd>Esc</kbd></td>
-              <td data-en="Cancel: stops streaming or closes the panel."
-                  data-ar="إلغاء: إيقاف الرد أو إغلاق اللوحة.">
-                Cancel: stops streaming or closes the panel.
-              </td>
-            </tr>
-            <tr>
-              <td><kbd>Enter</kbd></td>
-              <td data-en="Send — Shift+Enter for a newline"
-                  data-ar="إرسال — اضغط Shift+Enter لإضافة سطر جديد">
-                Send — <kbd>Shift</kbd>+<kbd>Enter</kbd> for a newline
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="install-foot"
-           data-en="All hotkeys are rebindable from the ⚙ menu."
-           data-ar="جميع الاختصارات قابلة للتخصيص من قائمة ⚙.">
-          All hotkeys are rebindable from the ⚙ menu.
-        </p>
+  <!-- FEATURES -->
+  <section id="features" style="padding-top:20px">
+    <div class="wrap">
+      <div class="shead rise">
+        <p class="eyebrow" data-en="What it does" data-ar="ماذا يفعل">What it does</p>
+        <h2 data-en="Five ways MudrikNow goes beyond chat." data-ar="خمس طرق يتجاوز بها مودرك ناو الدردشة.">Five ways MudrikNow goes beyond chat.</h2>
       </div>
-    </section>
+      <div class="fgrid rise">
+        <div class="fcard">
+          <div class="fnum"><span>01</span><i></i></div>
+          <h3><span class="cat" data-en="Vision" data-ar="رؤية">Vision</span><span data-en="Sees any Windows app" data-ar="يرى أي تطبيق ويندوز">Sees any Windows app</span></h3>
+          <p data-en="Reads the full UI tree — buttons, fields, text, menus — through Windows UI Automation. Chromium apps get auto-screenshot fallback." data-ar="يقرأ شجرة الواجهة كاملة — الأزرار والحقول والنصوص والقوائم — عبر Windows UI Automation. وتطبيقات Chromium تحصل على لقطة شاشة تلقائية كبديل.">Reads the full UI tree — buttons, fields, text, menus — through Windows UI Automation. Chromium apps get auto-screenshot fallback.</p>
+        </div>
+        <div class="fcard">
+          <div class="fnum"><span>02</span><i></i></div>
+          <h3><span class="cat" data-en="Action" data-ar="تنفيذ">Action</span><span data-en="Acts on your desktop" data-ar="ينفّذ على سطح مكتبك">Acts on your desktop</span></h3>
+          <p data-en="Not just a chatbot — MudrikNow types, pastes, clicks, fills, and presses keys in your app. Tell it what to do and it does it." data-ar="ليس مجرد روبوت دردشة — مودرك ناو يكتب ويلصق وينقر ويملأ ويضغط المفاتيح في تطبيقك. أخبره بما تريد وسيفعله.">Not just a chatbot — MudrikNow types, pastes, clicks, fills, and presses keys in your app. Tell it what to do and it does it.</p>
+        </div>
+        <div class="fcard">
+          <div class="fnum"><span>03</span><i></i></div>
+          <h3><span class="cat" data-en="Guide" data-ar="إرشاد">Guide</span><span data-en="Auto-Guide" data-ar="الإرشاد التلقائي">Auto-Guide</span></h3>
+          <p data-en="MudrikNow walks you step-by-step through multi-step tasks. An owl cursor points to each target with instructions in a speech bubble." data-ar="يرشدك مودرك ناو خطوة بخطوة خلال المهام متعددة الخطوات. مؤشر على شكل بومة يشير إلى كل هدف مع التعليمات في فقاعة كلام.">MudrikNow walks you step-by-step through multi-step tasks. An owl cursor points to each target with instructions in a speech bubble.</p>
+        </div>
+        <div class="fcard">
+          <div class="fnum"><span>04</span><i></i></div>
+          <h3><span class="cat" data-en="Chat" data-ar="دردشة">Chat</span><span data-en="Quick chat" data-ar="دردشة سريعة">Quick chat</span></h3>
+          <p data-en="Press Alt+X — the panel opens instantly without scanning your screen. Always one keystroke away." data-ar="اضغط Alt+X — تفتح اللوحة فورًا دون فحص شاشتك. دائمًا على بُعد ضغطة مفتاح واحدة.">Press Alt+X — the panel opens instantly without scanning your screen. Always one keystroke away.</p>
+        </div>
+        <div class="fcard">
+          <div class="fnum"><span>05</span><i></i></div>
+          <h3><span class="cat" data-en="Models" data-ar="نماذج">Models</span><span data-en="Bring your own model" data-ar="استخدم نموذجك الخاص">Bring your own model</span></h3>
+          <p data-en="Anthropic, OpenAI, Google, Groq, DeepSeek, Ollama, Z.AI, OpenRouter — paste your key in the settings panel. No terminal auth dance." data-ar="Anthropic وOpenAI وGoogle وGroq وDeepSeek وOllama وZ.AI وOpenRouter — الصق مفتاحك في لوحة الإعدادات. دون أي تعقيدات.">Anthropic, OpenAI, Google, Groq, DeepSeek, Ollama, Z.AI, OpenRouter — paste your key in the settings panel. No terminal auth dance.</p>
+        </div>
+        <div class="fcard">
+          <div class="fnum"><span>06</span><i></i></div>
+          <h3><span class="cat" data-en="Demo" data-ar="عرض">Demo</span><span data-en="See it in 10 seconds" data-ar="شاهده في 10 ثوانٍ">See it in 10 seconds</span></h3>
+          <p data-en="One hotkey. MudrikNow reads your screen, answers, and acts — no copy-pasting." data-ar="ضغطة مفتاح واحدة. يقرأ مودرك ناو شاشتك ويجيب وينفّذ — دون نسخ ولصق.">One hotkey. MudrikNow reads your screen, answers, and acts — no copy-pasting.</p>
+          <p style="margin-top:16px"><a class="linkpill" href="assets/Mudrik_demo.mp4" data-demo data-en="▶ Watch the demo →" data-ar="▶ شاهد العرض ←">▶ Watch the demo →</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- ============ Privacy ============ -->
-    <section id="privacy" class="tight">
-      <div class="wrap privacy">
+  <!-- HOTKEYS -->
+  <section id="hotkeys" style="padding-top:20px">
+    <div class="wrap">
+      <div class="shead rise">
+        <p class="eyebrow" data-en="Hotkeys" data-ar="الاختصارات">Hotkeys</p>
+        <h2 data-en="Press a key, get help." data-ar="اضغط مفتاحًا، واحصل على المساعدة.">Press a key, get help.</h2>
+      </div>
+      <div class="keys rise">
+        <div class="krow">
+          <span class="kb"><kbd>Alt</kbd><span class="plus">+</span><kbd>Space</kbd></span>
+          <p data-en="Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help." data-ar="يفحص شجرة واجهة النافذة عند المؤشر. يفتح مودرك ناو على الجانب المقابل من شاشتك، جاهزًا للمساعدة.">Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help.</p>
+        </div>
+        <div class="krow">
+          <span class="kb"><kbd>Alt</kbd><span class="plus">+</span><kbd>X</kbd></span>
+          <p data-en="Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness." data-ar="دردشة سريعة — تفتح اللوحة فورًا دون التقاط السياق. للأسئلة التي لا تحتاج إلى رؤية الشاشة.">Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness.</p>
+        </div>
+        <div class="krow">
+          <span class="kb"><kbd>Esc</kbd></span>
+          <p data-en="Cancel: stops streaming or closes the panel." data-ar="إلغاء: يوقف البث أو يغلق اللوحة.">Cancel: stops streaming or closes the panel.</p>
+        </div>
+        <div class="krow">
+          <span class="kb"><kbd>Enter</kbd></span>
+          <p><span data-en="Send — " data-ar="إرسال — ">Send — </span><kbd>Shift</kbd><span class="plus">+</span><kbd>Enter</kbd><span data-en=" for a newline." data-ar=" لسطر جديد."> for a newline.</span></p>
+        </div>
+      </div>
+      <p class="note rise" style="max-width:760px"><span data-en="All hotkeys are rebindable from the " data-ar="جميع الاختصارات قابلة لإعادة التعيين من قائمة ">All hotkeys are rebindable from the </span><b>⚙</b><span data-en=" menu." data-ar="."> menu.</span></p>
+    </div>
+  </section>
+
+  <!-- PRIVACY -->
+  <section id="privacy" style="padding-top:20px">
+    <div class="wrap">
+      <div class="priv rise">
         <div>
-          <span class="section-eyebrow" data-en="Privacy & Security" data-ar="الخصوصية والأمان">Privacy & Security</span>
-          <h2 class="section-title" data-en="Sandbox first." data-ar="بيئة معزولة وآمنة (Sandbox) أولاً.">Sandbox first.</h2>
-          <p style="color:var(--muted); font-size:16px; max-width:42ch;"
-              data-en="MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. Screen capture is automatic on Chromium apps; for any app, the Capture Context button captures a screenshot with a coordinate grid."
-              data-ar="يأتي MudrikNow بإعدادات مغلقة وآمنة افتراضياً. أوامر shell والكتابة على الملفات معطلة. إجراءات UIA مُدرجة في قائمة سماح. التقاط الشاشة تلقائي على تطبيقات Chromium؛ ولأي تطبيق، زر «التقاط السياق» يلتقط لقطة شاشة مع شبكة إحداثيات.">
-            MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. Screen capture is automatic on Chromium apps; for any app, the Capture Context button captures a screenshot with a coordinate grid.
-          </p>
-          <p class="priv-foot">
-            <a href="https://github.com/abdallahmagdy15/mudriknow/blob/main/SECURITY.md" target="_blank" rel="noopener"
-               data-en="Read the full threat model in SECURITY.md →"
-               data-ar="اطلع على نموذج التهديدات الأمني بالكامل في ملف SECURITY.md ←">
-              Read the full threat model in SECURITY.md →
-            </a>
-          </p>
+          <p class="eyebrow" data-en="Privacy &amp; security" data-ar="الخصوصية والأمان">Privacy &amp; security</p>
+          <h2 data-en="Sandbox first." data-ar="العزل أولًا.">Sandbox first.</h2>
+          <p class="lead" data-en="MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. Screen capture is automatic on Chromium apps; for any app, the Capture Context button captures a screenshot with a coordinate grid." data-ar="مودرك ناو مغلق افتراضيًا. أوامر الشل والكتابة على الملفات معطّلة. إجراءات UIA مقيّدة بقائمة مسموح. التقاط الشاشة تلقائي في تطبيقات Chromium؛ ولأي تطبيق آخر، يلتقط زر Capture Context لقطة شاشة مع شبكة إحداثيات.">MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. Screen capture is automatic on Chromium apps; for any app, the Capture Context button captures a screenshot with a coordinate grid.</p>
+          <a class="linkpill" href="https://github.com/abdallahmagdy15/mudriknow/blob/main/SECURITY.md" data-en="Read the full threat model in SECURITY.md →" data-ar="اقرأ نموذج التهديد الكامل في SECURITY.md ←">Read the full threat model in SECURITY.md →</a>
         </div>
-
-        <table class="priv-table">
-          <tbody>
-            <tr>
-              <td data-en="Shell / PowerShell exec" data-ar="تنفيذ أوامر Shell / PowerShell">Shell / PowerShell exec</td>
-              <td><span class="no">✕</span> <span data-en="Off" data-ar="معطّل">Off</span></td>
-            </tr>
-            <tr>
-              <td data-en="Filesystem write" data-ar="الكتابة على نظام الملفات">Filesystem write</td>
-              <td><span class="no">✕</span> <span data-en="Off" data-ar="معطّل">Off</span></td>
-            </tr>
-            <tr>
-              <td data-en="Windows UI Automation" data-ar="أتمتة واجهة ويندوز (Windows UI Automation)">Windows UI Automation</td>
-              <td><span class="yes">✓</span> <span data-en="Allow-listed" data-ar="ضمن قائمة السماح">Allow-listed</span></td>
-            </tr>
-            <tr>
-              <td data-en="Filesystem read" data-ar="القراءة من نظام الملفات">Filesystem read</td>
-              <td><span class="yes">✓</span> <span data-en="Working dir only" data-ar="مقتصرة على مجلد العمل فقط">Working dir only</span></td>
-            </tr>
-            <tr>
-              <td data-en="Screen pixels" data-ar="قراءة بكسلات الشاشة">Screen pixels</td>
-              <td><span class="manual">✋</span> <span data-en="Auto on Chromium · Capture Context for any app" data-ar="تلقائي على Chromium · زر «التقاط السياق» لأي تطبيق">Auto on Chromium · Capture Context for any app</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ============ About ============ -->
-    <section id="about" class="about">
-      <div class="wrap">
-        <span class="section-eyebrow" data-en="About" data-ar="نبذة عن التطبيق">About</span>
-        <h2 class="section-title" data-en="Hi, I'm Abdullah Magdy." data-ar="أهلاً، أنا عبد الله مجدي.">Hi, I'm Abdullah Magdy.</h2>
-        <p data-en="A dev who got tired of pasting screenshots into AI Chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝"
-           data-ar="أنا مطوّر سئم من النسخ واللصق المتكرر للقطات الشاشة في محادثات الذكاء الاصطناعي — لذا قمت بتطوير MudrikNow في أوقات فراغي. المشروع مفتوح المصدر، ونُرحب بمساهماتكم وأفكاركم 🤝">
-          A dev who got tired of pasting screenshots into AI Chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝
-        </p>
-        <div class="contact-row">
-          <a href="https://github.com/abdallahmagdy15" target="_blank" rel="noopener" aria-label="GitHub">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2.06c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.8 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
-            <span>@abdallahmagdy15</span>
-          </a>
-          <a href="https://x.com/AbdallahMagdyy" target="_blank" rel="noopener" aria-label="X / Twitter">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-            <span>@AbdallahMagdyy</span>
-          </a>
-          <a href="https://www.linkedin.com/in/abdallahmagdy15/" target="_blank" rel="noopener" aria-label="LinkedIn">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
-            <span>LinkedIn</span>
-          </a>
-          <a href="mailto:abdallah.magdy1515@gmail.com" aria-label="Email">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-            <span>abdallah.magdy1515@gmail.com</span>
-          </a>
+        <div class="sbox">
+          <div class="srow"><span data-en="Shell / PowerShell exec" data-ar="تنفيذ أوامر Shell / PowerShell">Shell / PowerShell exec</span><span class="status st-off"><i></i><span data-en="Off" data-ar="معطّل">Off</span></span></div>
+          <div class="srow"><span data-en="Filesystem write" data-ar="الكتابة على الملفات">Filesystem write</span><span class="status st-off"><i></i><span data-en="Off" data-ar="معطّل">Off</span></span></div>
+          <div class="srow"><span data-en="Windows UI Automation" data-ar="أتمتة واجهة ويندوز">Windows UI Automation</span><span class="status st-ok"><i></i><span data-en="Allow-listed" data-ar="قائمة مسموح فقط">Allow-listed</span></span></div>
+          <div class="srow"><span data-en="Filesystem read" data-ar="قراءة الملفات">Filesystem read</span><span class="status st-ok"><i></i><span data-en="Working dir only" data-ar="مجلد العمل فقط">Working dir only</span></span></div>
+          <div class="srow"><span data-en="Screen pixels" data-ar="بكسلات الشاشة">Screen pixels</span><span class="status st-amber"><i></i><span data-en="Auto on Chromium · Capture Context" data-ar="تلقائي في Chromium · زر Capture Context">Auto on Chromium · Capture Context</span></span></div>
         </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ============ Footer ============ -->
-  <footer class="site-footer">
-    <div class="wrap">
-      <div class="foot-brand">
-        <img src="assets/mascot.png" alt="" />
-        <span><span class="wordmark">MudrikNow</span> · <span lang="ar">مدرك</span></span>
-      </div>
-      <div class="meta">
-        © 2026 · <span data-en="MIT License" data-ar="بترخيص MIT">MIT License</span> ·
-        <a href="https://github.com/abdallahmagdy15/mudriknow" target="_blank" rel="noopener" data-en="Source on GitHub" data-ar="الكود المصدري على GitHub">Source on GitHub</a>
       </div>
     </div>
-  </footer>
+  </section>
 
-  <script src="script.js"></script>
+  <!-- ABOUT -->
+  <section id="about" class="about" style="padding-top:20px">
+    <div class="wrap">
+      <div class="rise">
+        <p class="eyebrow" data-en="About" data-ar="عن المطور">About</p>
+        <h2 data-en="Hi, I'm Abdullah Magdy." data-ar="مرحبًا، أنا عبدالله مجدي.">Hi, I'm Abdullah Magdy.</h2>
+        <p data-en="A dev who got tired of pasting screenshots into AI chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝" data-ar="مطوّر سئم من لصق لقطات الشاشة في دردشات الذكاء الاصطناعي — فبنى مودرك ناو في الليالي وعطلات نهاية الأسبوع. المشروع مفتوح المصدر، والمساهمات والأفكار مرحّب بها 🤝">A dev who got tired of pasting screenshots into AI chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝</p>
+        <div class="socials">
+          <a class="linkpill" href="https://github.com/abdallahmagdy15">⌥ @abdallahmagdy15</a>
+          <a class="linkpill" href="https://x.com/AbdallahMagdyy">𝕏 @AbdallahMagdyy</a>
+          <a class="linkpill" href="https://www.linkedin.com/in/abdallahmagdy15/">in LinkedIn</a>
+          <a class="linkpill" href="mailto:abdallah.magdy1515@gmail.com">✉ abdallah.magdy1515@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BIG CTA -->
+  <div class="bigcta">
+    <div class="wrap">
+      <div class="cta-panel rise">
+        <h2 data-en="Let the owl see your screen." data-ar="دع البومة ترى شاشتك.">Let the owl see your screen.</h2>
+        <p data-en="Open-source, sandboxed, and one hotkey away. Download MudrikNow and stop pasting screenshots forever." data-ar="مفتوح المصدر، معزول، وعلى بُعد ضغطة مفتاح واحدة. حمّل مودرك ناو وتوقّف عن لصق لقطات الشاشة إلى الأبد.">Open-source, sandboxed, and one hotkey away. Download MudrikNow and stop pasting screenshots forever.</p>
+        <a class="btn" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="↓ Download for Windows" data-ar="↓ تحميل لويندوز">↓ Download for Windows</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="vmodal" id="vmodal" aria-hidden="true">
+  <div class="vmodal-box">
+    <button class="vmodal-x" id="vmodalX" aria-label="Close">✕</button>
+    <video id="demoVideo" src="assets/Mudrik_demo.mp4" controls playsinline preload="metadata"></video>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span class="fbrand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <path d="M5 4 L7.5 7 M19 4 L16.5 7" stroke-linecap="round"/>
+        <rect x="4.5" y="6" width="15" height="14" rx="7"/>
+        <circle cx="9" cy="11.5" r="2.6"/><circle cx="15" cy="11.5" r="2.6"/>
+        <circle cx="9" cy="11.5" r="0.7" fill="currentColor" stroke="none"/>
+        <circle cx="15" cy="11.5" r="0.7" fill="currentColor" stroke="none"/>
+        <path d="M12 13.5 L11 15.2 L13 15.2 Z" fill="var(--accent-strong)" stroke="none"/>
+      </svg>
+      mudrik<b style="color:var(--accent-strong)">now</b>
+    </span>
+    <span>© 2026 · <span data-en="MIT License" data-ar="رخصة MIT">MIT License</span> · <a href="https://github.com/abdallahmagdy15/mudriknow" data-en="Source on GitHub" data-ar="المصدر على GitHub">Source on GitHub</a> · <a href="https://github.com/abdallahmagdy15/mudriknow/blob/main/CHANGELOG.md" data-en="Changelog" data-ar="سجل التغييرات">Changelog</a></span>
+  </div>
+</footer>
+
+<script>
+  const root = document.documentElement;
+
+  // theme (bar button + mobile panel button)
+  const savedTheme = localStorage.getItem('mk-theme');
+  if (savedTheme) root.dataset.theme = savedTheme;
+  document.querySelectorAll('.themebtn').forEach(b => b.addEventListener('click', () => {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('mk-theme', root.dataset.theme);
+  }));
+
+  // language (EN | AR) with RTL support
+  function setLang(l) {
+    root.lang = l;
+    root.dir = l === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-en]').forEach(el => { el.textContent = el.dataset[l]; });
+    localStorage.setItem('mk-lang', l);
+  }
+  document.querySelectorAll('.langbtn').forEach(b => b.addEventListener('click', () => {
+    setLang(root.lang === 'ar' ? 'en' : 'ar');
+  }));
+  if (localStorage.getItem('mk-lang') === 'ar') setLang('ar');
+
+  // mobile menu (animated burger + panel)
+  const navEl = document.querySelector('header.nav');
+  document.getElementById('menuBtn').addEventListener('click', () => navEl.classList.toggle('open'));
+  document.querySelectorAll('.mpanel a.mlink').forEach(a => a.addEventListener('click', () => navEl.classList.remove('open')));
+
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(btn.dataset.copy); } catch (e) {}
+      btn.textContent = root.lang === 'ar' ? 'تم' : 'copied';
+      setTimeout(() => { btn.textContent = btn.dataset[root.lang]; }, 1200);
+    });
+  });
+
+  // demo video modal
+  const vmodal = document.getElementById('vmodal');
+  const demoVideo = document.getElementById('demoVideo');
+  document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', e => {
+    e.preventDefault(); vmodal.classList.add('show'); demoVideo.play().catch(() => {});
+  }));
+  function closeDemo() { vmodal.classList.remove('show'); demoVideo.pause(); demoVideo.currentTime = 0; }
+  document.getElementById('vmodalX').addEventListener('click', closeDemo);
+  vmodal.addEventListener('click', e => { if (e.target === vmodal) closeDemo(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDemo(); });
+
+  // reveal on scroll
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.rise').forEach(el => io.observe(el));
+</script>
+
 </body>
 </html>
