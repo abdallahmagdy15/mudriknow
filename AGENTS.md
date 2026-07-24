@@ -1,70 +1,13 @@
 # AGENTS.md — MudrikNow (hoverbuddy)
 
-Compact, high-signal notes for OpenCode sessions working in this repo. For full architecture, threat model, and design specs, see [`CLAUDE.md`](CLAUDE.md).
+Compact, high-signal notes for OpenCode sessions. Architecture, threat model, and design specs all live **in this file** (`CLAUDE.md` is a deprecated stub that redirects here).
 
-> **Behavioral guidelines:** Also see [`.opencode/instructions.md`](.opencode/instructions.md).
+## Where the rules live
 
-## Critical Rule: Manual Approval Required
-
-**NEVER commit, submit, push, publish, release, or delete any changes without explicit manual review and approval by the owner/user.** This covers git mutations, publishing, deleting files/branches/resources, PRs, merging, and deploying.
-
-**Approval is per-request only.** *"commit and push now"* grants permission for that **specific action at that moment** — not blanket permission for future commits. Ask again before **every** git mutation unless the user has given a standing instruction.
-
-## Behavioral Guidelines
-
-### 1. Think Before Coding
-- State assumptions explicitly. If uncertain, ask.
-- Present multiple interpretations — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-
-### 2. Simplicity First
-- Minimum code that solves the problem. Nothing speculative.
-- No features beyond what was asked. No abstractions for single-use code.
-- If you write 200 lines and it could be 50, rewrite it.
-
-### 3. Surgical Changes
-- Don't "improve" adjacent code, comments, or formatting.
-- Match existing style. Don't refactor things that aren't broken.
-- Remove only imports/variables/functions that YOUR changes made unused.
-
-### 4. Goal-Driven Execution
-- Define success criteria. Loop until verified.
-- For multi-step tasks, state a brief plan with verification checks.
-
-### General Coding Behavior
-- **NEVER** use credentials, secrets, API keys, or sensitive configurations without explicit user permission.
-- Keep comments concise and brief.
-- When developing UI, check helper skills like impeccable.
-
-## Update Summary Format
-After making project updates, end every response with a bold bullet list:
-- **Summary** — root cause, changes, notes
-- **Files touched** — every file modified or created, with brief context
-- **Pending actions** — manual follow-up needed (deploy, publish, migrate, restart)
-- **Changes to review** — checklist of recent requirements/fixes to verify
-
-## Context Gathering
-
-Before any action — gather first; do not judge or assume.
-
-### Every Session Start
-- Read harness instruction files: `CLAUDE.md`, `AGENTS.md`, `.opencode/instructions.md`, etc.
-- Restore from memory/local state after compaction events.
-
-### Context Index
-Maintain `context-index.md` at project root as a map of visible structure + hidden knowledge (codebase structure, hidden docs, conventions). Before every task, check if doc context is needed first. Never infer file contents — read explicitly.
-
-### External Context & Post-Work Updates
-When work depends on external context (schemas, APIs, SDKs), proactively offer to fetch and save it locally. After completing features/bugfixes, update requirements/specs/docs accordingly. Do not update README or published docs without offering first.
-
-## Explaining Technical Concepts
-- **Tell a technical story** with direct terminology (no metaphors).
-- **Use diagrams** — ASCII art, shapes, connected ideas.
-- **Organize logically** — parts, dependencies, execution sequence.
-- **Emphasize critical, hard-to-assume parts**.
-
-## TODOs
-Maintain a side section or dedicated file (`open-items.md`) to track future tasks and reminders. If told to write to todos, just write — don't implement unless explicitly told to.
+- **Behavioral guidelines** (think-before-coding, simplicity, surgical changes, goal-driven execution, the manual-approval gate, update-summary format, context-gathering, explaining concepts, TODO discipline) live in the **global** `~/.config/opencode/AGENTS.md` and are auto-loaded every session — **not duplicated below**. That file is the source of truth. (`.opencode/instructions.md` in this repo is a stray duplicate; do not rely on it.)
+- **Approval gate (reinforced):** never commit, push, tag, publish, release, or delete without explicit per-request owner approval. This repo ships a Windows installer via tag-push CI (`release.yml`), so the gate is high-stakes here.
+- **`context-index.md`** — map of file → purpose → when-to-read. Read it before any non-trivial task; append when a file proves useful.
+- **`open-items.md`** — running TODO list. Write there when told to "add to todos"; don't implement unless asked.
 
 ## Build & run
 
