@@ -4,17 +4,24 @@
   <meta charset="utf-8" />
   <title>MudrikNow</title>
   <style>
+    @font-face {
+      font-family: 'Inter Variable';
+      font-style: normal;
+      font-display: swap;
+      font-weight: 100 900;
+      src: url(fonts/inter-latin-wght-normal.woff2) format('woff2-variations'),
+           url(fonts/inter-latin-ext-wght-normal.woff2) format('woff2-variations');
+    }
+
     :root {
-      --cyan: #18BFE1;
-      --cyan-deep: #0E9AB8;
-      --cyan-glow: rgba(24, 191, 225, 0.35);
-      --gold: #F2A93A;
-      --body: #7499C2;
-      --ink: #2D4A63;
-      --bg: #0F1822;
-      --bg-card: rgba(18, 32, 42, 0.92);
-      --text: #E6F4F7;
-      --text-muted: #8FBFCD;
+      --accent: #d9820b;
+      --accent-strong: #f5a623;
+      --steel: #4e82ab;
+      --ink: #132530;
+      --ink-2: #5c7281;
+      --line: #dde8f0;
+      --card: #ffffff;
+      --ok: #16a34a;
     }
 
     * { box-sizing: border-box; }
@@ -23,7 +30,7 @@
       margin: 0; padding: 0;
       width: 100%; height: 100%;
       overflow: hidden;
-      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-family: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
       background: transparent;
       user-select: none;
     }
@@ -35,21 +42,19 @@
       align-items: center;
       justify-content: center;
       padding: 28px 24px;
-      /* Existing card fill plus two slow aurora blobs layered on top.
-         Same conservative approach as the panel: solid base + gradients,
-         no transparency/backdrop-filter. */
+      color: var(--ink);
+      /* Site-style mesh: amber + steel soft radials over a light card. */
       background:
-        radial-gradient(80% 60% at 25% 30%, rgba(24, 191, 225, 0.10), transparent 65%),
-        radial-gradient(70% 70% at 75% 75%, rgba(242, 169, 58, 0.08), transparent 65%),
-        radial-gradient(140% 140% at 50% 0%, rgba(24, 191, 225, 0.12) 0%, transparent 55%),
-        var(--bg-card);
+        radial-gradient(60% 50% at 22% 18%, rgba(245, 166, 35, 0.18), transparent 65%),
+        radial-gradient(60% 60% at 82% 88%, rgba(78, 130, 171, 0.16), transparent 65%),
+        radial-gradient(120% 120% at 50% 0%, rgba(245, 166, 35, 0.08) 0%, transparent 55%),
+        var(--card);
       background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%;
       animation: splashAuroraShift 26s ease-in-out infinite;
-      border: 1px solid rgba(24, 191, 225, 0.25);
+      border: 1px solid var(--line);
       border-radius: 20px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45),
-                  0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-                  0 0 40px var(--cyan-glow);
+      box-shadow: 0 24px 60px rgba(19, 37, 48, 0.16),
+                  0 0 0 1px rgba(255, 255, 255, 0.5) inset;
       backdrop-filter: blur(12px);
       -webkit-app-region: no-drag;
     }
@@ -66,7 +71,7 @@
     .owl {
       height: 88px; width: auto;
       margin-bottom: 14px;
-      filter: drop-shadow(0 6px 18px rgba(24, 191, 225, 0.22));
+      filter: drop-shadow(0 6px 18px rgba(78, 130, 171, 0.22));
       animation: bob 2.4s ease-in-out infinite;
     }
 
@@ -76,16 +81,21 @@
     }
 
     .wordmark {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.03em;
-      color: var(--text);
+      color: var(--ink);
+      text-transform: lowercase;
       margin-bottom: 4px;
+    }
+    .wordmark b {
+      color: var(--accent-strong);
+      font-weight: 800;
     }
 
     .tagline {
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--ink-2);
       margin-bottom: 22px;
       text-align: center;
       line-height: 1.5;
@@ -103,19 +113,19 @@
       gap: 5px;
       padding: 5px 9px;
       border-radius: 7px;
-      background: rgba(24, 191, 225, 0.1);
-      border: 1px solid rgba(24, 191, 225, 0.22);
-      color: var(--cyan);
+      background: rgba(245, 166, 35, 0.10);
+      border: 1px solid rgba(245, 166, 35, 0.28);
+      color: var(--accent);
       font-size: 11px;
       font-weight: 600;
-      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
     }
 
     .shortcut .dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--gold);
-      box-shadow: 0 0 6px var(--gold);
+      background: var(--accent-strong);
+      box-shadow: 0 0 6px var(--accent-strong);
     }
 
     .status {
@@ -123,14 +133,14 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--ink-2);
     }
 
     .status .pulse {
       width: 7px; height: 7px;
       border-radius: 50%;
-      background: #4ADE80;
-      box-shadow: 0 0 8px #4ADE80;
+      background: var(--accent-strong);
+      box-shadow: 0 0 8px var(--accent-strong);
       animation: pulse 1.4s ease-in-out infinite;
     }
 
@@ -139,20 +149,12 @@
       50% { opacity: 0.55; transform: scale(0.85); }
     }
 
-    .footer {
-      position: absolute;
-      bottom: 14px;
-      font-size: 10px;
-      color: rgba(143, 191, 205, 0.55);
-      text-align: center;
-    }
-
     /* Click-to-skip hint */
     .skip-hint {
       position: absolute;
       bottom: 22px;
       font-size: 10px;
-      color: rgba(143, 191, 205, 0.4);
+      color: rgba(92, 114, 129, 0.6);
       opacity: 0;
       animation: fadeHint 0.5s ease 1.2s forwards;
     }
@@ -164,10 +166,10 @@
 </head>
 <body>
   <div class="splash" id="splash">
-    <!-- Owl hero — static mascot.png (transparent background). Replace assets/mascot.png to upgrade the splash character. -->
+    <!-- Owl hero — static mascot.png (transparent background). -->
     <img class="owl" src="mascot.png" alt="MudrikNow owl mascot" />
 
-    <div class="wordmark">MudrikNow</div>
+    <div class="wordmark">mudrik<b>now</b></div>
     <div class="tagline" id="tagline">Running in the background. Call MudrikNow any time with a shortcut.</div>
 
     <div class="shortcuts" id="shortcuts">

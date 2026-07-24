@@ -15,11 +15,17 @@ html, body, #root {
 }
 
 body {
-  font-family: "Plus Jakarta Sans", "Tajawal", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Inter Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   font-size: var(--font-size-base);
   background: transparent;
   color: var(--text);
   overflow: hidden;
+}
+
+/* Arabic renders in IBM Plex Sans Arabic (bundled), Latin falls back to Inter. */
+html[lang="ar"] body,
+.app[dir="rtl"] {
+  font-family: "IBM Plex Sans Arabic", "Inter Variable", system-ui, sans-serif;
 }
 
 /* ── RTL support ── */
@@ -83,7 +89,7 @@ body {
     radial-gradient(120% 120% at 15% 110%, var(--aurora-surface-cyan), transparent 60%),
     radial-gradient(120% 120% at 90% -10%, var(--aurora-surface-gold), transparent 60%),
     var(--composer-bg);
-  border: 1px solid var(--border-bright);
+  border: none;
   border-radius: var(--radius-sm);
   box-shadow: var(--header-shadow);
   cursor: grab;
@@ -108,12 +114,11 @@ body {
 .app-title {
   font-weight: 800;
   font-size: 14px;
-  letter-spacing: 0.02em;
-  background: linear-gradient(90deg, var(--cyan-deep) 0%, var(--cyan) 60%, var(--gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-transform: lowercase;
 }
+.app-title .wm-2 { color: #f5a623; }
 
 .status-pill {
   display: inline-flex;
@@ -353,10 +358,7 @@ body {
 .settings-panel {
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(80% 70% at 20% 30%, var(--aurora-surface-cyan), transparent 70%),
-    radial-gradient(80% 80% at 85% 85%, var(--aurora-surface-gold), transparent 70%),
-    var(--bg-overlay);
+  background: var(--bg-overlay);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -371,9 +373,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background:
-    radial-gradient(100% 100% at 50% 0%, var(--aurora-surface-cyan), transparent 70%),
-    var(--bg-surface);
+  background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   margin-bottom: 10px;
@@ -420,14 +420,19 @@ body {
 }
 
 .settings-section {
-  background:
-    radial-gradient(90% 60% at 80% 10%, var(--aurora-surface-cyan), transparent 70%),
-    radial-gradient(80% 80% at 10% 90%, var(--aurora-surface-gold), transparent 70%),
-    var(--bg-surface);
-  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-bright);
   border-radius: var(--radius-xs);
   margin-bottom: 8px;
   flex-shrink: 0;
+  transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+/* Emphasize clickable sections: a thin bright gold border on hover and while open. */
+.settings-section:hover,
+.settings-section:not(.closed) {
+  border-color: color-mix(in srgb, #f5a623 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #f5a623 12%, transparent);
 }
 
 .settings-section.closed {
@@ -1209,15 +1214,22 @@ body {
   animation: breathe 3.5s var(--ease-out) infinite;
 }
 
+/* Dark mode: the black-bodied owl would vanish on the dark panel, so add a
+   tight light halo outlining the silhouette. The body stays dark, but the
+   shape — plus the already-light belly and yellow eyes — stays readable. */
+[data-theme="dark"] .app-brand svg,
+[data-theme="dark"] .empty-state .owl-wrap {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.6));
+}
+
 .empty-state .wordmark {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(90deg, var(--cyan-deep) 0%, var(--cyan) 60%, var(--gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text);
+  text-transform: lowercase;
 }
+.empty-state .wordmark .wm-2 { color: #f5a623; }
 
 [dir="rtl"] .empty-state .wordmark {
   font-size: 28px;

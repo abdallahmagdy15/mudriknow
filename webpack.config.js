@@ -28,7 +28,8 @@ module.exports = [
           { from: "src/main/calibrate/hero-preview.html", to: "hero-preview.html" },
           { from: "src/main/calibrate/owl-preview.js", to: "owl-preview.js" },
           { from: "src/main/splash/splash.html", to: "splash.html" },
-          { from: "assets/owl-wing-pointer.png", to: "owl-wing-pointer.png" },
+          { from: "assets/owl-point-right.png", to: "owl-point-right.png" },
+          { from: "assets/owl-point-left.png", to: "owl-point-left.png" },
           { from: "assets/icon.png", to: "icon.png" },
           { from: "assets/mascot.png", to: "mascot.png" },
         ],
@@ -148,6 +149,7 @@ module.exports = [
         { test: /\.ts$/, use: "ts-loader", exclude: /node_modules/ },
         { test: /\.tsx$/, use: "ts-loader", exclude: /node_modules/ },
         { test: /\.css$/, use: ["style-loader", "css-loader"] },
+        { test: /\.(woff2?|eot|ttf|otf)$/, type: "asset/resource", generator: { filename: "fonts/[name][ext]" } },
       ],
     },
     resolve: {

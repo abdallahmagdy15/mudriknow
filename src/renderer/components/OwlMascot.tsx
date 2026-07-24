@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /**
- * Animated owl mascot — refined to match the character reference
- * (`assets/mascot.png`): soft steel-blue body, golden eyes, two layered
- * folded wings, gentle smile on the belly.
+ * Animated owl mascot — black-toned body with bright yellow eyes and a
+ * light chest, matching the new `assets/mascot.png` (owl_trans). Two
+ * layered folded wings, gentle smile on the belly.
  *
  *   - Eyes (pupils+iris+highlights) track the cursor within the window,
  *     clamped so they stay inside the eye white.
@@ -23,24 +23,23 @@ interface Props {
   size?: number;
 }
 
-// Eye centres in the SVG viewBox. The WHITE container stays big (r=30) —
-// that's the face feature. Only the inner eyeball (iris + pupil) is
-// smaller so there's more white visible around it, like real cartoon owl
-// eyes. Travel cap 14 keeps the shrunken eyeball well inside the white.
-const EYE_L = { cx: 100, cy: 94 };
-const EYE_R = { cx: 156, cy: 94 };
+// Eye centres in the SVG viewBox. Whites are wide (r=30) for the big-eyed
+// cartoon look; centres are spaced so the two whites just clear each other
+// (gap ≈ 2px) instead of overlapping at the inner bridge.
+const EYE_L = { cx: 97, cy: 94 };
+const EYE_R = { cx: 159, cy: 94 };
 const EYE_WHITE_R = 30;
 const PUPIL_TRAVEL = 14;
 
-// Palette keyed to the reference mascot PNG. A slightly dustier, steelier
-// blue than the app's cyan accent — character identity, not the UI brand
-// (those remain cyan in global.css).
+// Palette — dark blue-grey body (Tailwind slate-700, used instead of
+// absolute black), with bright yellow eyes and a light chest. Wing shading
+// (slate-800) is low-contrast so the body reads as a soft blue-grey.
 const C = {
-  body:      "#7499C2",  // primary feather blue
-  bodyDeep:  "#4F7399",  // wing shading / feather tips
-  bodyLight: "#9DB8D6",  // subtle highlights
-  line:      "#2D4A63",  // outline ink
-  belly:     "#E8EEF5",  // chest / belly off-white
+  body:      "#334155",  // slate-700 — dark blue-grey body (was absolute black)
+  bodyDeep:  "#1e293b",  // slate-800 — wing shading / feather tips
+  bodyLight: "#475569",  // slate-600 — subtle blue-grey highlights
+  line:      "#0f172a",  // slate-900 — outline ink
+  belly:     "#E8EEF5",  // chest / belly off-white (kept light)
   bellyShade:"#C9D5E4",  // belly edge shading
   iris:      "#F2C94C",  // golden yellow
   irisRing:  "#D99A1E",  // iris outer rim
@@ -200,11 +199,17 @@ export function OwlMascot({ state = "idle", size = 32 }: Props) {
       {/* Soft cast shadow on the floor so the owl feels grounded */}
       <ellipse cx="128" cy="246" rx="70" ry="4.5" fill={C.line} opacity="0.18" />
 
-      {/* Feet — three small orange toes per side, peeking under the body */}
+      {/* Feet — two distinct feet, each with three downward toes. The old
+          three-toes-in-a-row read as one ambiguous blob rather than two feet. */}
       <g fill={C.beak} stroke={C.line} strokeWidth="2" strokeLinejoin="round">
-        <path d="M 100 234 Q 102 244 108 244 L 114 244 Q 118 244 116 238 Z" />
-        <path d="M 118 234 Q 120 245 126 245 L 132 245 Q 136 244 134 238 Z" />
-        <path d="M 138 234 Q 140 245 146 245 L 152 245 Q 156 244 154 238 Z" />
+        {/* Left foot */}
+        <path d="M 100 230 Q 99 245 103 245 Q 107 245 106 230 Z" />
+        <path d="M 109 230 Q 108 246 112 246 Q 116 246 115 230 Z" />
+        <path d="M 118 230 Q 117 245 121 245 Q 125 245 124 230 Z" />
+        {/* Right foot */}
+        <path d="M 132 230 Q 131 245 135 245 Q 139 245 138 230 Z" />
+        <path d="M 141 230 Q 140 246 144 246 Q 148 246 147 230 Z" />
+        <path d="M 150 230 Q 149 245 153 245 Q 157 245 156 230 Z" />
       </g>
 
       {/* Body — unified pear silhouette, slightly wider than head */}

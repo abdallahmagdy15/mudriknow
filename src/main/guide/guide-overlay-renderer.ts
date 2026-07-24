@@ -48,8 +48,6 @@ const bubbleTail = bubble.querySelector(".guide-bubble-tail") as HTMLDivElement;
 // --- Owl pointer (unchanged) ---
 
 const OWL_SIZE = 64;
-const OWL_OFFSET_X = 6;
-const OWL_OFFSET_Y = 4;
 const EDGE_PADDING = 8;
 
 function placeOwl(x: number, y: number) {
@@ -67,8 +65,20 @@ window.guideOverlay?.onShow(({ target, fromCursor }) => {
     const targetCenterX = target.x + target.width / 2;
     const targetCenterY = target.y + target.height / 2;
 
-    let finalX = targetCenterX + OWL_OFFSET_X;
-    let finalY = targetCenterY + OWL_OFFSET_Y;
+    // Directional pointer, chosen by which half of the screen the target
+    // is on. Target on the right half -> point-right owl, placed to the
+    // LEFT of the target so it points rightward at it. Target on the left
+    // half -> point-left owl to the RIGHT of the target. This keeps the
+    // owl on the inner (toward-center) side, away from the screen edge.
+    const GAP = 8;
+    const onRightHalf = targetCenterX >= VW / 2;
+    owl.classList.toggle("point-right", onRightHalf);
+    owl.classList.toggle("point-left", !onRightHalf);
+
+    let finalX = onRightHalf
+      ? target.x - OWL_SIZE - GAP
+      : target.x + target.width + GAP;
+    let finalY = targetCenterY - OWL_SIZE / 2;
 
     finalX = Math.max(EDGE_PADDING, Math.min(finalX, VW - OWL_SIZE - EDGE_PADDING));
     finalY = Math.max(EDGE_PADDING, Math.min(finalY, VH - OWL_SIZE - EDGE_PADDING));
@@ -87,7 +97,7 @@ window.guideOverlay?.onSetOwlMode(({ mode }) => {
 });
 
 window.guideOverlay?.onHide(() => {
-  owl.classList.remove("visible", "bob", "thinking", "pointing");
+  owl.classList.remove("visible", "bob", "thinking", "pointing", "point-right", "point-left");
   hideBubble();
 });
 

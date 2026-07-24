@@ -907,7 +907,7 @@ if (!data?.hasImage) {
             state={streaming ? "thinking" : (currentResponse ? "replying" : "idle") as OwlState}
             size={32}
           />
-          <span className="app-title">{t("appTitle")}</span>
+          <span className="app-title" aria-label="MudrikNow"><span className="wm-1">mudrik</span><span className="wm-2">now</span></span>
           <span className={statusPillClass}>
             <span className="dot"></span>
             {statusLabel}
@@ -1180,7 +1180,7 @@ if (!data?.hasImage) {
             <div className="owl-wrap">
               <OwlMascot state="idle" size={88} />
             </div>
-            <div className="wordmark">{t("appTitle")}</div>
+            <div className="wordmark" aria-label="MudrikNow"><span className="wm-1">mudrik</span><span className="wm-2">now</span></div>
             <div className="hint">{t("startNewConversation")}</div>
             <div className="caps">
               <button className="cap-chip" onClick={() => {

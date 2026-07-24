@@ -166,7 +166,9 @@
       position: absolute;
       width: 64px;
       height: 64px;
-      background: url('owl-wing-pointer.png') no-repeat center / contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
       filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
       transition: left 500ms cubic-bezier(0.22, 1, 0.36, 1),
                   top 500ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -176,6 +178,11 @@
       pointer-events: auto;
       cursor: grab;
     }
+    /* Directional pointers, chosen by which half of the screen the target
+       is on. Defined before .owl.thinking so the thinking icon wins when
+       the owl switches to thinking mode. */
+    .owl.point-right { background-image: url('owl-point-right.png'); }
+    .owl.point-left  { background-image: url('owl-point-left.png'); }
     .owl.visible { opacity: 0.65; }
     .owl.bob { animation: bob 1.4s ease-in-out infinite; }
     .owl.thinking {
