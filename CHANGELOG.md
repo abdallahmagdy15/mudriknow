@@ -4,6 +4,31 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-25
+
+A ground-up visual redesign to match the new MudrikNow brand and website.
+
+### Added
+- **Bundled Inter + IBM Plex Sans Arabic fonts (offline).** The panel renders in Inter everywhere (Arabic in IBM Plex Sans Arabic), replacing the silent system-font fallback. Bundled as woff2 via Fontsource.
+- **New owl asset pack.** A new mascot/icon set (`owl_trans`) drives the splash, window icon, tray icon, installer icon, and the guide pointers.
+- **Directional guide pointers.** In Auto-Guide the owl picks a left/right pointer based on which half of the screen the target is on, and sits on the opposite side of the target so it always points at it.
+- **Hotkey mini-keyboard.** Focusing a hotkey field slides in a small on-screen keyboard of special keys (Ctrl/Alt/Shift/Win + Space/Enter/arrows/F1–F12) to compose combos by clicking.
+- **Appearance redesign.** Segmented theme/language pickers (with icons), a font-size slider with a pill thumb, ruler ticks, and a live "Aa" preview.
+- **Unified active-button treatment.** A glassy amber active state (separate light + dark variants) shared across the selected model, segmented controls, key caps, composer toggles, the send button, and behavior toggles.
+- **Dark-mode owl halo** — a light outline lifts the mascot silhouette off the dark panel.
+
+### Changed
+- **Brand wordmark** is now lowercase `mudrik` + gold `now` (top bar + chat-start), matching the website logo.
+- **Splash** redesigned to a light amber/steel mesh with Inter and the new owl.
+- **Owl mascot** body is a dark blue-grey (slate-700) instead of flat black, with refined feet and eye spacing.
+- **Settings** are flat (no background gradients); section borders are subtle and brighten on hover/open.
+- **Scrollbar** is more transparent in dark mode.
+- Steel-blue text/icons replaced with a theme-aware navy/slate.
+
+### Fixed
+- Font-size slider no longer changes the row height.
+- Dark-mode model-list hover no longer clashes (neutral hover wash; the selected row keeps its amber state instead of being overridden).
+
 ## [2.3.0] - 2026-07-23
 
 ### Added
@@ -409,6 +434,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[3.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.6...v2.2.0
 [2.1.6]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.5...v2.1.6
