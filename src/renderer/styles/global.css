@@ -46,10 +46,10 @@ html[lang="ar"] body,
   background: rgba(90, 111, 128, 0.7);
 }
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(138, 160, 181, 0.8);
+  background: rgba(120, 140, 160, 0.32);
 }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(154, 170, 191, 0.9);
+  background: rgba(134, 154, 174, 0.45);
 }
 
 .app {
@@ -426,7 +426,7 @@ html[lang="ar"] body,
 
 .settings-section {
   background: var(--bg-surface);
-  border: 1px solid var(--border-bright);
+  border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   margin-bottom: 8px;
   flex-shrink: 0;
@@ -559,6 +559,8 @@ html[lang="ar"] body,
   background: var(--btn-active-bg);
   box-shadow: inset 0 0 0 1px var(--btn-active-border);
 }
+/* Brighten secondary text on the selected row so it stays readable on the amber fill. */
+.model-active .model-provider { color: var(--text-subtle); }
 
 .model-remove,
 .model-edit-key {
@@ -607,7 +609,7 @@ html[lang="ar"] body,
 }
 
 .model-check {
-  color: var(--cyan);
+  color: var(--beak);
   font-size: 12px;
   font-weight: 700;
 }
@@ -773,7 +775,7 @@ html[lang="ar"] body,
   cursor: pointer;
   transition: color 0.12s var(--ease-out), background 0.12s var(--ease-out), border-color 0.12s var(--ease-out);
 }
-.kb-key:hover { color: var(--text); border-color: var(--border-bright); }
+.kb-key:hover { color: var(--text-subtle); border-color: var(--border-bright); }
 .kb-key.on {
   color: var(--btn-active-fg);
   background: var(--btn-active-bg);
@@ -808,7 +810,7 @@ html[lang="ar"] body,
   transition: color 0.15s var(--ease-out), background 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 
-.theme-option:hover { color: var(--text); }
+.theme-option:hover { color: var(--text-subtle); }
 
 .theme-option.theme-active {
   color: var(--btn-active-fg);
@@ -1919,8 +1921,8 @@ html[lang="ar"] body,
 }
 .tg:hover:not(:disabled) {
   border-color: var(--border-bright);
-  color: var(--text);
-  background: rgba(116, 153, 194, 0.10);
+  color: var(--text-subtle);
+  background: var(--hover-wash);
 }
 .tg.on {
   background: var(--btn-active-bg);
@@ -2031,7 +2033,7 @@ html[lang="ar"] body,
   z-index: 2;
 }
 .copy-card:hover .copy-card-btn { opacity: 1; }
-.copy-card-btn:hover { color: var(--text); border-color: var(--border-bright); }
+.copy-card-btn:hover { color: var(--text-subtle); border-color: var(--border-bright); }
 
 .copy-toast {
   position: fixed;
@@ -2448,7 +2450,7 @@ html[lang="ar"] body,
   background: none; border: none; color: var(--text-muted);
   font-size: 11px; cursor: pointer; font-family: inherit; padding: 2px 0;
 }
-.ms-back:hover { color: var(--text); }
+.ms-back:hover { color: var(--text-subtle); }
 
 /* Connection status dot on recent-model rows */
 .status-dot {
