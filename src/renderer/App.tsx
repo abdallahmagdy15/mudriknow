@@ -179,6 +179,7 @@ export function App() {
   const [hotkeyArea, setHotkeyArea] = useState("CommandOrControl+Space");
   const [hotkeyQuick, setHotkeyQuick] = useState("Alt+X");
   const [hotkeyError, setHotkeyError] = useState<string | null>(null);
+  const [kbFocus, setKbFocus] = useState<null | "pointer" | "quick">(null);
   const [launchOnStartup, setLaunchOnStartup] = useState(false);
   const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
   const [lang, setLang] = useState<Lang>("en");
@@ -898,6 +899,39 @@ if (!data?.hasImage) {
     }
   }, [contextSource, contextCaptured]);
 
+  // ── Hotkey mini-keyboard (clickable special keys, shown on input focus) ──
+  const HOTKEY_MOD_ORDER = ["CommandOrControl", "Alt", "Shift", "Super"];
+  const HOTKEY_MOD_LABEL: Record<string, string> = { CommandOrControl: "Ctrl", Alt: "Alt", Shift: "Shift", Super: "Win" };
+  const HOTKEY_TERMINALS = ["Space", "Enter", "Tab", "Escape", "Left", "Right", "Up", "Down", "Home", "End", "PageUp", "PageDown", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"];
+  const HOTKEY_TERMINAL_LABEL: Record<string, string> = { Space: "Space", Enter: "\u21b5", Tab: "Tab", Escape: "Esc", Left: "\u2190", Right: "\u2192", Up: "\u2191", Down: "\u2193", Home: "Home", End: "End", PageUp: "PgUp", PageDown: "PgDn", F1: "F1", F2: "F2", F3: "F3", F4: "F4", F5: "F5", F6: "F6", F7: "F7", F8: "F8", F9: "F9", F10: "F10", F11: "F11", F12: "F12" };
+  const parseHotkey = (combo: string): { mods: string[]; key: string } => {
+    const parts = (combo || "").split("+").map(s => s.trim()).filter(Boolean);
+    const mods = parts.filter(p => HOTKEY_MOD_ORDER.includes(p));
+    const key = parts.filter(p => !HOTKEY_MOD_ORDER.includes(p))[0] || "";
+    return { mods, key };
+  };
+  const buildHotkey = (mods: string[], key: string): string =>
+    [...HOTKEY_MOD_ORDER.filter(m => mods.includes(m)), key].filter(Boolean).join("+");
+  const renderHotkeyKb = (row: "pointer" | "quick") => {
+    const combo = row === "pointer" ? hotkeyPointer : hotkeyQuick;
+    const setCombo = row === "pointer" ? setHotkeyPointer : setHotkeyQuick;
+    const { mods, key } = parseHotkey(combo);
+    return (
+      <div className="hotkey-kb" onMouseDown={(e) => e.preventDefault()}>
+        <div className="kb-row">
+          {HOTKEY_MOD_ORDER.map((m) => (
+            <button key={m} type="button" className={`kb-key${mods.includes(m) ? " on" : ""}`} onClick={() => setCombo(buildHotkey(mods.includes(m) ? mods.filter(x => x !== m) : [...mods, m], key))}>{HOTKEY_MOD_LABEL[m]}</button>
+          ))}
+        </div>
+        <div className="kb-row">
+          {HOTKEY_TERMINALS.map((k) => (
+            <button key={k} type="button" className={`kb-key${key === k ? " on" : ""}`} onClick={() => setCombo(buildHotkey(mods, k))}>{HOTKEY_TERMINAL_LABEL[k]}</button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="app" dir={lang === "ar" ? "rtl" : "ltr"}>
       <ResizeGrips />
@@ -1025,31 +1059,39 @@ if (!data?.hasImage) {
             </button>
             {openSections.hotkeys && (
               <div className="settings-section-body">
-                <label className="hotkey-row">
-                  <span>Pointer</span>
-                  <input
-                    className="hotkey-input"
-                    type="text"
-                    value={hotkeyPointer}
-                    onChange={(e) => setHotkeyPointer(e.target.value)}
-                    onBlur={() => { if (hotkeyPointer) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                    placeholder="Alt+Space"
-                  />
-                </label>
+                <div className="hotkey-field">
+                  <label className="hotkey-row">
+                    <span>Pointer</span>
+                    <input
+                      className="hotkey-input"
+                      type="text"
+                      value={hotkeyPointer}
+                      onChange={(e) => setHotkeyPointer(e.target.value)}
+                      onFocus={() => setKbFocus("pointer")}
+                      onBlur={() => { setKbFocus(null); if (hotkeyPointer) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                      placeholder="Alt+Space"
+                    />
+                  </label>
+                  {kbFocus === "pointer" && renderHotkeyKb("pointer")}
+                </div>
                 {/* Area Capture hotkey is disabled for redesign — UI hidden, config retained. */}
-                <label className="hotkey-row">
-                  <span>Quick Chat</span>
-                  <input
-                    className="hotkey-input"
-                    type="text"
-                    value={hotkeyQuick}
-                    onChange={(e) => setHotkeyQuick(e.target.value)}
-                    onBlur={() => { if (hotkeyQuick) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                    placeholder="Alt+X"
-                  />
-                </label>
+                <div className="hotkey-field">
+                  <label className="hotkey-row">
+                    <span>Quick Chat</span>
+                    <input
+                      className="hotkey-input"
+                      type="text"
+                      value={hotkeyQuick}
+                      onChange={(e) => setHotkeyQuick(e.target.value)}
+                      onFocus={() => setKbFocus("quick")}
+                      onBlur={() => { setKbFocus(null); if (hotkeyQuick) commitHotkeys(hotkeyPointer, hotkeyArea, hotkeyQuick); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                      placeholder="Alt+X"
+                    />
+                  </label>
+                  {kbFocus === "quick" && renderHotkeyKb("quick")}
+                </div>
                 {hotkeyError && <div className="model-error">{hotkeyError}</div>}
               </div>
             )}
@@ -1076,6 +1118,7 @@ if (!data?.hasImage) {
                       className={`theme-option ${theme === th ? "theme-active" : ""}`}
                       onClick={() => handleSetTheme(th)}
                     >
+                      <i className={th === "system" ? "fa-solid fa-display" : th === "light" ? "fa-solid fa-sun" : "fa-solid fa-moon"}></i>
                       {th === "system" ? t("themeAuto") : th === "light" ? t("themeLight") : t("themeDark")}
                     </button>
                   ))}
@@ -1093,15 +1136,22 @@ if (!data?.hasImage) {
                   ))}
                 </div>
                 <div className="settings-sublabel">{t("fontSize")} <span className="settings-hint">{fontSize}px</span></div>
-                <input
-                  className="font-size-slider"
-                  type="range"
-                  min={11}
-                  max={20}
-                  step={1}
-                  value={fontSize}
-                  onChange={(e) => handleSetFontSize(Number(e.target.value))}
-                />
+                <div className="font-size-row">
+                  <div className="font-size-slider-wrap">
+                    <input
+                      className="font-size-slider"
+                      type="range"
+                      min={11}
+                      max={20}
+                      step={1}
+                      value={fontSize}
+                      onChange={(e) => handleSetFontSize(Number(e.target.value))}
+                      style={{ background: `linear-gradient(to right, var(--btn-active-border) ${((fontSize - 11) / 9) * 100}%, var(--bg-inset) ${((fontSize - 11) / 9) * 100}%)` }}
+                    />
+                    <div className="font-size-ticks" aria-hidden="true"></div>
+                  </div>
+                  <span className="font-size-preview" style={{ fontSize: `${fontSize}px` }}>Aa</span>
+                </div>
               </div>
             )}
           </div>

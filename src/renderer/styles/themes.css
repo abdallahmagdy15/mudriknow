@@ -5,9 +5,9 @@
 
 :root {
   /* Brand Colors */
-  --cyan-deep: #4F7399;
-  --cyan: #7499C2;
-  --cyan-light: #9DB8D6;
+  --cyan-deep: #1e293b;
+  --cyan: #334155;
+  --cyan-light: #475569;
   --gold: #F2C94C;
   --beak: #E89423;
   --ink: #0C2530;
@@ -17,11 +17,23 @@
   --primary-light: #F2C94C;
   --primary-faded: rgba(232, 148, 35, 0.15);
   --primary-glow: rgba(232, 148, 35, 0.25);
-  --secondary: #7499C2;
-  --secondary-light: #9DB8D6;
-  --secondary-deep: #4F7399;
-  --secondary-faded: rgba(116, 153, 194, 0.12);
-  --secondary-glow: rgba(116, 153, 194, 0.2);
+  --secondary: #334155;
+  --secondary-light: #475569;
+  --secondary-deep: #1e293b;
+  --secondary-faded: rgba(51, 65, 85, 0.12);
+  --secondary-glow: rgba(51, 65, 85, 0.2);
+
+  /* Unified active-button treatment — a glassy, faded amber (the "now" logo
+     hue, desaturated toward grey, translucent for a frosted-glass feel).
+     Light + dark versions differ so contrast works on each surface.
+     Use for any active/selected button. */
+  --btn-active-bg: rgba(238, 168, 50, 0.26);
+  --btn-active-bg-hover: rgba(238, 168, 50, 0.36);
+  --btn-active-border: rgba(225, 140, 30, 0.55);
+  --btn-active-fg: #5a3608;
+  /* Neutral hover wash for list rows — no hue, so it never clashes with the
+     amber active state or the navy text. */
+  --hover-wash: rgba(0, 0, 0, 0.045);
 
   /* Light Theme (default) */
   --bg-page: #141a24;
@@ -128,6 +140,26 @@
   --border-bright: rgba(90, 122, 156, 0.22);
   --success: #4a8b5f;
   --error: #b05050;
+
+  /* Steel-blue tokens -> light slate in dark mode, so the navy text/icons
+     stay readable (the light-mode navy #334155 would disappear on the
+     dark panel). */
+  --cyan-deep: #94a3b8;
+  --cyan: #cbd5e1;
+  --cyan-light: #e2e8f0;
+  --secondary-deep: #94a3b8;
+  --secondary: #cbd5e1;
+  --secondary-light: #e2e8f0;
+  --secondary-faded: rgba(203, 213, 225, 0.12);
+  --secondary-glow: rgba(203, 213, 225, 0.2);
+
+  /* Dark-mode active button: amber tint (a touch stronger) + light fg so it
+     reads on the dark panel. Hover wash is white-alpha (lifts, no hue). */
+  --btn-active-bg: rgba(245, 178, 60, 0.20);
+  --btn-active-bg-hover: rgba(245, 178, 60, 0.30);
+  --btn-active-border: rgba(245, 178, 60, 0.48);
+  --btn-active-fg: #f5d590;
+  --hover-wash: rgba(255, 255, 255, 0.06);
 
   /* Collapsed-body inner shadow: fade towards white in dark mode. */
   --collapse-shadow: rgba(255, 255, 255, 0.12);

@@ -118,7 +118,12 @@ html[lang="ar"] body,
   color: var(--text);
   text-transform: lowercase;
 }
-.app-title .wm-2 { color: #f5a623; }
+.app-title .wm-2 {
+  background: linear-gradient(100deg, #f7bd45, #e88a08);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
 .status-pill {
   display: inline-flex;
@@ -541,16 +546,18 @@ html[lang="ar"] body,
 }
 
 .model-option:hover {
-  background: rgba(116, 153, 194, 0.06);
+  background: var(--hover-wash);
+}
+/* Hovering the selected model keeps the amber active state (the old
+   blue hover used to override it and clash). */
+.model-option.model-active:hover {
+  background: var(--btn-active-bg-hover);
 }
 
 .model-active {
-  color: #000;
-  background: rgba(116, 153, 194, 0.22);
-}
-
-[data-theme="dark"] .model-active {
-  color: var(--text);
+  color: var(--btn-active-fg);
+  background: var(--btn-active-bg);
+  box-shadow: inset 0 0 0 1px var(--btn-active-border);
 }
 
 .model-remove,
@@ -730,38 +737,83 @@ html[lang="ar"] body,
   border-color: var(--cyan);
 }
 
+/* ── Mini on-screen keyboard for hotkey composition (shown on input focus) ── */
+.hotkey-kb {
+  margin-top: 6px;
+  padding: 6px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transform-origin: top;
+  animation: kbIn 0.16s var(--ease-out);
+}
+@keyframes kbIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.kb-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.kb-key {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.12s var(--ease-out), background 0.12s var(--ease-out), border-color 0.12s var(--ease-out);
+}
+.kb-key:hover { color: var(--text); border-color: var(--border-bright); }
+.kb-key.on {
+  color: var(--btn-active-fg);
+  background: var(--btn-active-bg);
+  border-color: var(--btn-active-border);
+}
+
 .theme-picker {
   display: flex;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 3px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 999px;
 }
 
 .theme-option {
   flex: 1;
-  padding: 5px 8px;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
   font-family: inherit;
-  color: var(--text);
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.15s var(--ease-out);
+  transition: color 0.15s var(--ease-out), background 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 
-.theme-option:hover {
-  color: var(--text);
-  border-color: var(--border-bright);
-}
+.theme-option:hover { color: var(--text); }
 
 .theme-option.theme-active {
-  color: #000;
-  background: rgba(116, 153, 194, 0.22);
-  border-color: var(--secondary);
-}
-
-[data-theme="dark"] .theme-option.theme-active {
-  color: var(--text);
+  color: var(--btn-active-fg);
+  background: var(--btn-active-bg);
+  box-shadow: inset 0 0 0 1px var(--btn-active-border), 0 2px 8px -2px rgba(232, 148, 35, 0.25);
 }
 
 .settings-hint {
@@ -771,33 +823,68 @@ html[lang="ar"] body,
   margin-left: 6px;
 }
 
+.font-size-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 22px;            /* fixed height: slider thumb + ticks + Aa preview never change the row */
+  margin-top: 8px;
+}
+
+.font-size-slider-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .font-size-slider {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
-  height: 4px;
+  height: 6px;
   background: var(--bg-inset);
   border: 1px solid var(--border);
-  border-radius: 3px;
-  margin-top: 6px;
+  border-radius: 999px;
   outline: none;
   cursor: pointer;
 }
 
+/* Ruler ticks — one per step (11..20), a repeating 1px line. */
+.font-size-ticks {
+  height: 4px;
+  background-image: repeating-linear-gradient(to right, var(--border-bright) 0, var(--border-bright) 1px, transparent 1px, transparent 10%);
+  opacity: 0.55;
+}
+
+.font-size-preview {
+  flex: none;
+  width: 34px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--text-subtle);
+  font-weight: 600;
+  overflow: visible;
+}
+
+/* Thumb — a small horizontal pill (not a circle), in the active amber. */
 .font-size-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--cyan);
-  border: 2px solid var(--bg-surface);
-  box-shadow: 0 0 0 1px var(--border-bright);
+  width: 18px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--btn-active-border);
+  border: 1px solid var(--btn-active-fg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
   cursor: pointer;
   transition: transform 0.1s var(--ease-out);
 }
 
 .font-size-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
+  transform: scale(1.1);
 }
 
 .toggle-switch {
@@ -812,8 +899,8 @@ html[lang="ar"] body,
 }
 
 .toggle-switch.on {
-  background: var(--cyan);
-  border-color: var(--cyan);
+  background: var(--btn-active-bg);
+  border-color: var(--btn-active-border);
 }
 
 .toggle-knob {
@@ -1223,16 +1310,21 @@ html[lang="ar"] body,
 }
 
 .empty-state .wordmark {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--text);
   text-transform: lowercase;
 }
-.empty-state .wordmark .wm-2 { color: #f5a623; }
+.empty-state .wordmark .wm-2 {
+  background: linear-gradient(100deg, #f7bd45, #e88a08);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
 [dir="rtl"] .empty-state .wordmark {
-  font-size: 28px;
+  font-size: 34px;
 }
 
 .empty-state .hint {
@@ -1831,12 +1923,12 @@ html[lang="ar"] body,
   background: rgba(116, 153, 194, 0.10);
 }
 .tg.on {
-  background: var(--primary-faded);
-  border-color: var(--primary-glow);
-  color: var(--beak);
+  background: var(--btn-active-bg);
+  border-color: var(--btn-active-border);
+  color: var(--btn-active-fg);
 }
-.tg.on i { color: var(--beak); }
-.tg.on:hover:not(:disabled) { background: var(--primary-glow); }
+.tg.on i { color: var(--btn-active-fg); }
+.tg.on:hover:not(:disabled) { background: var(--btn-active-bg-hover); }
 .tg:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Release-context button — tiny × that appears next to the Capture pill
@@ -1876,20 +1968,20 @@ html[lang="ar"] body,
   justify-content: center;
   padding: 0;
   border-radius: 8px;
-  border: 1px solid var(--primary-glow);
+  border: 1px solid var(--btn-active-border);
   cursor: pointer;
-  color: var(--primary);
+  color: var(--btn-active-fg);
   font-size: 14px;
   line-height: 1;
-  background: var(--primary-faded);
+  background: var(--btn-active-bg);
   transition: background 0.15s var(--ease-out), color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
   flex-shrink: 0;
 }
 
 .composer-send:hover:not(:disabled) {
-  background: var(--primary-glow);
-  border-color: var(--primary);
-  color: var(--beak);
+  background: var(--btn-active-bg-hover);
+  border-color: var(--btn-active-border);
+  color: var(--btn-active-fg);
 }
 
 .composer-send:active:not(:disabled) {
@@ -2335,7 +2427,7 @@ html[lang="ar"] body,
   font-size: 11px; cursor: pointer; font-family: inherit;
   transition: all 0.15s var(--ease-out);
 }
-.ms-add:hover { border-color: var(--cyan); background: rgba(116, 153, 194, 0.08); }
+.ms-add:hover { border-color: var(--cyan); background: var(--hover-wash); }
 
 /* Pulse used by the banner/health-check to draw the eye to "Add a model".
  *   Uses the warm orange primary accent (not the blue secondary). */
@@ -2381,7 +2473,7 @@ html[lang="ar"] body,
   border-radius: var(--radius-xs); cursor: pointer; font-family: inherit;
   transition: all 0.15s var(--ease-out); text-align: left; width: 100%;
 }
-.provider-row:hover { border-color: var(--cyan); background: rgba(116, 153, 194, 0.08); }
+.provider-row:hover { border-color: var(--cyan); background: var(--hover-wash); }
 .provider-row.is-authed { border-color: rgba(74, 143, 107, 0.4); }
 .provider-logo { width: 16px; height: 16px; object-fit: contain; flex-shrink: 0; }
 .provider-row-name { font-size: 12px; color: var(--text); flex: 1; }
@@ -2426,7 +2518,7 @@ html[lang="ar"] body,
   border-radius: var(--radius-xs); cursor: pointer; font-family: inherit;
   transition: all 0.15s var(--ease-out); text-align: left;
 }
-.model-row:hover { border-color: var(--cyan); background: rgba(116, 153, 194, 0.08); }
+.model-row:hover { border-color: var(--cyan); background: var(--hover-wash); }
 .model-row.is-authreq { opacity: 0.55; }
 .model-row-main { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .model-row-name { font-size: 11px; color: var(--text); font-weight: 500; }
@@ -2489,7 +2581,7 @@ html[lang="ar"] body,
   transition: all 0.15s var(--ease-out);
 }
 .manage-action i { color: var(--cyan); width: 14px; text-align: center; }
-.manage-action:hover { border-color: var(--cyan); background: rgba(116, 153, 194, 0.08); }
+.manage-action:hover { border-color: var(--cyan); background: var(--hover-wash); }
 
 /* "Load more" pagination button (Stage B) */
 .load-more {
@@ -2499,7 +2591,7 @@ html[lang="ar"] body,
   font-size: 11px; cursor: pointer; font-family: inherit;
   transition: all 0.15s var(--ease-out);
 }
-.load-more:hover { border-color: var(--cyan); background: rgba(116, 153, 194, 0.08); }
+.load-more:hover { border-color: var(--cyan); background: var(--hover-wash); }
 
 /* "Run setup again" link in Model settings — removed (no standalone wizard) */
 
