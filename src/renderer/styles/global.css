@@ -1582,9 +1582,13 @@ html[lang="ar"] body,
 .message:has(.msg-clip.is-collapsed):hover::after {
   opacity: 0;
 }
-/* Hover reveals ONLY the copy / show-more actions row (a small expansion for
-   that row). The show-more button (collapse-toggle) is what reveals the full
-   text — hover must NOT expand the clipped body. */
+/* On hover the body grows just enough to fill the action-row band (~140
+   threshold + ~30 row) so the text continues into the space the buttons now
+   occupy -- no dead band, no gap. This is a SMALL fill, not the full text:
+   the show-more button (collapse-toggle) still reveals everything. 170 = 140
+   + 30; bump if the action-row height ever changes. */
+.message:has(.msg-clip.is-collapsed):hover .msg-clip { max-height: 170px !important; }
+.message:has(.msg-clip.is-collapsed):hover { box-shadow: none; }
 /* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
 .app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
 
@@ -2410,20 +2414,17 @@ html:not([data-theme="dark"]) .composer::after {
   border-color: var(--border);
 }
 
-/* User-message actions sit on a gold-tint body (--primary-faded), which is
-   a different surface than the chat bg the default styles assume. Give them
-   a readable fg + a defined chip bg so copy / collapse-toggle read clearly.
-   Reuses --text, the brand slate hue, and --border-bright. Both the copy
-   button and .collapse-toggle carry .copy-action, so this covers both. */
+/* User-message actions sit on a gold-tint body (--primary-faded). No box
+   (transparent, borderless -- matches the AI-message buttons); navy --text
+   reads cleanly on the pale-gold bubble without needing a chip background.
+   Covers both .copy-action and .collapse-toggle (both carry .copy-action). */
 .message-user .copy-action {
   color: var(--text);
-  background: rgba(116, 153, 194, 0.14);
-  border-color: rgba(116, 153, 194, 0.20);
 }
 .message-user .copy-action:hover {
   color: var(--text);
-  background: rgba(116, 153, 194, 0.24);
-  border-color: var(--border-bright);
+  background: transparent;
+  border-color: transparent;
 }
 
 .copy-menu {
