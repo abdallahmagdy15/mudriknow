@@ -42,7 +42,7 @@
   :root{
     --bg:#f4f8fb;
     --card:#fdfeff;
-    --ink:#132530;
+    --ink:#2c3a56;
     --ink-2:#5c7281;
     --line:#dde8f0;
     --accent:#d9820b;
@@ -188,6 +188,8 @@
 
   /* ---------------- hero ---------------- */
   .hero{padding:96px 0 90px;text-align:center}
+  .hero .wrap{position:relative;z-index:0}
+  .hero .watermark{position:absolute;top:50%;right:-30px;transform:translateY(-50%);width:440px;height:440px;opacity:.14;pointer-events:none;z-index:-1;object-fit:contain}
   .eyebrow{
     font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
     color:var(--accent);margin-bottom:22px;
