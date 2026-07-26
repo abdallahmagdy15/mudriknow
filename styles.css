@@ -2,7 +2,7 @@
 :root {
   --bg: #F4F7FB;
   --bg-2: #EAF1F8;
-  --ink: #0C2530;
+  --ink: #2c3a56;
   --muted: #556A77;
   --line: rgba(12, 37, 48, 0.10);
 
@@ -203,6 +203,13 @@ img { max-width: 100%; display: block; }
   min-height: calc(100vh - 64px);
   display: flex;
   align-items: center;
+}
+/* Owl-thinking hero watermark: more-visible, shifted to the right of the text. */
+.hero .wrap { position: relative; z-index: 0; }
+.hero .watermark {
+  position: absolute; top: 50%; right: -30px; transform: translateY(-50%);
+  width: 440px; height: 440px; opacity: .14;
+  pointer-events: none; z-index: -1; object-fit: contain;
 }
 .hero-grid {
   display: grid;
