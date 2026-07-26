@@ -422,6 +422,10 @@ html[lang="ar"] body,
   flex-direction: column;
   gap: 4px;
   min-height: 0;
+  /* Extend into the panel's right padding so the scrollbar sits flush at the
+     window edge, while keeping section content inset via padding-right. */
+  margin-right: -14px;
+  padding-right: 14px;
 }
 
 .settings-section {
@@ -1245,6 +1249,9 @@ html[lang="ar"] body,
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Reserve the scrollbar gutter so content width never changes when a long
+     message (show-more) makes the scrollbar appear — no horizontal jump. */
+  scrollbar-gutter: stable;
   /* Top room clears the floating header; bottom room clears the composer.
      Horizontal padding matches the bars' 12px inset so bubbles align with
      the card edges. The mask fades both tails into the floating cards. */
@@ -1575,12 +1582,9 @@ html[lang="ar"] body,
 .message:has(.msg-clip.is-collapsed):hover::after {
   opacity: 0;
 }
-/* Hovering a collapsed user message releases the clip so the text fills the
-   bubble down to the actions row — no cut mid-reveal. max-height is set
-   inline (px), so !important is needed to override on hover; 1000px is well
-   above any real message height and still transitions smoothly. */
-.message:has(.msg-clip.is-collapsed):hover .msg-clip { max-height: 1000px !important; }
-.message:has(.msg-clip.is-collapsed):hover { box-shadow: none; }
+/* Hover reveals ONLY the copy / show-more actions row (a small expansion for
+   that row). The show-more button (collapse-toggle) is what reveals the full
+   text — hover must NOT expand the clipped body. */
 /* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
 .app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
 

@@ -35,9 +35,9 @@ const PUPIL_TRAVEL = 14;
 // absolute black), with bright yellow eyes and a light chest. Wing shading
 // (slate-800) is low-contrast so the body reads as a soft blue-grey.
 const C = {
-  body:      "#334155",  // slate-700 — dark blue-grey body (was absolute black)
-  bodyDeep:  "#1e293b",  // slate-800 — wing shading / feather tips
-  bodyLight: "#475569",  // slate-600 — subtle blue-grey highlights
+  body:      "#2c3a56",  // navy body (dark floor — used for body + deep shading)
+  bodyDeep:  "#2c3a56",  // same navy floor — darker regions stay at #2c3a56, never darker
+  bodyLight: "#4d5f80",  // brighter navy for the lighter highlight parts
   line:      "#0f172a",  // slate-900 — outline ink
   belly:     "#E8EEF5",  // chest / belly off-white (kept light)
   bellyShade:"#C9D5E4",  // belly edge shading
