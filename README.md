@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/mascot.png" alt="MudrikNow owl mascot" width="180" />
+<img src="assets/hero-mascot.png" alt="MudrikNow owl mascot" width="180" />
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 

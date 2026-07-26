@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 /**
  * Animated owl mascot — black-toned body with bright yellow eyes and a
- * light chest, matching the new `assets/mascot.png` (owl_trans). Two
+ * light chest, matching `assets/mascot.png` (owl-straight). Two
  * layered folded wings, gentle smile on the belly.
  *
  *   - Eyes (pupils+iris+highlights) track the cursor within the window,
