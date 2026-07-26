@@ -27,10 +27,10 @@
      hue, desaturated toward grey, translucent for a frosted-glass feel).
      Light + dark versions differ so contrast works on each surface.
      Use for any active/selected button. */
-  --btn-active-bg: rgba(238, 168, 50, 0.26);
-  --btn-active-bg-hover: rgba(238, 168, 50, 0.36);
+  --btn-active-bg: rgba(238, 168, 50, 0.22);
+  --btn-active-bg-hover: rgba(238, 168, 50, 0.31);
   --btn-active-border: rgba(225, 140, 30, 0.55);
-  --btn-active-fg: #5a3608;
+  --btn-active-fg: #E89423;
   /* Neutral hover wash for list rows — no hue, so it never clashes with the
      amber active state or the navy text. */
   --hover-wash: rgba(0, 0, 0, 0.045);
@@ -155,10 +155,10 @@
 
   /* Dark-mode active button: amber tint (a touch stronger) + light fg so it
      reads on the dark panel. Hover wash is white-alpha (lifts, no hue). */
-  --btn-active-bg: rgba(245, 178, 60, 0.20);
-  --btn-active-bg-hover: rgba(245, 178, 60, 0.30);
+  --btn-active-bg: rgba(245, 178, 60, 0.17);
+  --btn-active-bg-hover: rgba(245, 178, 60, 0.26);
   --btn-active-border: rgba(245, 178, 60, 0.48);
-  --btn-active-fg: #f5d590;
+  --btn-active-fg: #E89423;
   --hover-wash: rgba(255, 255, 255, 0.06);
 
   /* Collapsed-body inner shadow: fade towards white in dark mode. */
@@ -183,8 +183,8 @@
     0 -1px 2px rgba(10, 14, 20, 0.22),
     0 -6px 16px rgba(10, 14, 20, 0.16);
   --composer-shadow-focus:
-    0 -1px 3px rgba(10, 14, 20, 0.28),
-    0 -8px 20px rgba(116, 153, 194, 0.16);
+    0 -1px 2px rgba(10, 14, 20, 0.20),
+    0 -4px 12px rgba(116, 153, 194, 0.08);
   /* Brighter than --bg-elevated (#141d28) so the composer lifts off the
      darker chat body like a real floating card. */
   --composer-bg: #1e2a3a;

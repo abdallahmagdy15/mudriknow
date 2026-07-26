@@ -439,6 +439,12 @@ html[lang="ar"] body,
   border-color: color-mix(in srgb, #f5a623 42%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #f5a623 12%, transparent);
 }
+/* Dark mode: a darker, less neon border on hover/open (reuses --beak). */
+[data-theme="dark"] .settings-section:hover,
+[data-theme="dark"] .settings-section:not(.closed) {
+  border-color: color-mix(in srgb, var(--beak) 48%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--beak) 16%, transparent);
+}
 
 .settings-section.closed {
   padding-bottom: 0;
@@ -829,7 +835,7 @@ html[lang="ar"] body,
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 22px;            /* fixed height: slider thumb + ticks + Aa preview never change the row */
+  height: 28px;            /* fixed height: slider thumb + ticks + Aa preview never change the row */
   margin-top: 8px;
 }
 
@@ -845,7 +851,10 @@ html[lang="ar"] body,
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 6px;
+  height: 9px;
+  /* Force LTR so the fill + drag direction always increase left-to-right,
+     even when the app shell is dir="rtl". */
+  direction: ltr;
   background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -875,8 +884,8 @@ html[lang="ar"] body,
 .font-size-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 8px;
+  width: 24px;
+  height: 14px;
   border-radius: 999px;
   background: var(--btn-active-border);
   border: 1px solid var(--btn-active-fg);
@@ -908,7 +917,7 @@ html[lang="ar"] body,
 .toggle-knob {
   width: 16px;
   height: 16px;
-  background: var(--text);
+  background: var(--btn-active-fg);
   border-radius: 50%;
   position: absolute;
   top: 1px;
@@ -1243,12 +1252,12 @@ html[lang="ar"] body,
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(45% 38% at 14% 16%, var(--aurora-surface-cyan), transparent 72%),
-    radial-gradient(42% 42% at 86% 22%, var(--aurora-surface-gold), transparent 70%),
-    radial-gradient(55% 50% at 76% 84%, var(--aurora-surface-cyan), transparent 74%),
-    radial-gradient(40% 36% at 20% 78%, var(--aurora-surface-gold), transparent 70%),
-    radial-gradient(60% 60% at 46% 52%, var(--aurora-surface-cyan), transparent 80%),
+    radial-gradient(70% 60% at 20% 20%, rgba(116, 153, 194, 0.18), transparent 85%),
+    radial-gradient(70% 60% at 80% 85%, rgba(116, 153, 194, 0.14), transparent 85%),
+    radial-gradient(50% 45% at 85% 15%, rgba(232, 148, 35, 0.08), transparent 80%),
     var(--bg-msg);
+  /* "Calm" mesh — 3 quiet steel + gold blooms (was a busy 5-layer aurora).
+     Brand hues kept; alphas lowered for a calmer, flatter chat body. */
   /* Static mesh — no animation. Animating background-position on 5 radial
      gradients forces a full per-frame repaint of the viewport (heavy GPU).
      Positions are intentionally scattered for an organic mesh look. */
@@ -1566,6 +1575,12 @@ html[lang="ar"] body,
 .message:has(.msg-clip.is-collapsed):hover::after {
   opacity: 0;
 }
+/* Hovering a collapsed user message releases the clip so the text fills the
+   bubble down to the actions row — no cut mid-reveal. max-height is set
+   inline (px), so !important is needed to override on hover; 1000px is well
+   above any real message height and still transitions smoothly. */
+.message:has(.msg-clip.is-collapsed):hover .msg-clip { max-height: 1000px !important; }
+.message:has(.msg-clip.is-collapsed):hover { box-shadow: none; }
 /* Collapse arrow lives in the same actions row as copy (shares hover reveal). */
 .app[dir="rtl"] .collapse-toggle i { transform: scaleX(-1); }
 
@@ -1820,7 +1835,17 @@ html[lang="ar"] body,
    against the brighter composer surface instead of a bright neon edge.
    Idle dimmer than light; focus capped below full. */
 [data-theme="dark"] .composer::after { opacity: 0.28; }
-[data-theme="dark"] .composer.focus::after { opacity: 0.6; }
+[data-theme="dark"] .composer.focus::after { opacity: 0.42; }
+/* Light mode: swap the dark navy ring stops for a lighter mid steel-blue
+   (reuses the brand slate hue) so the glowing border reads as blue, not
+   dark navy. Gold/beak accents unchanged. */
+html:not([data-theme="dark"]) .composer::after {
+  background: conic-gradient(
+    from var(--composer-angle),
+    rgba(116, 153, 194, 0.9) 0deg, rgba(116, 153, 194, 0.55) 90deg,
+    var(--gold) 180deg, var(--beak) 250deg, rgba(116, 153, 194, 0.9) 360deg
+  );
+}
 
 .composer-field {
   display: flex;
@@ -1930,7 +1955,7 @@ html[lang="ar"] body,
   color: var(--btn-active-fg);
 }
 .tg.on i { color: var(--btn-active-fg); }
-.tg.on:hover:not(:disabled) { background: var(--btn-active-bg-hover); }
+.tg.on:hover:not(:disabled) { background: var(--btn-active-bg-hover); color: var(--btn-active-fg); }
 .tg:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Release-context button — tiny × that appears next to the Capture pill
@@ -2381,6 +2406,22 @@ html[lang="ar"] body,
   border-color: var(--border);
 }
 
+/* User-message actions sit on a gold-tint body (--primary-faded), which is
+   a different surface than the chat bg the default styles assume. Give them
+   a readable fg + a defined chip bg so copy / collapse-toggle read clearly.
+   Reuses --text, the brand slate hue, and --border-bright. Both the copy
+   button and .collapse-toggle carry .copy-action, so this covers both. */
+.message-user .copy-action {
+  color: var(--text);
+  background: rgba(116, 153, 194, 0.14);
+  border-color: rgba(116, 153, 194, 0.20);
+}
+.message-user .copy-action:hover {
+  color: var(--text);
+  background: rgba(116, 153, 194, 0.24);
+  border-color: var(--border-bright);
+}
+
 .copy-menu {
   position: absolute;
   bottom: calc(100% + 4px);
@@ -2452,13 +2493,17 @@ html[lang="ar"] body,
 }
 .ms-back:hover { color: var(--text-subtle); }
 
+/* Light entrance for the add-model wizard step views (reuses sectionSlide
+   from themes.css). Runs each time a step mounts (recent → provider → model). */
+.ms-sub, .pp, .mp { animation: sectionSlide 0.2s var(--ease-out); }
+
 /* Connection status dot on recent-model rows */
 .status-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
   box-shadow: 0 0 0 2px var(--bg-surface);
 }
 .dot-ok { background: var(--success); }
-.dot-needs { background: var(--gold); }
+.dot-needs { background: var(--beak); }
 
 /* Provider picker grid */
 .pp { display: flex; flex-direction: column; gap: 6px; }
@@ -2495,7 +2540,7 @@ html[lang="ar"] body,
   letter-spacing: 0.02em; flex-shrink: 0;
 }
 .badge-ok { color: var(--success); background: rgba(74, 143, 107, 0.14); }
-.badge-needs { color: var(--gold); background: rgba(242, 201, 76, 0.14); }
+.badge-needs { color: var(--beak); background: rgba(232, 148, 35, 0.16); }
 .badge-free { color: var(--cyan); background: rgba(116, 153, 194, 0.14); }
 
 /* Model picker list */
