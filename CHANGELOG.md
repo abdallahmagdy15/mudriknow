@@ -4,6 +4,32 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-07-26
+
+### Fixed
+- **Recent chats (and session restore/cleanup) broken by opencode plugin banner.** The `opencode-mobile` plugin prints a `[opencode-mobile] ...` banner to stdout, crashing `JSON.parse`. Added `extractJsonArray()` to skip non-JSON prefixes at all session-list parse sites.
+- **Long user-message hover now fills the action-row band.** On hover the clip grows by ~the action-row height so the text continues into the space the buttons occupy — no dead band. The show-more button still reveals the full text.
+- **Messages no longer shift sideways** when the scrollbar appears on text expand (`scrollbar-gutter: stable`).
+
+### Changed
+- **Light-mode text + owl mascot are now a deep navy (`#2c3a56`).** The owl body/bodyDeep use #2c3a56; bodyLight is a brighter navy.
+- **Active-button text is primary orange (`#E89423`) in both themes**, tint-strength decreased ~15%.
+- **Chat body mesh → "Calm"** — a quieter 3-layer steel+gold radial set replaces the busy 5-layer aurora.
+- **Darker settings-section borders in dark mode** (`--beak` instead of bright `#f5a623`).
+- **Lighter composer animated border** — the light-mode conic ring uses the mid steel-blue hue instead of dark navy cyan.
+- **Font-size slider:** always fills LTR (even in RTL), and the pill/thumb is larger.
+- **Toggle knob** uses the active-button text color.
+- **Settings scrollbar** is flush to the window edge.
+- **Needs-key dot/badge** is a darker gold (`--beak`).
+- **Add-model wizard** receives a subtle entrance animation.
+- **User-message action buttons** are now boxless (transparent, navy — matching the AI-message style).
+- **Dark active-chat-input glow** reduced.
+- **Website landing page** updated — navy ink (`#2c3a56`), owl-straight favicon, owl-thinking hero watermark + brand icon, install-step scroll-spy.
+
+### Added
+- **New owl asset pack** — `owl-straight` (app icon + splash), `owl-point-left/right` (guide), `owl-thinking` (README hero + website mascot).
+- **`scripts/generate-assets.ps1`** — regenerates every app PNG + `.ico` from the pack with one command.
+
 ## [3.0.0] - 2026-07-25
 
 A ground-up visual redesign to match the new MudrikNow brand and website.
@@ -434,6 +460,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[3.1.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.1.6...v2.2.0
