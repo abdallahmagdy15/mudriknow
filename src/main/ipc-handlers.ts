@@ -2055,7 +2055,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         targetSessionId = sessionId;
       } else {
         const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "1"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
-        const sessions = JSON.parse(listRaw);
+        const sessions = JSON.parse(extractJsonArray(listRaw));
         if (!Array.isArray(sessions) || sessions.length === 0) { log("restoreSession: no sessions"); return null; }
         // Filter to sessions created from MudrikNow's working directory. Without
         // this we restore the most recent GLOBAL OpenCode session — which may
@@ -2180,7 +2180,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       const cwd = config.workingDir || os.homedir();
       const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
       const listRaw = await execOpenCode(opencodeBin, ["session", "list", "--format", "json", "-n", "100"], { encoding: "utf-8", timeout: 10000, cwd, env, maxBuffer: 1024*1024 });
-      const sessions = JSON.parse(listRaw);
+      const sessions = JSON.parse(extractJsonArray(listRaw));
       if (!Array.isArray(sessions) || sessions.length === 0) { log("getRecentChats: no sessions"); return []; }
       const ourSessions = sessions
         .filter((s: any) => s.directory === cwd)
@@ -2226,7 +2226,7 @@ function cleanupOldSessions(): void {
   execFile(execCmd, execArgs, { encoding: "utf-8", timeout: 15000, cwd, env, maxBuffer: 2*1024*1024 }, async (err: any, stdout: string) => {
     if (err) { log(`cleanupSessions list error: ${err.message}`); return; }
     try {
-      const sessions = JSON.parse(stdout);
+      const sessions = JSON.parse(extractJsonArray(stdout));
       if (!Array.isArray(sessions)) return;
 
       const ourSessions = sessions
@@ -2313,6 +2313,16 @@ function cleanAssistantContent(text: string): string {
  *  the streaming path does, and strips prompt-injection noise. */
 function extractGuideReplyText(text: string): string {
   return cleanAssistantContent(filterToolArtifactLines(text.replace(/<!--ACTION:[\s\S]*?-->/g, ""))).trim();
+}
+
+/** opencode plugins (e.g. opencode-mobile) print `[plugin] …` banner lines to
+ *  stdout before the JSON, which breaks JSON.parse. This returns the substring
+ *  starting at the real JSON array `[` — the last `[` before the first `{`
+ *  (skips `[banner]` prefixes printed on the same line). No-op for clean output. */
+function extractJsonArray(raw: string): string {
+  const brace = raw.indexOf("{");
+  const start = brace >= 0 ? raw.lastIndexOf("[", brace) : raw.indexOf("[");
+  return start >= 0 ? raw.slice(start) : raw;
 }
 
 function execOpenCode(bin: string, cliArgs: string[], options: any): Promise<string> {
