@@ -4,6 +4,16 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-07-29
+
+### Added
+- **New capture animation: diagonal shimmer + navy dim + orange flash.** Replaces the old camera focus-frame overlay on every capture path (Alt+Space pointer, Ctrl+Space area, and the panel's manual re-capture). While MudrikNow captures context, a brand-orange (`#E89423`) sheen sweeps across a navy-dimmed (`#1c2531` @ 25%) screen; on completion a one-shot orange "shutter" wash plays, then the panel pops instantly. The panel stays hidden during capture so the shimmer reads as the app scanning your UI.
+- **Sheen-free screenshots via freeze-for-shot.** Right before the screenshot, the sheen band is frozen to opacity 0 so it never appears in the captured image — only the dim backdrop stays (content remains readable). The end flash plays strictly after the screenshot.
+
+### Changed
+- **`scanArea` (Ctrl+Space) serialized** to UIA scan → freeze → screenshot so the same sheen-free shot applies to the area path too (previously scan and screenshot ran in parallel and couldn't be interposed).
+- **Removed** the old pre-screenshot overlay hide + 80 ms delay (it existed only because the former dim backdrop polluted screenshots).
+
 ## [3.1.0] - 2026-07-26
 
 ### Fixed
@@ -460,6 +470,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[3.2.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.2.0...v2.3.0
