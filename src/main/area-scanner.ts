@@ -225,18 +225,22 @@ export async function scanArea(
   x1: number,
   y1: number,
   x2: number,
-  y2: number
+  y2: number,
+  beforeScreenshot?: () => void | Promise<void>
 ): Promise<{ elements: UIElement[]; rect: { x1: number; y1: number; x2: number; y2: number }; imagePath?: string }> {
   log(`scanArea: (${x1},${y1}) to (${x2},${y2})`);
   const startTime = Date.now();
 
-  const [uiaResult, imagePath] = await Promise.all([
-    scanAreaUIA(x1, y1, x2, y2),
-    captureAndOptimize(x1, y1, x2, y2, { noGrid: true }).catch((err: Error) => {
-      log(`Image capture failed (non-fatal): ${err.message}`);
-      return null;
-    }),
-  ]);
+  // Run the UIA scan first (shimmer sweeps during it), then hand control to
+  // the caller's beforeScreenshot hook (which freezes the sheen for a clean
+  // shot), then capture. Serialized (not Promise.all) so the freeze lands
+  // between scan and shot; cost is ~the capture duration added to total time.
+  const uiaResult = await scanAreaUIA(x1, y1, x2, y2);
+  if (beforeScreenshot) await beforeScreenshot();
+  const imagePath = await captureAndOptimize(x1, y1, x2, y2, { noGrid: true }).catch((err: Error) => {
+    log(`Image capture failed (non-fatal): ${err.message}`);
+    return null;
+  });
 
   log(`scanArea total: ${uiaResult.elements.length} UIA elements, image=${imagePath ? "captured" : "none"}, took ${Date.now() - startTime}ms`);
   return { ...uiaResult, imagePath: imagePath || undefined };

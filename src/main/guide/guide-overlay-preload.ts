@@ -13,8 +13,14 @@ contextBridge.exposeInMainWorld("guideOverlay", {
   onCaptureShow: (handler: () => void) => {
     ipcRenderer.on("guide-overlay-capture-show", () => handler());
   },
-  onCaptureHide: (handler: () => void) => {
-    ipcRenderer.on("guide-overlay-capture-hide", () => handler());
+  onCaptureFinish: (handler: () => void) => {
+    ipcRenderer.on("guide-overlay-capture-finish", () => handler());
+  },
+  onCaptureCancel: (handler: () => void) => {
+    ipcRenderer.on("guide-overlay-capture-cancel", () => handler());
+  },
+  onCaptureFreeze: (handler: () => void) => {
+    ipcRenderer.on("guide-overlay-capture-freeze", () => handler());
   },
   onBubbleShow: (handler: (payload: { caption: string; options: string[]; theme: string }) => void) => {
     ipcRenderer.on("guide-overlay-bubble-show", (_event, payload) => handler(payload));

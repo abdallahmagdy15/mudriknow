@@ -215,7 +215,14 @@ export function setOwlMode(mode: "pointing" | "thinking"): void {
   overlayWin.webContents.send("guide-overlay-owl-mode", { mode });
 }
 
-export function showCaptureScreen(): void {
+// Capture FX (diagonal shimmer). start() shows the loop; finish() plays the
+// one-shot end wash and calls back after ~--cfx-end so the caller can show the
+// panel on the "shutter" beat; cancel() hides instantly (supersede/error/Esc).
+// ponytail: end ms mirrors CSS --cfx-end (0.3s) + small buffer; syncing via an
+// IPC ack would add a round-trip for ~no gain.
+const CAPTURE_SHIMMER_END_MS = 360;
+
+export function startCaptureShimmer(): void {
   (async () => {
     if (!overlayWin || overlayWin.isDestroyed()) {
       overlayWin = await createOverlayWindow();
@@ -226,10 +233,23 @@ export function showCaptureScreen(): void {
   })();
 }
 
-export function hideCaptureScreen(): void {
+export function finishCaptureShimmer(onDone?: () => void): void {
+  if (!overlayWin || overlayWin.isDestroyed()) { onDone?.(); return; }
+  overlayWin.webContents.send("guide-overlay-capture-finish");
+  setTimeout(() => onDone?.(), CAPTURE_SHIMMER_END_MS);
+}
+
+export function cancelCaptureShimmer(): void {
   if (!overlayWin || overlayWin.isDestroyed()) return;
-  overlayWin.webContents.send("guide-overlay-capture-hide");
-  overlayWin.hide();
+  overlayWin.webContents.send("guide-overlay-capture-cancel");
+}
+
+// Snap the sheen band off (opacity 0) right before a screenshot so the band
+// never appears in the captured image. The dim backdrop stays. Caller waits a
+// short beat after this for the renderer to paint before capturing.
+export function freezeCaptureShimmerForShot(): void {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.webContents.send("guide-overlay-capture-freeze");
 }
 
 export function destroyOverlay(): void {

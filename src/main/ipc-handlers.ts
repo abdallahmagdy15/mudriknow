@@ -1822,17 +1822,18 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         await new Promise((r) => setTimeout(r, 80));
       }
 
-      // Show cinematic capture overlay while we capture UIA
+      // Show shimmer capture overlay while we capture UIA
       const overlayMod = await import("./guide/guide-overlay");
-      overlayMod.showCaptureScreen();
+      overlayMod.startCaptureShimmer();
 
       // Read UIA context at the current cursor position
       const { readContextAtPoint } = await import("./context-reader");
       const ctx = await readContextAtPoint(cursor.x, cursor.y);
 
-      // Hide overlay BEFORE screenshot so its dim/frame don't appear in
-      // the captured image and wash out the grid lines.
-      overlayMod.hideCaptureScreen();
+      // Freeze the sheen band off so it doesn't appear in the screenshot
+      // (dim stays — content remains readable). Wait a beat for the renderer
+      // to paint the frozen state before GDI grabs the screen.
+      overlayMod.freezeCaptureShimmerForShot();
       await new Promise((r) => setTimeout(r, 80));
 
       // Always capture a full-screen screenshot with grid overlay
@@ -1844,6 +1845,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
 
       if (!imagePath) {
         log("CAPTURE_CONTEXT — screenshot capture returned null");
+        overlayMod.cancelCaptureShimmer();
         sendStatus(false);
         if (panelWasVisible && win && !win.isDestroyed()) win.show();
         return;
@@ -1873,19 +1875,21 @@ contextBlock += `\n--- END CONTEXT ---\n`;
 
       sendStatus(true);
 
-      // Re-show the panel. We intentionally do NOT send CONTEXT_READY here:
-      // that event carries fresh-activation semantics in the renderer (it resets
-      // streaming/currentResponse and may call restoreSession). Manual context
-      // capture is just a context refresh for the next message; the renderer
-      // learns about it via CONTEXT_CAPTURED.
-      if (panelWasVisible && win && !win.isDestroyed()) {
-        win.show();
-        win.focus();
-        win.moveTop();
-      }
+      // Play the end wash, then re-show the panel. We intentionally do NOT
+      // send CONTEXT_READY here: that event carries fresh-activation semantics
+      // in the renderer (it resets streaming/currentResponse and may call
+      // restoreSession). Manual context capture is just a context refresh for
+      // the next message; the renderer learns about it via CONTEXT_CAPTURED.
+      overlayMod.finishCaptureShimmer(() => {
+        if (panelWasVisible && win && !win.isDestroyed()) {
+          win.show();
+          win.focus();
+          win.moveTop();
+        }
+      });
     } catch (err: any) {
-      import("./guide/guide-overlay").then((overlayMod) => {
-        overlayMod.hideCaptureScreen();
+      import("./guide/guide-overlay").then((m) => {
+        m.cancelCaptureShimmer();
       });
       log(`CAPTURE_CONTEXT FAILED: ${err.message}`);
       sendStatus(false);

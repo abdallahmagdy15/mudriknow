@@ -23,7 +23,9 @@ declare global {
       onShow: (h: (p: ShowPayload) => void) => void;
       onHide: (h: () => void) => void;
       onCaptureShow: (h: () => void) => void;
-      onCaptureHide: (h: () => void) => void;
+      onCaptureFinish: (h: () => void) => void;
+      onCaptureCancel: (h: () => void) => void;
+      onCaptureFreeze: (h: () => void) => void;
       onBubbleShow: (h: (payload: BubblePayload) => void) => void;
       onBubbleHide: (h: () => void) => void;
       onBubbleFade: (h: (payload: { opacity: number }) => void) => void;
@@ -355,16 +357,57 @@ const observer = new MutationObserver(() => {
 });
 observer.observe(owl, { attributes: true, attributeFilter: ["style"] });
 
-// --- Capture screen overlay ---
+// --- Capture FX: diagonal shimmer ---
+// Loop runs while context is captured; finish() plays a one-shot end wash then
+// hides the overlay content. The main process waits ~--cfx-end before showing
+// the panel, so the wash reads as the "shutter" moment before the panel pops.
 
-const captureScreen = document.getElementById("capture-screen") as HTMLDivElement;
+const cfxOverlay = document.getElementById("cfx-overlay") as HTMLDivElement;
+let cfxEndTimer: number | null = null;
 
-window.guideOverlay?.onCaptureShow(() => {
-  captureScreen.classList.add("active");
-});
+function cfxEndMs(): number {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--cfx-end").trim();
+  const sec = parseFloat(raw);
+  return Number.isFinite(sec) ? sec * 1000 : 300;
+}
 
-window.guideOverlay?.onCaptureHide(() => {
-  captureScreen.classList.remove("active");
-});
+const CaptureFX = {
+  start() {
+    if (!cfxOverlay) return;
+    if (cfxEndTimer !== null) { clearTimeout(cfxEndTimer); cfxEndTimer = null; }
+    cfxOverlay.classList.remove("finishing", "frozen");
+    cfxOverlay.classList.add("on", "capturing");
+  },
+  // Snap the sheen band off (opacity 0) so a screenshot captures only the dim
+  // + content. Dim stays. Idempotent. The screenshot is taken right after.
+  freezeForShot() {
+    if (!cfxOverlay) return;
+    cfxOverlay.classList.add("frozen");
+  },
+  finish() {
+    if (!cfxOverlay) return;
+    if (!cfxOverlay.classList.contains("capturing")) {
+      cfxOverlay.classList.remove("on", "frozen");
+      return;
+    }
+    cfxOverlay.classList.remove("capturing", "frozen");
+    cfxOverlay.classList.add("finishing");
+    if (cfxEndTimer !== null) clearTimeout(cfxEndTimer);
+    cfxEndTimer = window.setTimeout(() => {
+      cfxOverlay.classList.remove("on", "finishing", "frozen");
+      cfxEndTimer = null;
+    }, cfxEndMs());
+  },
+  cancel() {
+    if (!cfxOverlay) return;
+    if (cfxEndTimer !== null) { clearTimeout(cfxEndTimer); cfxEndTimer = null; }
+    cfxOverlay.classList.remove("on", "capturing", "finishing", "frozen");
+  },
+};
+
+window.guideOverlay?.onCaptureShow(() => CaptureFX.start());
+window.guideOverlay?.onCaptureFinish(() => CaptureFX.finish());
+window.guideOverlay?.onCaptureCancel(() => CaptureFX.cancel());
+window.guideOverlay?.onCaptureFreeze(() => CaptureFX.freezeForShot());
 
 export {};

@@ -22,7 +22,7 @@ import { log, pruneOldLogs } from "./logger";
 app.commandLine.appendSwitch("enable-features", "BackDropFilter");
 
 import { showSplashScreen, closeSplashScreen } from "./splash/splash-window";
-import { showCaptureScreen, hideCaptureScreen } from "./guide/guide-overlay";
+import { startCaptureShimmer, finishCaptureShimmer, cancelCaptureShimmer, freezeCaptureShimmerForShot } from "./guide/guide-overlay";
 
 const gotTheLock = app.requestSingleInstanceLock();
 // Set the AppUserModelID early so modern Windows toasts (response-ready
@@ -396,53 +396,6 @@ function showPanel(context: ContextPayload): void {
   log("Panel shown and focused");
 }
 
-function showPanelWithLoading(cursorPos: { x: number; y: number }): void {
-  const cursorX = cursorPos.x;
-  const cursorY = cursorPos.y;
-
-  if (!mainWindow) {
-    mainWindow = createWindow(cursorX, cursorY);
-    mainWindow.on("closed", () => {
-      mainWindow = null;
-    });
-  } else {
-    const pos = calculatePanelPosition(cursorX, cursorY);
-    mainWindow.setPosition(pos.x, pos.y);
-    mainWindow.setSize(pos.width, pos.height);
-  }
-
-  const send = () => {
-    mainWindow?.webContents.send(IPC.CONTEXT_LOADING, true);
-  };
-
-  if (mainWindow.webContents.isLoading()) {
-    mainWindow.webContents.once("did-finish-load", () => send());
-  } else {
-    send();
-  }
-
-  mainWindow.show();
-  applyAcrylic(mainWindow);
-  applyRoundedCorners(mainWindow);
-  pushAcrylicState(mainWindow);
-  mainWindow.focus();
-  mainWindow.moveTop();
-}
-
-function updatePanelContext(context: ContextPayload): void {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  log(`updatePanelContext: delivering real context â€” element "${context.element?.name}" type="${context.element?.type}"`);
-  mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
-  mainWindow.webContents.send(IPC.CONTEXT_READY, context);
-  mainWindow.focus();
-  mainWindow.moveTop();
-  setTimeout(() => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send(IPC.FOCUS_INPUT);
-    }
-  }, 150);
-}
-
 function hidePanel(): void {
   log("hidePanel called");
   if (mainWindow) {
@@ -484,14 +437,6 @@ let lastCursorY: number | null = null;
 // user sees the panel "stuck on" the previous element.
 let activationSeq = 0;
 
-function showCaptureOverlay(): void {
-  showCaptureScreen();
-}
-
-function hideCaptureOverlay(): void {
-  hideCaptureScreen();
-}
-
 async function handlePointerActivate(cursorPos: { x: number; y: number }): Promise<void> {
   const myActivation = ++activationSeq;
   log(`Pointer hotkey at cursor pos: x=${cursorPos.x}, y=${cursorPos.y} (activation #${myActivation})`);
@@ -505,7 +450,7 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
   if (mainWindow && mainWindow.isVisible()) {
     mainWindow.hide();
   }
-  showCaptureOverlay();
+  startCaptureShimmer();
 
   let targetHwnd = 0;
   try {
@@ -519,7 +464,7 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
     try {
       const ctx = await readContextAtPoint(cursorPos.x, cursorPos.y, targetHwnd);
       if (myActivation !== activationSeq) {
-        hideCaptureOverlay();
+        cancelCaptureShimmer();
         return;
       }
 
@@ -532,11 +477,10 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
         const display = electronScreen.getDisplayNearestPoint(cursorPos);
         const sf = display.scaleFactor || 1;
         const b = display.bounds;
-        // Hide the capture overlay BEFORE the screenshot so its dim/frame
-        // don't appear in the captured image and wash out the grid lines.
-        hideCaptureOverlay();
-        // Brief delay to let the overlay window actually hide before GDI
-        // captures the screen.
+        // Freeze the sheen band off so it doesn't appear in the screenshot
+        // (dim stays — content remains readable). Wait a beat for the
+        // renderer to paint the frozen state before GDI grabs the screen.
+        freezeCaptureShimmerForShot();
         await new Promise((r) => setTimeout(r, 80));
         const screenshotPath = await captureAndOptimize(
           Math.round(b.x * sf), Math.round(b.y * sf),
@@ -556,15 +500,18 @@ async function handlePointerActivate(cursorPos: { x: number; y: number }): Promi
         log(`Pointer screenshot capture failed: ${err?.message || err}`);
       }
 
-      showElementHighlight(ctx.element.bounds);
-      showPanel(context);
+      // Play the one-shot end wash, then pop the panel + target highlight.
+      finishCaptureShimmer(() => {
+        showElementHighlight(ctx.element.bounds);
+        showPanel(context);
+      });
     } catch (err: any) {
     if (myActivation !== activationSeq) {
-      hideCaptureOverlay();
+      cancelCaptureShimmer();
       return;
     }
     log(`ERROR reading context: ${err.message}`);
-    hideCaptureOverlay();
+    cancelCaptureShimmer();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
     }
@@ -612,15 +559,18 @@ function handleAreaActivate(): void {
     const midX = (px1 + px2) / 2;
     const midY = (py1 + py2) / 2;
     const cursorPos = { x: Math.round(midX), y: Math.round(midY) };
-    showPanelWithLoading(cursorPos);
-    scanArea(px1, py1, px2, py2).then(async ({ elements, imagePath }) => {
+    startCaptureShimmer();
+    scanArea(px1, py1, px2, py2, async () => {
+      freezeCaptureShimmerForShot();
+      await new Promise((r) => setTimeout(r, 80));
+    }).then(async ({ elements, imagePath }) => {
       if (myActivation !== activationSeq) {
         log(`Area scan for #${myActivation} superseded by #${activationSeq} â€” discarding result`);
+        cancelCaptureShimmer();
         if (imagePath) cleanupImage(imagePath);
         return;
       }
       log(`Area scan found ${elements.length} elements, image=${imagePath ? "captured" : "none"}`);
-      showAreaHighlight(rect);
 
       const { screen: electronScreen } = require("electron") as typeof import("electron");
       const display = electronScreen.getDisplayNearestPoint(cursorPos);
@@ -629,9 +579,15 @@ function handleAreaActivate(): void {
 
       const context = setAreaContext(elements, rect, cursorPos, imagePath);
       context.source = "area";
-      updatePanelContext(context);
+      // Play the end wash, then pop the panel (positioned near the rect center)
+      // alongside the area highlight.
+      finishCaptureShimmer(() => {
+        showAreaHighlight(rect);
+        showPanel(context);
+      });
     }).catch((err) => {
       log(`ERROR scanning area: ${err.message}`);
+      cancelCaptureShimmer();
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send(IPC.CONTEXT_LOADING, false);
       }
