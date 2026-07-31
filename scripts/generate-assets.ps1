@@ -4,6 +4,7 @@
 # Outputs (FIXED names -- code references them, do NOT rename):
 #   mascot.png (512)  icon.png (256)  tray.png (32)  tray@2x.png (64)  <- owl-straight.png
 #   owl-point-left.png (256)  owl-point-right.png (256)                <- pack (guide pointers)
+#   owl-thinking.png (256)                                             <- owl-thinking.png (guide thinking state)
 #   hero-mascot.png (512)                                              <- owl-thinking.png (README + website)
 #   icon.ico (16/24/32/48/64/128/256)                                  <- owl-straight.png
 #
@@ -59,6 +60,10 @@ Save-Png $mainSrc (Join-Path $Dst "tray@2x.png")   64
 Save-Png $leftSrc  (Join-Path $Dst "owl-point-left.png")  256
 Save-Png $rightSrc (Join-Path $Dst "owl-point-right.png") 256
 
+# Guide thinking-state owl -> 256 (same scale as the pointers; shown in the
+# guide overlay during waiting/recapturing/awaiting-ai phases)
+Save-Png $thinkSrc (Join-Path $Dst "owl-thinking.png") 256
+
 # README / website hero mascot (owl-thinking) -> 512
 Save-Png $thinkSrc (Join-Path $Dst "hero-mascot.png") 512
 
@@ -104,4 +109,4 @@ try {
 
 Write-Output "Done. icon.ico must be ~80-120 KB (NOT ~125 bytes -- that signals the Write overload bug)."
 Write-Output ""
-Get-ChildItem $Dst | Where-Object { $_.Name -match 'mascot|icon|^tray|owl-point|hero' } | Select-Object Name, Length | Format-Table -AutoSize
+Get-ChildItem $Dst | Where-Object { $_.Name -match 'mascot|icon|^tray|owl-point|owl-thinking|hero' } | Select-Object Name, Length | Format-Table -AutoSize
