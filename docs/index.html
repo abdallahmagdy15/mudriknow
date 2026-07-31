@@ -201,7 +201,7 @@
   }
   .hint b{color:var(--ink);font-weight:500}
   h1{
-    font-size:clamp(46px,7.2vw,88px);
+    font-size:clamp(27px,7.2vw,88px);
     line-height:1.03;letter-spacing:-.045em;font-weight:800;
   }
   h1 .l2{
@@ -424,6 +424,59 @@
     border:none;cursor:pointer;background:rgba(0,0,0,.55);color:#fff;font-size:14px;
   }
   .vmodal-x:hover{background:rgba(0,0,0,.8)}
+
+  /* ---------------- mobile polish & overflow guard ---------------- */
+  /* Previous inline section offsets moved here (desktop rendering unchanged) */
+  #install{padding-top:40px}
+  #features,#hotkeys,#privacy,#about{padding-top:20px}
+
+  /* Safety net: nothing may widen the page past the viewport.
+     ('clip' does not create a scroll container, so the sticky nav keeps working —
+      unlike overflow-x:hidden. Also clips the watermark's right:-30px overhang
+      on mid-size screens.) */
+  html,body{overflow-x:clip}
+
+  @media (max-width:880px){
+    /* hero watermark stuck out 30px past the right edge → horizontal scroll strip */
+    .hero .watermark{right:0;width:280px;height:280px;opacity:.1}
+
+    /* tighten desktop-scale vertical rhythm on phones/tablets */
+    .hero{padding:56px 0 64px}
+    section{padding:64px 0}
+    #install,#features,#hotkeys,#privacy,#about{padding-top:0}
+    .marquee-sec{padding:18px 0 4px}
+    .diagram{padding:16px 0 56px}
+    .bigcta{padding:8px 0 64px}
+    .shead{margin-bottom:40px}
+    .hero .sub{margin:20px auto 28px}
+
+    /* smaller eyebrow + hint pill on mobile */
+    .eyebrow{font-size:10px;letter-spacing:.12em;margin-bottom:14px}
+    .hint{font-size:11.5px;padding:5px 12px;margin-bottom:22px}
+
+    /* headline must stay on one line per sentence — never wrap */
+    h1>span{white-space:nowrap}
+    .tstep{padding:0 0 36px 66px}
+    [dir="rtl"] .tstep{padding:0 66px 36px 0}
+
+    /* session-diagram pill must shrink instead of overflowing */
+    .dpill{max-width:100%}
+    .dpill>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  }
+
+  @media (max-width:520px){
+    .wrap{padding:0 16px}
+    .hero{padding:44px 0 52px}
+    section{padding:52px 0}
+    .shead{margin-bottom:32px}
+    /* scale headline by vw so "Stop pasting screenshots." fits one line
+       even on ~320px phones (floor 22px for accessibility) */
+    h1{font-size:clamp(22px,7.2vw,34px)}
+    .btn{padding:13px 22px;font-size:14.5px}
+    .cta-panel{padding:56px 22px;border-radius:24px}
+    .dcard-body{padding:16px 14px}
+    .krow{padding:16px 18px}
+  }
 </style>
 </head>
 <body>
@@ -474,7 +527,7 @@
   <section class="hero">
     <div class="wrap">
       <img class="watermark" src="assets/hero-mascot.png" alt="" aria-hidden="true">
-      <p class="eyebrow rise" data-en="MudrikNow — Open-Source Windows AI" data-ar="مودرك ناو — ذكاء اصطناعي مفتوح المصدر لويندوز">MudrikNow — Open-Source Windows AI</p>
+      <p class="eyebrow rise" data-en="MudrikNow — Open-Source" data-ar="مودرك ناو — مفتوح المصدر">MudrikNow — Open-Source</p>
       <div class="rise"><span class="hint mono"><span data-en="press" data-ar="اضغط">press</span> <b>alt + space</b> <span data-en="— it sees your screen" data-ar="— وهو يرى شاشتك">— it sees your screen</span></span></div>
       <h1 class="rise"><span data-en="Stop pasting screenshots." data-ar="توقف عن لصق لقطات الشاشة.">Stop pasting screenshots.</span><br><span class="l2" data-en="Your AI sees what you see." data-ar="ذكاؤك الاصطناعي يرى ما تراه.">Your AI sees what you see.</span></h1>
       <p class="sub rise" data-en="MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task." data-ar="مودرك ناو مساعد ذكاء اصطناعي مفتوح المصدر لنظام ويندوز يرى ما تراه — ويجيب، وينفّذ، أو يرشدك خطوة بخطوة خلال أي مهمة.">MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.</p>
@@ -525,7 +578,7 @@
   </div>
 
   <!-- INSTALL -->
-  <section id="install" style="padding-top:40px">
+  <section id="install">
     <div class="wrap">
       <div class="shead rise">
         <p class="eyebrow" data-en="How it works" data-ar="طريقة العمل">How it works</p>
@@ -563,7 +616,7 @@
   </section>
 
   <!-- FEATURES -->
-  <section id="features" style="padding-top:20px">
+  <section id="features">
     <div class="wrap">
       <div class="shead rise">
         <p class="eyebrow" data-en="What it does" data-ar="ماذا يفعل">What it does</p>
@@ -606,7 +659,7 @@
   </section>
 
   <!-- HOTKEYS -->
-  <section id="hotkeys" style="padding-top:20px">
+  <section id="hotkeys">
     <div class="wrap">
       <div class="shead rise">
         <p class="eyebrow" data-en="Hotkeys" data-ar="الاختصارات">Hotkeys</p>
@@ -635,7 +688,7 @@
   </section>
 
   <!-- PRIVACY -->
-  <section id="privacy" style="padding-top:20px">
+  <section id="privacy">
     <div class="wrap">
       <div class="priv rise">
         <div>
@@ -656,7 +709,7 @@
   </section>
 
   <!-- ABOUT -->
-  <section id="about" class="about" style="padding-top:20px">
+  <section id="about" class="about">
     <div class="wrap">
       <div class="rise">
         <p class="eyebrow" data-en="About" data-ar="عن المطور">About</p>
