@@ -73,6 +73,10 @@ AI's map of hidden knowledge in this repo. Before acting on any task, read this 
 - `scripts/prune-platform-bins.js` | Post-install: prunes cross-platform native binaries | Read when modifying install scripts.
 - `scripts/check-no-env.js` | Pre-release: scans for leaked `.env` files and token strings | Read when modifying security checks.
 
+## Tools & playgrounds
+
+- `playground/index.html` | Self-contained UI lab — HTML clone of the panel + settings with live theme controls (colors, fonts, radii, panel size, scenes) and a mesh-variant editor (spots/position/fade/colors, localStorage persistence, CSS export for themes.css/global.css) | Open directly in a browser to preview UI changes without rebuilding the app.
+
 ## Tests
 
 - `src/shared/prompts.test.ts` | 21 tests for prompt generation | Read when modifying prompts.
