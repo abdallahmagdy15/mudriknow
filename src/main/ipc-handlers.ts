@@ -110,6 +110,7 @@ import * as fs from "fs";
 
 import { log } from "./logger";
 import { startTimer } from "./debug-timing";
+import { settingsDeltaParts, buildSettingsDeltaBlock, buildSettingsSnapshotBlock } from "./settings-delta";
 
 function computeContextHash(context: ContextPayload | null, isArea: boolean, areaEls: any[]): string {
   if (!context) return "";
@@ -117,6 +118,15 @@ function computeContextHash(context: ContextPayload | null, isArea: boolean, are
   const imageLen = context.imagePath ? 1 : 0;
   const areaCount = areaEls.length;
   return `${isArea}:${el.type}:${el.name}:${el.value?.slice(0, 50)}:${imageLen}:${areaCount}`;
+}
+
+// Fixed-format local timestamp for settings snapshots/deltas. The AI resolves
+// conflicting settings instructions by "latest timestamp wins", so a stable,
+// readable format matters more than timezone precision.
+function settingsTimestamp(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
 let client: OpenCodeClient;
@@ -134,6 +144,13 @@ let areaRect: { x1: number; y1: number; x2: number; y2: number } | null = null;
 let lastContextHash: string = "";
 let contextNeedsSending: boolean = false;
 let hasSentFirstMessage: boolean = false;
+// Settings-change tracking. When the user toggles actionsEnabled or
+// autoGuideEnabled mid-conversation, the next follow-up injects a small
+// "SETTINGS UPDATE" notice (with timestamp) so the AI overrides its earlier
+// instruction. A full rebuild (new context capture / new session) emits a
+// fresh snapshot line instead. The AI resolves conflicts by newest timestamp.
+let settingsSnapshot: { actionsEnabled: boolean; autoGuideEnabled: boolean; time: string } | null = null;
+let settingsDirty = false;
 // Cached recent chats list (cleared on startup and when a new chat starts)
 let recentChatsCache: { id: string; title: string; created: number }[] | null = null;
 // Mirror of the guide controller's phase, updated by onStateUpdate. Lets
@@ -987,6 +1004,15 @@ export function registerIpcHandlers(
     if (newConfig.autoGuideEnabled === true && !prev.autoGuideEnabled) {
       void initGuideControllerIfNeeded();
     }
+    // If a model-visible setting (actions / guide) actually changed, queue a
+    // delta notice for the next follow-up so the AI overrides its earlier
+    // instruction without needing a fresh context capture.
+    const actionsChanged = newConfig.actionsEnabled !== undefined && newConfig.actionsEnabled !== prev.actionsEnabled;
+    const guideChanged = newConfig.autoGuideEnabled !== undefined && newConfig.autoGuideEnabled !== prev.autoGuideEnabled;
+    if (actionsChanged || guideChanged) {
+      settingsDirty = true;
+      log(`Model-visible setting changed (actions:${actionsChanged} guide:${guideChanged}) — delta queued for next send`);
+    }
     return config;
   });
 
@@ -1359,7 +1385,22 @@ export function registerIpcHandlers(
 
     if (isFollowUp) {
       log("Follow-up message — skipping system prompt and context (already in session)");
-      fullPrompt = stopNote + prompt;
+      // If the user toggled a model-visible setting (actions / guide) since
+      // the AI was last told, inject a timestamped "SETTINGS UPDATE" notice
+      // so the AI overrides its earlier instruction on this same session,
+      // without forcing a full context re-send.
+      let deltaNote = "";
+      if (settingsDirty) {
+        const now = settingsTimestamp();
+        const parts = settingsDeltaParts(settingsSnapshot, config.actionsEnabled, config.autoGuideEnabled);
+        if (parts.length > 0) {
+          deltaNote = buildSettingsDeltaBlock(settingsSnapshot, config.actionsEnabled, config.autoGuideEnabled, now);
+          settingsSnapshot = { actionsEnabled: config.actionsEnabled, autoGuideEnabled: config.autoGuideEnabled, time: now };
+          log(`Injecting settings delta into follow-up: ${parts.join(", ")}`);
+        }
+        settingsDirty = false;
+      }
+      fullPrompt = stopNote + deltaNote + prompt;
     } else {
       // First message of a new conversation — clear cached recent chats
       // so the popup reflects the newly created session
@@ -1500,15 +1541,23 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         autoGuideEnabled: config.autoGuideEnabled,
       })}\n\n`;
       // Tell the AI about the current actions permission. The toggle is
-      // LIVE — when the user flips it in settings, contextNeedsSending is
-      // forced true so the very next message rebuilds this block with the
+      // LIVE — when the user flips it in settings, the next message carries
+      // a timestamped "SETTINGS UPDATE" notice (follow-up) or this fresh
+      // snapshot (new capture / new session). Either way the model sees the
       // new value. Earlier turns of the same conversation may carry the
-      // opposite instruction in their history; the model must trust THIS
-      // block (the most recent system instruction) over older ones.
+      // opposite instruction in their history; the model must trust the
+      // newest SETTINGS timestamp over older ones.
       const actionsBlock = config.actionsEnabled
         ? `\n--- USER SETTING ---\nactionsEnabled: true — you MAY emit interactive action markers (click, type, paste, press_keys, invoke, set_value). This is the live, current setting; if earlier in this conversation you said you were in read-only mode, that instruction is now superseded.\n--- END SETTING ---\n`
         : `\n--- USER SETTING ---\nactionsEnabled: false — READ-ONLY MODE. Do NOT emit interactive action markers (click, type, paste, press_keys, invoke, set_value) — they will be blocked and the user will see a "blocked" error. You MAY still emit copy_to_clipboard markers and COPY chips so the user can paste content themselves. NOTE: Auto-Guide mode is a SEPARATE setting — if guide mode is enabled, you MAY still emit guide_offer / guide_step markers; do not refuse a guide request just because desktop actions are off. This is the live, current setting; if earlier in this conversation you said actions were enabled, that instruction is now superseded. If the user wants to re-enable actions: tell them to toggle 'Allow desktop actions' in ⚙ settings — the change takes effect on their next message.\n--- END SETTING ---\n`;
-      fullPrompt = systemPrefix + contextBlock + actionsBlock + `\n--- USER MESSAGE ---\n${stopNote}${prompt}\n--- END MESSAGE ---\n`;
+      // Timestamped snapshot of BOTH model-visible settings. The AI resolves
+      // conflicts with earlier turns by newest timestamp. Recorded so a
+      // later toggle delta can show old->new.
+      const nowSnap = settingsTimestamp();
+      const settingsBlock = buildSettingsSnapshotBlock(config.actionsEnabled, config.autoGuideEnabled, nowSnap);
+      fullPrompt = systemPrefix + contextBlock + actionsBlock + settingsBlock + `\n--- USER MESSAGE ---\n${stopNote}${prompt}\n--- END MESSAGE ---\n`;
+      settingsSnapshot = { actionsEnabled: config.actionsEnabled, autoGuideEnabled: config.autoGuideEnabled, time: nowSnap };
+      settingsDirty = false;
     }
 
     contextNeedsSending = false;
