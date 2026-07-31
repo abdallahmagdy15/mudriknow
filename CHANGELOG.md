@@ -4,6 +4,14 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-07-31
+
+### Added
+- **Auto-Guide thinking owl.** The guide overlay now shows the `owl-thinking.png` character (pondering pose) during the waiting / recapturing / awaiting-ai phases, instead of the generic app icon. Rendered at the same 64px scale as the pointer owls for visual consistency. The thinking/pointing state machine and `setOwlMode("thinking")` IPC were already wired — this only adds the missing asset (`generate-assets.ps1` now emits it at 256px, webpack copies it to `dist/`, and `.owl.thinking` references it).
+
+### Fixed
+- **Settings toggle now reaches the AI mid-conversation.** Toggling "Allow desktop actions" or "Enable Auto-Guide" was silently ignored — `SET_CONFIG` never invalidated the rebuild gate, so the next message was classified as a follow-up and skipped `buildSystemPrompt`, leaving the AI acting on the stale setting. New three-tier behavior: a fresh `--- SETTINGS @ <time> ---` snapshot is sent on every new capture / new session; a follow-up sent right after a toggle now carries a timestamped `--- SETTINGS UPDATE @ <time> | guide: OFF->ON ---` notice telling the AI to override its earlier instruction; unchanged follow-ups send nothing extra. The AI resolves conflicts by newest timestamp. Pure delta/snapshot helpers extracted into `src/main/settings-delta.ts` (unit-tested).
+
 ## [3.2.0] - 2026-07-29
 
 ### Added
@@ -470,6 +478,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[3.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v2.3.0...v3.0.0
