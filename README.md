@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/hero-mascot.png" alt="MudrikNow owl mascot" width="180" />
+<img src="assets/readme-banner.png" alt="MudrikNow" width="768" />
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
@@ -15,14 +15,6 @@
 [Website](https://abdallahmagdy15.github.io/mudriknow/) · [Install](#-install) · [Hotkeys](#%EF%B8%8F-hotkeys) · [About](#-about)
 
 </div>
-
-***
-
-## 🎬 Demo
-
-[**Watch the demo →**](https://abdallahmagdy15.github.io/mudriknow/)
-
-<div align="center"><em>Alt+Space → ask → MudrikNow acts on your desktop</em></div>
 
 ***
 
