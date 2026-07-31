@@ -30,6 +30,7 @@ module.exports = [
           { from: "src/main/splash/splash.html", to: "splash.html" },
           { from: "assets/owl-point-right.png", to: "owl-point-right.png" },
           { from: "assets/owl-point-left.png", to: "owl-point-left.png" },
+          { from: "assets/owl-thinking.png", to: "owl-thinking.png" },
           { from: "assets/icon.png", to: "icon.png" },
           { from: "assets/mascot.png", to: "mascot.png" },
         ],
