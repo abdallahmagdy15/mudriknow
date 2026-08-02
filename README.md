@@ -53,7 +53,9 @@ From there it's not just chat — it's an AI agent. Flip on **Auto-Guide** and i
    npm i -g opencode-ai
    ```
 3. Download the latest `.exe` from [Releases](https://github.com/abdallahmagdy15/mudriknow/releases) and run it.
-4. **Connect your AI model.** On first launch MudrikNow opens settings and highlights **Add a model** for you. Pick a provider — **NVIDIA** is recommended (generous free tier; [build.nvidia.com](https://build.nvidia.com/) → API keys) — paste your key, click **Verify**, then choose a model. Any time: **⚙ → Model → Add a model**.
+4. **Connect your AI model.** On first launch MudrikNow opens settings and highlights **Add a model** for you. Pick a provider, paste your key, click **Verify**, then choose a model. Any time: **⚙ → Model → Add a model**.
+
+> 💡 **Multimodal (vision) model recommended** — MudrikNow auto-captures a screenshot on every activation. For free/light use, **Google Gemini Flash-Lite** is a great pick ([aistudio.google.com](https://aistudio.google.com/) → API key).
 
 > Installer is **unsigned** — SmartScreen will warn on first launch. *More info → Run anyway*.
 
@@ -78,7 +80,7 @@ Two global hotkeys put MudrikNow in front of you. Both are rebindable from the �
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🦉 **Auto-Guide**             | MudrikNow becomes a teacher: an owl cursor appears on screen, points to each target with a speech bubble, and walks you step‑by‑step through multi‑step UI tasks. Toggle in ⚙ settings.                            |
 | 💬 **Quick chat mode**        | `Alt+X` opens the panel without capturing context — for questions that don't need screen awareness. MudrikNow is always one keystroke away, even when you just need a quick answer.                                |
-| 🔌 **Any LLM**               | 140+ providers via [OpenCode](https://opencode.ai) + [models.dev](https://models.dev) — NVIDIA, Anthropic, OpenAI, Google, DeepSeek, OpenRouter, and more. Pick a provider, paste your key, and **Verify** it works before you trust it.                           |
+| 🔌 **Any LLM**               | 140+ providers via [OpenCode](https://opencode.ai) + [models.dev](https://models.dev) — NVIDIA, Anthropic, OpenAI, Google, DeepSeek, OpenRouter, and more. Pick a provider, paste your key, and **Verify** it works before you trust it. **Vision (multimodal) models recommended** — MudrikNow auto-screenshots every activation; Google Gemini Flash-Lite is a great free pick.                           |
 | 🔒 **Sandboxed**             | No shell commands, no filesystem writes. The AI reads files in your working directory and dispatches an allow-listed set of UI actions. That's the whole capability surface.                                   |
 
 ## 🧠 How it works
