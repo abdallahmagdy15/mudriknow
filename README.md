@@ -39,9 +39,9 @@
 
 ## ✨ What it does
 
-Press **Alt+Space** anywhere. MudrikNow scans your active window's UI — every button, field, label, and value — and opens a floating panel on the opposite side of your screen so nothing gets covered. The element you're pointing at becomes the focal anchor. For web apps and Chromium windows, MudrikNow auto-attaches a screenshot, because browser UIA trees can miss page content.
+Trigger the hotkey over any window and MudrikNow reads the full accessibility tree under your cursor — every button, field, label, and value — across browsers, Office, IDEs, and native dialogs, then opens a floating panel. The element you pointed at becomes the anchor for the conversation.
 
-From there: ask, translate, fix, summarize. Or tell it to **act**: type, paste, click, invoke, press shortcuts. Turn on **Auto-Guide** and MudrikNow becomes a teacher — an owl cursor appears on screen and walks you step‑by‑step through any multi‑step task.
+From there it's not just chat — it's an AI agent. Flip on **Auto-Guide** and it switches from *doing* to *teaching*: an owl pointer appears, lands on each target with a speech bubble, and walks you through the task one click at a time.
 
 ## 🚀 Install
 
@@ -76,8 +76,6 @@ Two global hotkeys put MudrikNow in front of you. Both are rebindable from the �
 
 | <br />                       | <br />                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🪟 **Reads any app** | Uses native accessibility (UI Automation) to pick up buttons, fields, text, menus. Works in browsers, Office, IDEs, native dialogs — anywhere accessibility reaches. Auto-screenshot on Chromium apps; Capture Context button works for any app.           |
-| ⚡ **Acts for you**           | Type, paste, click, invoke, press keyboard shortcuts — MudrikNow can interact with any accessible element.                                                                                                        |
 | 🦉 **Auto-Guide**             | MudrikNow becomes a teacher: an owl cursor appears on screen, points to each target with a speech bubble, and walks you step‑by‑step through multi‑step UI tasks. Toggle in ⚙ settings.                            |
 | 💬 **Quick chat mode**        | `Alt+X` opens the panel without capturing context — for questions that don't need screen awareness. MudrikNow is always one keystroke away, even when you just need a quick answer.                                |
 | 🔌 **Any LLM**               | 140+ providers via [OpenCode](https://opencode.ai) + [models.dev](https://models.dev) — NVIDIA, Anthropic, OpenAI, Google, DeepSeek, OpenRouter, and more. Pick a provider, paste your key, and **Verify** it works before you trust it.                           |
