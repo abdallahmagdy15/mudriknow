@@ -576,7 +576,7 @@
         <h2 data-en="See it in action." data-ar="شاهده أثناء العمل.">See it in action.</h2>
       </div>
       <div class="rise" style="max-width:880px;margin:0 auto;">
-        <video src="assets/Mudriknow-demo.mp4" autoplay loop muted playsinline controls preload="metadata" style="display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:var(--radius);background:#000;box-shadow:0 24px 60px -28px rgba(19,37,48,.28)"></video>
+        <video src="assets/Mudriknow-demo-v2.mp4" autoplay loop muted playsinline controls preload="metadata" style="display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:var(--radius);background:#000;box-shadow:0 24px 60px -28px rgba(19,37,48,.28)"></video>
       </div>
     </div>
   </section>
@@ -588,33 +588,6 @@
       <div class="mtrack">
         <span>Anthropic</span><span>OpenAI</span><span>Google</span><span>Groq</span><span>DeepSeek</span><span>Ollama</span><span>Z.AI</span><span>OpenRouter</span><span>Kimi</span>
         <span>Anthropic</span><span>OpenAI</span><span>Google</span><span>Groq</span><span>DeepSeek</span><span>Ollama</span><span>Z.AI</span><span>OpenRouter</span><span>Kimi</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- SESSION DIAGRAM -->
-  <div class="diagram">
-    <div class="wrap">
-      <div class="dwrap rise">
-        <div class="dpill mono"><span class="dot"></span><span data-en="alt+space pressed · excel.exe" data-ar="تم الضغط على alt+space · excel.exe">alt+space pressed · excel.exe</span></div>
-        <div class="dcard">
-          <div class="dcard-in">
-            <div class="dcard-bar">
-              <strong>mudriknow — panel</strong>
-              <span class="grow" data-en="docked → right side" data-ar="مثبّت على يمين الشاشة">docked → right side</span>
-              <span class="status st-ok"><i></i><span data-en="Running" data-ar="يعمل">Running</span></span>
-            </div>
-            <div class="dcard-body">
-              <div class="chips">
-                <span class="chip" data-en="UIA tree · 1,284 nodes" data-ar="شجرة UIA · 1,284 عقدة">UIA tree · 1,284 nodes</span>
-                <span class="chip" data-en="screen context ✓" data-ar="سياق الشاشة ✓">screen context ✓</span>
-                <span class="chip">112ms</span>
-              </div>
-              <div class="you"><span class="who" data-en="YOU" data-ar="أنت">YOU</span><span data-en="why is my pivot showing stale values?" data-ar="لماذا يعرض الجدول المحوري قيمًا قديمة؟">why is my pivot showing stale values?</span></div>
-              <div class="owl"><span class="who" data-en="OWL" data-ar="البومة">OWL</span><span><span data-en="the source range doesn't include the new rows." data-ar="نطاق المصدر لا يشمل الصفوف الجديدة.">the source range doesn't include the new rows.</span><br><span data-en="want me to extend it and refresh?" data-ar="هل أوسّعه وأحدّثه؟">want me to extend it and refresh?</span> <span class="dim" data-en="(y/n)" data-ar="(نعم/لا)">(y/n)</span> <span class="caret"></span></span></div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -780,13 +753,6 @@
 
 </main>
 
-<div class="vmodal" id="vmodal" aria-hidden="true">
-  <div class="vmodal-box">
-    <button class="vmodal-x" id="vmodalX" aria-label="Close">✕</button>
-    <video id="demoVideo" src="assets/Mudriknow-demo.mp4" controls playsinline preload="metadata"></video>
-  </div>
-</div>
-
 <footer>
   <div class="wrap">
     <span class="fbrand">
@@ -833,17 +799,6 @@
       setTimeout(() => { btn.textContent = btn.dataset[root.lang]; }, 1200);
     });
   });
-
-  // demo video modal
-  const vmodal = document.getElementById('vmodal');
-  const demoVideo = document.getElementById('demoVideo');
-  document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', e => {
-    e.preventDefault(); vmodal.classList.add('show'); demoVideo.play().catch(() => {});
-  }));
-  function closeDemo() { vmodal.classList.remove('show'); demoVideo.pause(); demoVideo.currentTime = 0; }
-  document.getElementById('vmodalX').addEventListener('click', closeDemo);
-  vmodal.addEventListener('click', e => { if (e.target === vmodal) closeDemo(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDemo(); });
 
   // reveal on scroll
   const io = new IntersectionObserver(entries => {
