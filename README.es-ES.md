@@ -69,7 +69,7 @@ Dos atajos globales ponen a MudrikNow frente a ti. Ambos se pueden reasignar des
 | 🦉 **Auto-Guide**             | MudrikNow se convierte en un instructor: aparece un cursor con forma de búho en la pantalla, señala cada objetivo con un globo de diálogo y te guía paso a paso en tareas de interfaz complejas. Se activa/desactiva en la configuración ⚙.                            |
 | 💬 **Modo de chat rápido**        | `Alt+X` abre el panel sin capturar el contexto — para preguntas que no requieren conciencia de la pantalla. MudrikNow está siempre a una tecla de distancia, incluso cuando solo necesitas una respuesta rápida.                                |
 | 🔌 **Cualquier LLM**               | Más de 140 proveedores mediante [OpenCode](https://opencode.ai) + [models.dev](https://models.dev) — NVIDIA, Anthropic, OpenAI, Google, DeepSeek, OpenRouter y más. Elige un proveedor, pega tu clave y **Verifica** que funcione antes de confiar en él.                           |
-| 🔒 **Aislado (Sandbox)**             | Sin comandos de shell, sin escritura en el sistema de archivos. La IA lee archivos en tu directorio de trabajo y ejecuta un conjunto permitido de acciones de UI. Eso es todo el alcance de sus capacidades.                                   |
+| 🔒 **Aislado (Sandbox)**             | Shell de solo lectura para diagnósticos — escrituras, eliminaciones y piping están bloqueados (las violaciones detienen la sesión). Sin escritura en el sistema de archivos. La IA lee archivos en tu directorio de trabajo y ejecuta un conjunto permitido de acciones de UI. Eso es todo el alcance de sus capacidades.                                   |
 
 ## 🧠 Cómo funciona
 
@@ -104,7 +104,7 @@ MudrikNow ejecuta la IA en un entorno aislado (sandbox) con capacidades delibera
 
 | Capacidad                                        | ¿Expuesta al modelo?              |
 | ------------------------------------------------- | ---------------------------------- |
-| Ejecución de Shell / PowerShell                           | ❌ No                              |
+| Ejecución de Shell / PowerShell                           | 🟡 Solo lectura (mutación/tuberías bloqueadas) |
 | Escritura en **sistema de archivos**                              | ❌ No                              |
 | **Lectura** de sistema de archivos (`read`/`grep`/`glob`/`list`) | ✅ Sí (dentro del directorio de trabajo)  |
 | Windows UI Automation                             | ✅ Sí (conjunto de acciones predefinido)    |

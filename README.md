@@ -81,7 +81,7 @@ Two global hotkeys put MudrikNow in front of you. Both are rebindable from the �
 | 🦉 **Auto-Guide**             | MudrikNow becomes a teacher: an owl cursor appears on screen, points to each target with a speech bubble, and walks you step‑by‑step through multi‑step UI tasks. Toggle in ⚙ settings.                            |
 | 💬 **Quick chat mode**        | `Alt+X` opens the panel without capturing context — for questions that don't need screen awareness. MudrikNow is always one keystroke away, even when you just need a quick answer.                                |
 | 🔌 **Any LLM**               | 140+ providers via [OpenCode](https://opencode.ai) + [models.dev](https://models.dev) — NVIDIA, Anthropic, OpenAI, Google, DeepSeek, OpenRouter, and more. Pick a provider, paste your key, and **Verify** it works before you trust it. **Vision (multimodal) models recommended** — MudrikNow auto-screenshots every activation; Google Gemini Flash-Lite is a great free pick.                           |
-| 🔒 **Sandboxed**             | No shell commands, no filesystem writes. The AI reads files in your working directory and dispatches an allow-listed set of UI actions. That's the whole capability surface.                                   |
+| 🔒 **Sandboxed**             | Read-only shell for diagnostics — writes, deletes, and piping are blocked (violations kill the session). No filesystem writes. The AI reads files in your working directory and dispatches an allow-listed set of UI actions. That's the whole capability surface.                                   |
 
 ## 🧠 How it works
 
@@ -116,7 +116,7 @@ MudrikNow runs the AI in a sandbox with deliberately narrow capabilities:
 
 | Capability                                        | Exposed to the model?              |
 | ------------------------------------------------- | ---------------------------------- |
-| Shell / PowerShell exec                           | ❌ No                              |
+| Shell / PowerShell exec                           | 🟡 Read-only only (mutation/pipes blocked) |
 | Filesystem **write**                              | ❌ No                              |
 | Filesystem **read** (`read`/`grep`/`glob`/`list`) | ✅ Yes (within working directory)  |
 | Windows UI Automation                             | ✅ Yes (pre-defined action set)    |

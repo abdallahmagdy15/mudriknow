@@ -74,9 +74,10 @@ After regenerating, run `npm run build` so `dist/` picks up the new PNGs. The Wi
 ## Security & sandbox (never weaken accidentally)
 
 - **Desktop actions are embedded markers, NOT tool calls**. The LLM may use OpenCode's read-only tools (`read`, `grep`, `glob`, `list`) for local file lookup, but **all desktop side effects** (click, type, paste, press keys, guide cursor) must flow through `<!--ACTION:{json}-->` markers in plain text. `parseActionsFromResponse` in `action-executor.ts` extracts them. When editing `SYSTEM_PROMPT` in `src/shared/prompts.ts`, keep this split intact — do NOT introduce a tool-call story for desktop actions, and do NOT widen the runtime tool allowlist.
-- **Two-layer sandbox enforcement**:
-  1. `.opencode/agent/readonly.md` is copied into the working dir on **every launch** by `config-store.ts#ensureAgentInWorkingDir` (overwrites, so updates propagate after upgrade).
-  2. **Runtime kill-switch** (`opencode-client.ts#detectDisallowedTool`): inspects every JSON event streamed from OpenCode. If a `permission.asked` or `part.tool` event names anything outside the allowlist (`read`, `grep`, `glob`, `list`, `webfetch`, `websearch`), the subprocess is `SIGKILL`ed and a `Blocked: model attempted to use X` error surfaces.
+- **Sandbox enforcement** (allowlist is dynamic):
+  1. `.opencode/agent/readonly.md` is copied into the working dir on **every launch** by `config-store.ts#ensureAgentInWorkingDir` (overwrites, so updates propagate after upgrade). When `Config.readOnlyCommandsEnabled` is true (the default), the file is runtime-patched to enable read-only `bash`.
+  2. **Runtime tool kill-switch** (`opencode-client.ts#detectDisallowedTool`): inspects every JSON event streamed from OpenCode. Anything outside the dynamic allowlist — `read`, `grep`, `glob`, `list`, `webfetch`, `websearch`, plus `bash` only when `readOnlyCommandsEnabled` — gets the subprocess `SIGKILL`ed and a `Blocked: model attempted to use X` error surfaced.
+  3. **Bash command filtering** (only when bash is allowed): `opencode-client.ts` inspects each bash command string for `BLOCKED_OPERATORS` (`; & | > <`) and `MUTATING_COMMANDS` (remove-item, set-content, stop-process, start-process, invoke-webrequest, node, python, cmd, reg, sc, net, shutdown…) — a match terminates the session. Denylist model: block known-mutating + operators, allow the rest.
 - **IPC-level guard**: `validateAction` in `action-executor.ts` sanitizes every renderer-supplied action payload. Never wire a new IPC handler that forwards renderer-supplied actions to an executor without going through `validateAction`.
 
 ## Lazy-loaded modules (do not static-import)
