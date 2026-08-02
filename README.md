@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-bannerv2.png" alt="MudrikNow" width="768" />
+<img src="assets/readme-banner-v3.png" alt="MudrikNow" width="768" />
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
@@ -15,6 +15,12 @@
 [Website](https://abdallahmagdy15.github.io/mudriknow/) · [Install](#-install) · [Hotkeys](#%EF%B8%8F-hotkeys) · [About](#-about)
 
 </div>
+
+***
+
+## 🎬 Demo
+
+<p align="center"><img src="https://abdallahmagdy15.github.io/mudriknow/assets/Mudriknow-demo-compressed.gif" alt="MudrikNow demo" width="480"></p>
 
 ***
 
