@@ -4,7 +4,7 @@
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
-***Stop pasting screenshots into AI chats.*** **MudrikNow is an open-source desktop AI agent that sees what you see — and answers, acts, or guides you step-by-step through any task.**
+***Stop explaining your screen to AI.*** **MudrikNow is an open-source desktop AI agent that sees what you see — and answers, acts, or guides you step-by-step through any task.**
 
 [![License](https://img.shields.io/badge/license-MIT-18BFE1?style=flat-square)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/abdallahmagdy15/mudriknow?style=flat-square\&color=F2A93A\&include_prereleases)](https://github.com/abdallahmagdy15/mudriknow/releases)
@@ -127,7 +127,7 @@ Full threat model + reporting in **[SECURITY.md](SECURITY.md)**.
 
 Hi, I'm **Abdullah Magdy**.
 
-A senior dev who got tired of pasting screenshots into ChatGPT — so I built MudrikNow on nights and weekends. Open source so you can see (and improve) every line.
+A senior dev who got tired of explaining context to AI chats — so I built MudrikNow on nights and weekends. Open source so you can see (and improve) every line.
 
 - 🐙 GitHub — [@abdallahmagdy15](https://github.com/abdallahmagdy15)
 - 🐦 X / Twitter — [@AbdallahMagdyy](https://x.com/AbdallahMagdyy)
