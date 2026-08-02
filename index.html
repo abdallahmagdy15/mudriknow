@@ -639,7 +639,7 @@
         <div class="fcard">
           <div class="fnum"><span>01</span><i></i></div>
           <h3><span class="cat" data-en="Vision" data-ar="رؤية">Vision</span><span data-en="Sees any app" data-ar="يرى أي تطبيق">Sees any app</span></h3>
-          <p data-en="Reads the full UI tree — buttons, fields, text, menus — through native accessibility (UI Automation). Chromium apps get auto-screenshot fallback." data-ar="يقرأ شجرة الواجهة كاملة — الأزرار والحقول والنصوص والقوائم — عبر إمكانية الوصول الأصلية (UI Automation). وتطبيقات Chromium تحصل على لقطة شاشة تلقائية كبديل.">Reads the full UI tree — buttons, fields, text, menus — through native accessibility (UI Automation). Chromium apps get auto-screenshot fallback.</p>
+          <p data-en="Reads the full UI tree — buttons, fields, text, menus — through native accessibility (UI Automation). A full-screen screenshot with a coordinate grid is captured on every activation." data-ar="يقرأ شجرة الواجهة كاملة — الأزرار والحقول والنصوص والقوائم — عبر إمكانية الوصول الأصلية (UI Automation). ويلتقط لقطة شاشة كاملة مع شبكة إحداثيات عند كل تفعيل.">Reads the full UI tree — buttons, fields, text, menus — through native accessibility (UI Automation). A full-screen screenshot with a coordinate grid is captured on every activation.</p>
         </div>
         <div class="fcard">
           <div class="fnum"><span>02</span><i></i></div>
@@ -681,7 +681,7 @@
       <div class="keys rise">
         <div class="krow">
           <span class="kb"><kbd>Alt</kbd><span class="plus">+</span><kbd>Space</kbd></span>
-          <p data-en="Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help." data-ar="يفحص شجرة واجهة النافذة عند المؤشر. يفتح مودرك ناو على الجانب المقابل من شاشتك، جاهزًا للمساعدة.">Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help.</p>
+          <p data-en="Reads your active window's full UI and anchors on what you're pointing at. MudrikNow opens on the opposite side of your screen, ready to help." data-ar="يقرأ واجهة نافذتك النشطة بالكامل ويرتكز على ما تشير إليه. يفتح مودرك ناو على الجانب المقابل من شاشتك، جاهزًا للمساعدة.">Reads your active window's full UI and anchors on what you're pointing at. MudrikNow opens on the opposite side of your screen, ready to help.</p>
         </div>
         <div class="krow">
           <span class="kb"><kbd>Alt</kbd><span class="plus">+</span><kbd>X</kbd></span>
@@ -707,7 +707,7 @@
         <div>
           <p class="eyebrow" data-en="Privacy &amp; security" data-ar="الخصوصية والأمان">Privacy &amp; security</p>
           <h2 data-en="Sandbox first." data-ar="العزل أولًا.">Sandbox first.</h2>
-          <p class="lead" data-en="MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. Screen capture is automatic on Chromium apps; for any app, the Capture Context button captures a screenshot with a coordinate grid." data-ar="مودرك ناو مغلق افتراضيًا. أوامر الشل والكتابة على الملفات معطّلة. إجراءات UIA مقيّدة بقائمة مسموح. التقاط الشاشة تلقائي في تطبيقات Chromium؛ ولأي تطبيق آخر، يلتقط زر Capture Context لقطة شاشة مع شبكة إحداثيات.">MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. Screen capture is automatic on Chromium apps; for any app, the Capture Context button captures a screenshot with a coordinate grid.</p>
+          <p class="lead" data-en="MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. A full-screen screenshot with a coordinate grid is captured on every Alt+Space (and via the Capture Context button) — the AI sees the pixels as well as the UI tree." data-ar="مودرك ناو مغلق افتراضيًا. أوامر الشل والكتابة على الملفات معطّلة. إجراءات UIA مقيّدة بقائمة مسموح. تُلتقط لقطة شاشة كاملة مع شبكة إحداثيات عند كل Alt+Space (وكذلك عبر زر Capture Context) — بحيث يرى الذكاء الاصطناعي البكسلات إضافة إلى شجرة الواجهة.">MudrikNow defaults closed. Shell commands and filesystem writes are off. UIA actions are allow-listed. A full-screen screenshot with a coordinate grid is captured on every Alt+Space (and via the Capture Context button) — the AI sees the pixels as well as the UI tree.</p>
           <a class="linkpill" href="https://github.com/abdallahmagdy15/mudriknow/blob/main/SECURITY.md" data-en="Read the full threat model in SECURITY.md →" data-ar="اقرأ نموذج التهديد الكامل في SECURITY.md ←">Read the full threat model in SECURITY.md →</a>
         </div>
         <div class="sbox">
@@ -715,7 +715,7 @@
           <div class="srow"><span data-en="Filesystem write" data-ar="الكتابة على الملفات">Filesystem write</span><span class="status st-off"><i></i><span data-en="Off" data-ar="معطّل">Off</span></span></div>
           <div class="srow"><span data-en="Windows UI Automation" data-ar="أتمتة واجهة ويندوز">Windows UI Automation</span><span class="status st-ok"><i></i><span data-en="Allow-listed" data-ar="قائمة مسموح فقط">Allow-listed</span></span></div>
           <div class="srow"><span data-en="Filesystem read" data-ar="قراءة الملفات">Filesystem read</span><span class="status st-ok"><i></i><span data-en="Working dir only" data-ar="مجلد العمل فقط">Working dir only</span></span></div>
-          <div class="srow"><span data-en="Screen pixels" data-ar="بكسلات الشاشة">Screen pixels</span><span class="status st-amber"><i></i><span data-en="Auto on Chromium · Capture Context" data-ar="تلقائي في Chromium · زر Capture Context">Auto on Chromium · Capture Context</span></span></div>
+          <div class="srow"><span data-en="Screen pixels" data-ar="بكسلات الشاشة">Screen pixels</span><span class="status st-amber"><i></i><span data-en="Auto on every Alt+Space" data-ar="تلقائي عند كل Alt+Space">Auto on every Alt+Space</span></span></div>
         </div>
       </div>
     </div>
