@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-banner-v3.png" alt="MudrikNow" width="768" />
+<img src="assets/readme-banner-v3.png?v=2" alt="MudrikNow" width="768" />
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
@@ -20,7 +20,7 @@
 
 ## 🎬 Demo
 
-<p align="center"><img src="https://abdallahmagdy15.github.io/mudriknow/assets/Mudriknow-demo-compressed.gif" alt="MudrikNow demo" width="480"></p>
+<p align="center"><video src="https://abdallahmagdy15.github.io/mudriknow/assets/Mudriknow-demo.mp4" autoplay loop muted playsinline width="640">MudrikNow demo</video></p>
 
 ***
 
