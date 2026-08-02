@@ -201,7 +201,7 @@
   }
   .hint b{color:var(--ink);font-weight:500}
   h1{
-    font-size:clamp(27px,7.2vw,88px);
+    font-size:clamp(27px,6vw,62px);
     line-height:1.03;letter-spacing:-.045em;font-weight:800;
   }
   h1 .l2{
@@ -454,8 +454,7 @@
     .eyebrow{font-size:10px;letter-spacing:.12em;margin-bottom:14px}
     .hint{font-size:11.5px;padding:5px 12px;margin-bottom:22px}
 
-    /* headline must stay on one line per sentence — never wrap */
-    h1>span{white-space:nowrap}
+    /* longer hook now wraps on narrow phones — see ≤520px note below */
     .tstep{padding:0 0 36px 66px}
     [dir="rtl"] .tstep{padding:0 66px 36px 0}
 
@@ -469,8 +468,7 @@
     .hero{padding:44px 0 52px}
     section{padding:52px 0}
     .shead{margin-bottom:32px}
-    /* scale headline by vw so "Stop pasting screenshots." fits one line
-       even on ~320px phones (floor 22px for accessibility) */
+    /* floor 22px for accessibility; longer hook wraps on narrow phones */
     h1{font-size:clamp(22px,7.2vw,34px)}
     .btn{padding:13px 22px;font-size:14.5px}
     .cta-panel{padding:56px 22px;border-radius:24px}
@@ -531,7 +529,7 @@
       <img class="watermark" src="assets/hero-mascot.png" alt="" aria-hidden="true">
       <p class="eyebrow rise" data-en="MudrikNow — Open-Source" data-ar="مودرك ناو — مفتوح المصدر">MudrikNow — Open-Source</p>
       <div class="rise"><span class="hint mono"><span data-en="press" data-ar="اضغط">press</span> <b>alt + space</b> <span data-en="— it sees your screen" data-ar="— وهو يرى شاشتك">— it sees your screen</span></span></div>
-      <h1 class="rise"><span data-en="Stop pasting screenshots." data-ar="توقف عن لصق لقطات الشاشة.">Stop pasting screenshots.</span><br><span class="l2" data-en="Your AI sees what you see." data-ar="ذكاؤك الاصطناعي يرى ما تراه.">Your AI sees what you see.</span></h1>
+      <h1 class="rise"><span data-en="Stop explaining your screen to AI." data-ar="توقف عن شرح شاشتك للذكاء الاصطناعي.">Stop explaining your screen to AI.</span><br><span class="l2" data-en="Your AI sees what you see." data-ar="ذكاؤك الاصطناعي يرى ما تراه.">Your AI sees what you see.</span></h1>
       <p class="sub rise" data-en="MudrikNow is an open-source desktop AI agent that sees what you see — and answers, acts, or guides you step-by-step through any task." data-ar="مودرك ناو عميل ذكاء اصطناعي مفتوح المصدر لسطح المكتب يرى ما تراه — ويجيب، وينفّذ، أو يرشدك خطوة بخطوة خلال أي مهمة.">MudrikNow is an open-source desktop AI agent that sees what you see — and answers, acts, or guides you step-by-step through any task.</p>
       <div class="cta rise">
         <a class="btn solid" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="↓ Download" data-ar="↓ تحميل">↓ Download</a>
@@ -729,7 +727,7 @@
       <div class="rise">
         <p class="eyebrow" data-en="About" data-ar="عن المطور">About</p>
         <h2 data-en="Hi, I'm Abdullah Magdy." data-ar="مرحبًا، أنا عبدالله مجدي.">Hi, I'm Abdullah Magdy.</h2>
-        <p data-en="A dev who got tired of pasting screenshots into AI chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝" data-ar="مطوّر سئم من لصق لقطات الشاشة في دردشات الذكاء الاصطناعي — فبنى مودرك ناو في الليالي وعطلات نهاية الأسبوع. المشروع مفتوح المصدر، والمساهمات والأفكار مرحّب بها 🤝">A dev who got tired of pasting screenshots into AI chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝</p>
+        <p data-en="A dev who got tired of explaining context to AI chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝" data-ar="مطوّر سئم من شرح شاشتك للذكاء الاصطناعي — فبنى مودرك ناو في الليالي وعطلات نهاية الأسبوع. المشروع مفتوح المصدر، والمساهمات والأفكار مرحّب بها 🤝">A dev who got tired of explaining context to AI chats — so I built MudrikNow on nights and weekends. It's open source; contributions and ideas are welcome 🤝</p>
         <div class="socials">
           <a class="linkpill" href="https://github.com/abdallahmagdy15">⌥ @abdallahmagdy15</a>
           <a class="linkpill" href="https://x.com/AbdallahMagdyy">𝕏 @AbdallahMagdyy</a>
@@ -745,7 +743,7 @@
     <div class="wrap">
       <div class="cta-panel rise">
         <h2 data-en="Let the owl see your screen." data-ar="دع البومة ترى شاشتك.">Let the owl see your screen.</h2>
-        <p data-en="Open-source, sandboxed, and one hotkey away. Download MudrikNow and stop pasting screenshots forever." data-ar="مفتوح المصدر، معزول، وعلى بُعد ضغطة مفتاح واحدة. حمّل مودرك ناو وتوقّف عن لصق لقطات الشاشة إلى الأبد.">Open-source, sandboxed, and one hotkey away. Download MudrikNow and stop pasting screenshots forever.</p>
+        <p data-en="Open-source, sandboxed, and one hotkey away. Download MudrikNow and stop explaining your screen to AI." data-ar="مفتوح المصدر، معزول، وعلى بُعد ضغطة مفتاح واحدة. حمّل مودرك ناو وتوقّف عن شرح شاشتك للذكاء الاصطناعي.">Open-source, sandboxed, and one hotkey away. Download MudrikNow and stop explaining your screen to AI.</p>
         <a class="btn" href="https://github.com/abdallahmagdy15/mudriknow/releases/latest" data-en="↓ Download" data-ar="↓ تحميل">↓ Download</a>
       </div>
     </div>
