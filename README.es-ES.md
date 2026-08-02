@@ -6,9 +6,8 @@
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
-***Deja de pegar capturas de pantalla en chats de IA.*** **MudrikNow es un asistente de IA para Windows de código abierto que ve lo que tú ves — y responde, actúa o te guía paso a paso en cualquier tarea.**
+***Deja de explicar tu pantalla a la IA.*** **MudrikNow es un agente de IA de escritorio de código abierto que ve lo que tú ves — y responde, actúa o te guía paso a paso en cualquier tarea.**
 
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0FA8C9?style=flat-square)](https://github.com/abdallahmagdy15/mudriknow/releases)
 [![License](https://img.shields.io/badge/license-MIT-18BFE1?style=flat-square)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/abdallahmagdy15/mudriknow?style=flat-square\&color=F2A93A\&include_prereleases)](https://github.com/abdallahmagdy15/mudriknow/releases)
 [![Preview](https://img.shields.io/badge/status-preview-F2A93A?style=flat-square)](CHANGELOG.md)
@@ -30,7 +29,7 @@
 
 ## ✨ Qué hace
 
-Presiona **Alt+Space** en cualquier parte de Windows. MudrikNow escanea la interfaz de tu ventana activa — cada botón, campo, etiqueta y valor — y abre un panel flotante en el lado opuesto de tu pantalla para que nada quede oculto. El elemento en el que apuntas se convierte en el punto de referencia. Para aplicaciones web y ventanas Chromium, MudrikNow adjunta automáticamente una captura de pantalla, ya que los árboles UIA del navegador pueden omitir el contenido de la página.
+Presiona **Alt+Space** sobre cualquier ventana. MudrikNow escanea la interfaz de tu ventana activa — cada botón, campo, etiqueta y valor — y abre un panel flotante en el lado opuesto de tu pantalla para que nada quede oculto. El elemento en el que apuntas se convierte en el punto de referencia. MudrikNow también captura una captura de pantalla completa con cuadrícula de coordenadas en cada activación, para que vea los píxeles además del árbol de interfaz.
 
 A partir de ahí: pregunta, traduce, corrige o resume. O dale la orden de **actuar**: escribir, pegar, hacer clic, invocar o presionar atajos de teclado. Activa **Auto-Guide** y MudrikNow se convierte en un instructor — aparece un cursor con forma de búho en la pantalla que te guía paso a paso en cualquier tarea compleja.
 
@@ -56,7 +55,7 @@ Dos atajos globales ponen a MudrikNow frente a ti. Ambos se pueden reasignar des
 
 | Atajo        | Qué ocurre |
 | ------------ | ------------ |
-| `Alt+Space`  | Escanea el árbol de interfaz de la ventana en la posición del cursor. MudrikNow se abre en el lado opuesto de la pantalla, listo para ayudar. |
+| `Alt+Space`  | Lee la interfaz completa de tu ventana activa y se ancla en lo que estás señalando. MudrikNow se abre en el lado opuesto de la pantalla, listo para ayudar. |
 | `Alt+X`      | Chat rápido — abre el panel al instante sin capturar el contexto. Para preguntas que no requieren conciencia de la pantalla. |
 | `Esc`        | Cancelar: detiene la transmisión o cierra el panel. |
 | `Enter`      | Enviar el mensaje. `Shift+Enter` para nueva línea. |
@@ -65,7 +64,7 @@ Dos atajos globales ponen a MudrikNow frente a ti. Ambos se pueden reasignar des
 
 | <br />                       | <br />                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🪟 **Lee cualquier app de Windows** | Usa Windows UI Automation para detectar botones, campos, texto y menús. Funciona en navegadores, Office, IDEs y diálogos nativos — en cualquier lugar donde llegue la accesibilidad. Captura automática en apps Chromium; el botón Capturar Contexto funciona para cualquier app.           |
+| 🪟 **Lee cualquier app de Windows** | Usa Windows UI Automation para detectar botones, campos, texto y menús. Funciona en navegadores, Office, IDEs y diálogos nativos — en cualquier lugar donde llegue la accesibilidad. Captura una captura de pantalla en cada Alt+Space; el botón Capturar Contexto también está disponible.           |
 | ⚡ **Actúa por ti**           | Escribe, pega, haz clic, invoca o presiona atajos de teclado — MudrikNow puede interactuar con cualquier elemento accesible.                                                                                                        |
 | 🦉 **Auto-Guide**             | MudrikNow se convierte en un instructor: aparece un cursor con forma de búho en la pantalla, señala cada objetivo con un globo de diálogo y te guía paso a paso en tareas de interfaz complejas. Se activa/desactiva en la configuración ⚙.                            |
 | 💬 **Modo de chat rápido**        | `Alt+X` abre el panel sin capturar el contexto — para preguntas que no requieren conciencia de la pantalla. MudrikNow está siempre a una tecla de distancia, incluso cuando solo necesitas una respuesta rápida.                                |
@@ -78,7 +77,7 @@ Dos atajos globales ponen a MudrikNow frente a ti. Ambos se pueden reasignar des
 Alt+Space (cursor)
   ↓  el atajo lee la posición del cursor
   ↓  script UIA de PowerShell — árbol JSON de la ventana activa
-  ↓  ¿Chromium/Electron? → captura automática de pantalla completa como respaldo
+  ↓  captura de pantalla completa + cuadrícula de coordenadas, siempre
   ↓  MudrikNow se abre en el lado opuesto de la pantalla, listo para chatear
 
 Alt+X (chat rápido)
@@ -110,7 +109,7 @@ MudrikNow ejecuta la IA en un entorno aislado (sandbox) con capacidades delibera
 | **Lectura** de sistema de archivos (`read`/`grep`/`glob`/`list`) | ✅ Sí (dentro del directorio de trabajo)  |
 | Windows UI Automation                             | ✅ Sí (conjunto de acciones predefinido)    |
 | Teclado / ratón                                  | ✅ Sí (cuando UIA no puede alcanzar un objetivo) |
-| Píxeles de pantalla                                     | ✅ Automático en Chromium/Electron · 🖐️ Manual en apps nativas |
+| Píxeles de pantalla                                     | ✅ Automático en cada Alt+Space |
 
 Modelo de amenazas completo + reporte en **[SECURITY.md](SECURITY.md)**.
 
@@ -118,7 +117,7 @@ Modelo de amenazas completo + reporte en **[SECURITY.md](SECURITY.md)**.
 
 Hola, soy **Abdullah Magdy**.
 
-Un desarrollador senior que se cansó de pegar capturas de pantalla en ChatGPT — así que construí MudrikNow en mis noches y fines de semana. Código abierto para que puedas ver (y mejorar) cada línea.
+Un desarrollador senior que se cansó de explicar su pantalla a la IA — así que construí MudrikNow en mis noches y fines de semana. Código abierto para que puedas ver (y mejorar) cada línea.
 
 - 🐙 GitHub — [@abdallahmagdy15](https://github.com/abdallahmagdy15)
 - 🐦 X / Twitter — [@AbdallahMagdyy](https://x.com/AbdallahMagdyy)

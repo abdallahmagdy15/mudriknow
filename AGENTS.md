@@ -176,7 +176,7 @@ Alt+Space
   → EXECUTE_ACTION → UIA/robotjs performs the action, ACTION_RESULT goes back
 ```
 
-The pointer hotkey captures UIA data only — no screenshot. Vision is opt-in via the renderer's 📸 button (`ATTACH_SCREENSHOT` IPC → `vision.ts#captureAndOptimize`). The area hotkey (`Ctrl+Space`) is pixel-based: `area-selector.ts` (fullscreen overlay drag) + `area-scanner.ts` (captures the region + scans contained UIA elements).
+The pointer hotkey captures UIA data **plus a full-screen screenshot with a coordinate grid on every activation** (the panel hides briefly during capture; see `index.ts#handlePointerActivate`, which unconditionally calls `captureAndOptimize`). The Capture Context button (`CAPTURE_CONTEXT` IPC) does the same on demand; Alt+X (quick chat) captures nothing unless the user taps Capture Context. The legacy `ATTACH_SCREENSHOT` IPC still exists for back-compat. Both paths funnel through `vision.ts#captureAndOptimize` and `cleanupImage`. The area hotkey (`Ctrl+Space`) is pixel-based: `area-selector.ts` (fullscreen overlay drag) + `area-scanner.ts` (captures the region + scans contained UIA elements).
 
 ### Desktop actions are embedded markers, not tool calls
 

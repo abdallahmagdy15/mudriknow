@@ -39,7 +39,7 @@
 
 ## ✨ What it does
 
-Trigger the hotkey over any window and MudrikNow reads the full accessibility tree under your cursor — every button, field, label, and value — across browsers, Office, IDEs, and native dialogs, then opens a floating panel. The element you pointed at becomes the anchor for the conversation.
+Trigger the hotkey and MudrikNow reads the full accessibility tree of your active window — every button, field, label, and value — across browsers, Office, IDEs, and native dialogs, then opens a floating panel. The element you're hovering becomes the anchor for the conversation.
 
 From there it's not just chat — it's an AI agent. Flip on **Auto-Guide** and it switches from *doing* to *teaching*: an owl pointer appears, lands on each target with a speech bubble, and walks you through the task one click at a time.
 
@@ -67,7 +67,7 @@ Two global hotkeys put MudrikNow in front of you. Both are rebindable from the �
 
 | Shortcut     | What happens |
 | ------------ | ------------ |
-| `Alt+Space`  | Scans the window's UI tree at your cursor. MudrikNow opens on the opposite side of your screen, ready to help. |
+| `Alt+Space`  | Reads your active window's full UI and anchors on what you're pointing at. MudrikNow opens on the opposite side of your screen, ready to help. |
 | `Alt+X`      | Quick chat — opens the panel instantly without capturing context. For questions that don't need screen awareness. |
 | `Esc`        | Cancel: stops streaming or closes the panel. |
 | `Enter`      | Send prompt. `Shift+Enter` for newline. |
@@ -87,7 +87,7 @@ Two global hotkeys put MudrikNow in front of you. Both are rebindable from the �
 Alt+Space (pointer)
   ↓  hotkey reads cursor position
   ↓  PowerShell UIA script — JSON tree of the active window
-  ↓  Chromium/Electron? → auto-captures full-screen screenshot as fallback
+  ↓  full-screen screenshot + coordinate grid, captured every time
   ↓  MudrikNow opens on the opposite side of your screen, ready to chat
 
 Alt+X (quick chat)
@@ -119,7 +119,7 @@ MudrikNow runs the AI in a sandbox with deliberately narrow capabilities:
 | Filesystem **read** (`read`/`grep`/`glob`/`list`) | ✅ Yes (within working directory)  |
 | Windows UI Automation                             | ✅ Yes (pre-defined action set)    |
 | Keyboard / mouse                                  | ✅ Yes (when UIA can't reach a target) |
-| Screen pixels                                     | ✅ Auto on Chromium/Electron · 🖐️ Manual on native apps |
+| Screen pixels                                     | ✅ Auto on every Alt+Space |
 
 Full threat model + reporting in **[SECURITY.md](SECURITY.md)**.
 
