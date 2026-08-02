@@ -4,9 +4,8 @@
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
-***Stop pasting screenshots into AI chats.*** **MudrikNow is an open-source Windows AI assistant that sees what you see — and answers, acts, or guides you step-by-step through any task.**
+***Stop pasting screenshots into AI chats.*** **MudrikNow is an open-source desktop AI agent that sees what you see — and answers, acts, or guides you step-by-step through any task.**
 
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0FA8C9?style=flat-square)](https://github.com/abdallahmagdy15/mudriknow/releases)
 [![License](https://img.shields.io/badge/license-MIT-18BFE1?style=flat-square)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/abdallahmagdy15/mudriknow?style=flat-square\&color=F2A93A\&include_prereleases)](https://github.com/abdallahmagdy15/mudriknow/releases)
 [![Preview](https://img.shields.io/badge/status-preview-F2A93A?style=flat-square)](CHANGELOG.md)
@@ -26,13 +25,27 @@
 
 ***
 
+## 💡 Why MudrikNow
+
+<table>
+<tr>
+<td width="33%" valign="top" align="center"><strong>⚡ Instant Access</strong><br><em>Show MudrikNow instantly with a shortcut, whenever you need it.</em></td>
+<td width="33%" valign="top" align="center"><strong>🪟 Less Context</strong><br><em>It understands what's on your screen, so you explain less.</em></td>
+<td width="33%" valign="top" align="center"><strong>🎯 Any Task. Any Window.</strong><br><em>Get help and guidance through any task and any window.</em></td>
+</tr>
+</table>
+
+***
+
 ## ✨ What it does
 
-Press **Alt+Space** anywhere on Windows. MudrikNow scans your active window's UI — every button, field, label, and value — and opens a floating panel on the opposite side of your screen so nothing gets covered. The element you're pointing at becomes the focal anchor. For web apps and Chromium windows, MudrikNow auto-attaches a screenshot, because browser UIA trees can miss page content.
+Press **Alt+Space** anywhere. MudrikNow scans your active window's UI — every button, field, label, and value — and opens a floating panel on the opposite side of your screen so nothing gets covered. The element you're pointing at becomes the focal anchor. For web apps and Chromium windows, MudrikNow auto-attaches a screenshot, because browser UIA trees can miss page content.
 
 From there: ask, translate, fix, summarize. Or tell it to **act**: type, paste, click, invoke, press shortcuts. Turn on **Auto-Guide** and MudrikNow becomes a teacher — an owl cursor appears on screen and walks you step‑by‑step through any multi‑step task.
 
 ## 🚀 Install
+
+> 🌍 Currently **Windows** · macOS & Linux on the roadmap.
 
 1. Install **[Node.js ≥ 20](https://nodejs.org/)**.
 2. Install OpenCode (auth optional — keys can live in-app):
@@ -63,7 +76,7 @@ Two global hotkeys put MudrikNow in front of you. Both are rebindable from the �
 
 | <br />                       | <br />                                                                                                                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🪟 **Reads any Windows app** | Uses Windows UI Automation to pick up buttons, fields, text, menus. Works in browsers, Office, IDEs, native dialogs — anywhere accessibility reaches. Auto-screenshot on Chromium apps; Capture Context button works for any app.           |
+| 🪟 **Reads any app** | Uses native accessibility (UI Automation) to pick up buttons, fields, text, menus. Works in browsers, Office, IDEs, native dialogs — anywhere accessibility reaches. Auto-screenshot on Chromium apps; Capture Context button works for any app.           |
 | ⚡ **Acts for you**           | Type, paste, click, invoke, press keyboard shortcuts — MudrikNow can interact with any accessible element.                                                                                                        |
 | 🦉 **Auto-Guide**             | MudrikNow becomes a teacher: an owl cursor appears on screen, points to each target with a speech bubble, and walks you step‑by‑step through multi‑step UI tasks. Toggle in ⚙ settings.                            |
 | 💬 **Quick chat mode**        | `Alt+X` opens the panel without capturing context — for questions that don't need screen awareness. MudrikNow is always one keystroke away, even when you just need a quick answer.                                |
