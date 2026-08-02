@@ -19,7 +19,7 @@
 
 ## 🎬 Demo
 
-<p align="center"><a href="https://abdallahmagdy15.github.io/mudriknow/assets/Mudriknow-demo.mp4" target="_blank"><img src="https://abdallahmagdy15.github.io/mudriknow/assets/mudriknow-demo-poster.jpg" alt="MudrikNow demo" width="640"></a></p>
+<p align="center"><a href="https://abdallahmagdy15.github.io/mudriknow/assets/Mudriknow-demo-v2.mp4" target="_blank"><img src="https://abdallahmagdy15.github.io/mudriknow/assets/mudriknow-demo-poster-v2.jpg" alt="MudrikNow demo" width="640"></a></p>
 
 <div align="center"><em>▶ Click to play the demo</em></div>
 
