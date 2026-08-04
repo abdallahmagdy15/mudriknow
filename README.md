@@ -39,7 +39,7 @@
 
 ## ✨ What it does
 
-Trigger the hotkey and MudrikNow reads the full accessibility tree of your active window — every button, field, label, and value — across browsers, Office, IDEs, and native dialogs, then opens a floating panel. The element you're hovering becomes the anchor for the conversation.
+Trigger the hotkey and MudrikNow reads the full accessibility tree of your active window — every button, field, label, and value — **and** captures a full-screen screenshot with a coordinate grid. The tree gives precise automationIds + hidden metadata (deep text, off-screen state); the grid lets the model estimate coordinates when the tree is shallow (canvas, custom widgets, web content). It works across browsers, Office, IDEs, and native dialogs, then opens a floating panel anchored on the element you're hovering.
 
 From there it's not just chat — it's an AI agent. Flip on **Auto-Guide** and it switches from *doing* to *teaching*: an owl pointer appears, lands on each target with a speech bubble, and walks you through the task one click at a time.
 
