@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/readme-banner-v3.png?v=2" alt="MudrikNow" width="768" />
+<img src="assets/readme-banner-v4.png" alt="MudrikNow" width="768" />
 
 # MudrikNow  ·  <span dir="rtl">مدرك</span>
 
