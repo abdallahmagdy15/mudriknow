@@ -8,10 +8,6 @@ const log = (msg: string) => console.log(`[TRAY] ${msg}`);
 
 let tray: Tray | null = null;
 
-export function createTray(onQuit: () => void): Tray {
-  return createTrayWithShow(undefined, onQuit);
-}
-
 export function createTrayWithShow(onShow: (() => void) | undefined, onQuit: () => void): Tray {
   log("Creating tray icon...");
 

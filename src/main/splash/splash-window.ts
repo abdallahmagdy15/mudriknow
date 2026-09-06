@@ -77,11 +77,3 @@ export function closeSplashScreen(delayMs = 0): void {
     }
   }, delayMs);
 }
-
-export function isSplashVisible(): boolean {
-  return !!splashWindow && !splashWindow.isDestroyed() && splashWindow.isVisible();
-}
-
-export function getSplashWindow(): BrowserWindow | null {
-  return splashWindow && !splashWindow.isDestroyed() ? splashWindow : null;
-}

@@ -205,11 +205,6 @@ export function hideBubble(): void {
   overlayWin.webContents.send("guide-overlay-bubble-hide");
 }
 
-export function fadeBubble(opacity: number): void {
-  if (!overlayWin || overlayWin.isDestroyed()) return;
-  overlayWin.webContents.send("guide-overlay-bubble-fade", { opacity });
-}
-
 export function setOwlMode(mode: "pointing" | "thinking"): void {
   if (!overlayWin || overlayWin.isDestroyed()) return;
   overlayWin.webContents.send("guide-overlay-owl-mode", { mode });

@@ -28,7 +28,6 @@ declare global {
       onCaptureFreeze: (h: () => void) => void;
       onBubbleShow: (h: (payload: BubblePayload) => void) => void;
       onBubbleHide: (h: () => void) => void;
-      onBubbleFade: (h: (payload: { opacity: number }) => void) => void;
       onSetOwlMode: (h: (payload: { mode: "pointing" | "thinking" }) => void) => void;
       sendChoice: (choice: string) => void;
       reportInteractive: (rects: {
@@ -232,14 +231,6 @@ window.guideOverlay?.onBubbleShow(({ caption, options, theme }) => {
 
 window.guideOverlay?.onBubbleHide(() => {
   hideBubble();
-});
-
-window.guideOverlay?.onBubbleFade(({ opacity }) => {
-  if (opacity <= 0.35) {
-    bubble.classList.add("faded");
-  } else {
-    bubble.classList.remove("faded");
-  }
 });
 
 // --- Click-through is driven by a MAIN-PROCESS cursor poller ---

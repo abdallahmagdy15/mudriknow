@@ -26,10 +26,6 @@ export type UpdateStatus =
 
 let status: UpdateStatus = { kind: "idle" };
 
-export function getUpdateStatus(): UpdateStatus {
-  return status;
-}
-
 export function initUpdater(): void {
   if (!app.isPackaged) {
     log("Updater skipped: app is not packaged (dev build)");

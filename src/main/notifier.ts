@@ -85,6 +85,3 @@ export function setToastAppId(): void {
     log(`setAppUserModelId failed: ${e.message}`);
   }
 }
-
-// Re-exported so the caller can reference the IPC name for the scroll signal.
-export { IPC as SCROLL_IPC };

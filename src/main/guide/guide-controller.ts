@@ -636,7 +636,3 @@ export function getController(deps?: GuideControllerDeps): GuideController {
 export function isControllerInitialized(): boolean {
   return singleton !== null;
 }
-// Test helper — resets the singleton between tests
-export function _resetSingletonForTests(): void {
-  singleton = null;
-}
