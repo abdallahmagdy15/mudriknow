@@ -55,3 +55,22 @@ export function buildSettingsDeltaBlock(
 export function buildSettingsSnapshotBlock(actions: boolean, guide: boolean, time: string): string {
   return `\n--- SETTINGS @ ${time} | actions=${onOff(actions)} guide=${onOff(guide)} ---\nThese are the current live settings as of the timestamp above. If a later turn carries a newer SETTINGS timestamp (full snapshot or UPDATE notice), that newer one wins.\n--- END SETTINGS ---\n`;
 }
+
+/**
+ * Regexes for prompt artifacts MudrikNow prepends to user text. Follow-up
+ * turns carry no USER MESSAGE wrapper, so on session restore these blocks
+ * would otherwise be replayed to the user as if they typed them.
+ */
+const INJECTED_ARTIFACT_PATTERNS: RegExp[] = [
+  /--- SETTINGS UPDATE @ [\s\S]*?--- END SETTINGS ---\s*/g,
+  /--- SETTINGS @ [\s\S]*?--- END SETTINGS ---\s*/g,
+  /\[Note: I cancelled the in-progress guide walkthrough[^\]]*\]\s*/g,
+];
+
+/** Strip injected prompt artifacts (SETTINGS blocks, guide stop-note) from a
+ *  stored user message so session restore shows only what the user typed. */
+export function stripInjectedPromptArtifacts(content: string): string {
+  let out = content;
+  for (const p of INJECTED_ARTIFACT_PATTERNS) out = out.replace(p, "");
+  return out.trim();
+}

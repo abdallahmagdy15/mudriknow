@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { settingsDeltaParts, buildSettingsDeltaBlock, buildSettingsSnapshotBlock, SettingsSnap } from "./settings-delta";
+import { settingsDeltaParts, buildSettingsDeltaBlock, buildSettingsSnapshotBlock, stripInjectedPromptArtifacts, SettingsSnap } from "./settings-delta";
 
 describe("settingsDeltaParts", () => {
   it("returns empty when nothing changed vs snapshot", () => {
@@ -50,5 +50,30 @@ describe("buildSettingsSnapshotBlock", () => {
     expect(out).toContain("actions=ON");
     expect(out).toContain("guide=OFF");
     expect(out).toMatch(/newer SETTINGS timestamp/i);
+  });
+});
+
+describe("stripInjectedPromptArtifacts", () => {
+  it("strips a SETTINGS UPDATE block, keeping only the user text (CRLF-tolerant)", () => {
+    const stored =
+      "\n--- SETTINGS UPDATE @ 2026-09-05 23:12:43 | guide: OFF->ON ---\r\n" +
+      "The user changed these settings after the last SETTINGS snapshot in this conversation. OVERRIDE any earlier actions/guide instruction you were given; follow these latest values. (Newest timestamp wins.)\r\n" +
+      "--- END SETTINGS ---\r\n\r\n" +
+      "ok should be enabled";
+    expect(stripInjectedPromptArtifacts(stored)).toBe("ok should be enabled");
+  });
+
+  it("strips a SETTINGS snapshot block", () => {
+    const stored = buildSettingsSnapshotBlock(true, true, "2026-09-05 23:12:43") + "hello";
+    expect(stripInjectedPromptArtifacts(stored)).toBe("hello");
+  });
+
+  it("strips the guide-cancellation stop-note", () => {
+    const stored = "\n\n[Note: I cancelled the in-progress guide walkthrough. Treat this message as a fresh request — do NOT resume the guide unless I explicitly ask for it.]\n\nnext question";
+    expect(stripInjectedPromptArtifacts(stored)).toBe("next question");
+  });
+
+  it("leaves plain user text untouched", () => {
+    expect(stripInjectedPromptArtifacts("what is 2+2?")).toBe("what is 2+2?");
   });
 });
