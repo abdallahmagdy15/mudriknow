@@ -155,6 +155,13 @@ const MUTATING_NPM_SUBS: ReadonlySet<string> = new Set([
   "rm", "remove", "add", "ci", "dedupe", "prune", "fund", "audit fix",
 ]);
 
+/** Read-only subcommands of commands in MUTATING_COMMANDS. Everything else
+ *  under those commands stays blocked. */
+const READ_ONLY_SUBCOMMANDS: Record<string, ReadonlySet<string>> = {
+  reg: new Set(["query"]),      // reg add/delete/import etc. stay blocked
+  sc: new Set(["query", "queryex"]), // sc start/stop/config etc. stay blocked
+};
+
 /** Checks a bash command string against the operator block + mutating-command
  *  denylist. Returns a reason string if disallowed, null if allowed. */
 export function detectDisallowedBashCommand(command: string | undefined): string | null {
@@ -177,7 +184,14 @@ export function detectDisallowedBashCommand(command: string | undefined): string
 
   // Check single-token mutating commands
   if (MUTATING_COMMANDS.includes(first)) {
-    return `command "${first}" is a mutating command`;
+    // Read-only subcommands of otherwise-mutating externals are allowed
+    // (same intent as the git/npm subcommand split below): `reg query` and
+    // `sc query` only read registry/service state and are common in
+    // diagnostics, so blanket-blocking them kills legitimate sessions.
+    const readOnlySubs = READ_ONLY_SUBCOMMANDS[first];
+    if (!readOnlySubs || !readOnlySubs.has((tokens[1] || "").toLowerCase())) {
+      return `command "${first}" is a mutating command`;
+    }
   }
 
   // Check git subcommands

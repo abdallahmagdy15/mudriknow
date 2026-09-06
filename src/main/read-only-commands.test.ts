@@ -164,6 +164,28 @@ describe("detectDisallowedBashCommand", () => {
     });
   });
 
+  describe("read-only subcommands of mutating externals", () => {
+    it("ALLOWS reg query (registry read)", () => {
+      expect(detectDisallowedBashCommand("reg query HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run")).toBeNull();
+    });
+
+    it("blocks reg add (registry write)", () => {
+      expect(detectDisallowedBashCommand("reg add HKLM\\SOFTWARE\\X /v Y /d Z")).toContain("mutating");
+    });
+
+    it("blocks bare reg (no subcommand)", () => {
+      expect(detectDisallowedBashCommand("reg")).toContain("mutating");
+    });
+
+    it("ALLOWS sc query (service read)", () => {
+      expect(detectDisallowedBashCommand("sc query wuauserv")).toBeNull();
+    });
+
+    it("blocks sc stop (service mutation)", () => {
+      expect(detectDisallowedBashCommand("sc stop wuauserv")).toContain("mutating");
+    });
+  });
+
   describe("npm subcommand denylist", () => {
     it("blocks npm install", () => {
       expect(detectDisallowedBashCommand("npm install express")).toContain("mutating");

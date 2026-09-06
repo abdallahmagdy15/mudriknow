@@ -69,7 +69,7 @@ const RULES: Rule[] = [
     // a generic "something went wrong".
     category: "BLOCKED",
     test: includes("blocked:", "session terminated for safety", "blocked operator", "read-only mode"),
-    message: "The AI tried to run a command that isn't allowed in read-only mode. Try rephrasing your request.",
+    message: "The AI tried to run a blocked shell command (chained operators like ; & | > <, or a mutating command) and the session was stopped for safety. Send your message again — remind it to run ONE command at a time.",
   },
   {
     category: "AUTH_MISSING",
@@ -148,7 +148,7 @@ const FRIENDLY: Record<ErrorCategory, string> = {
   RATE_LIMIT: "Rate limit hit. Wait a moment and try again.",
   NETWORK: "Couldn't reach the provider. Check your connection.",
   PROVIDER_DOWN: "The provider seems to be having trouble right now.",
-  BLOCKED: "The AI tried to run a command that isn't allowed in read-only mode. Try rephrasing your request.",
+  BLOCKED: "The AI tried to run a blocked shell command (chained operators like ; & | > <, or a mutating command) and the session was stopped for safety. Send your message again — remind it to run ONE command at a time.",
   INCONCLUSIVE: "Couldn't confirm the connection. You can save the key and try sending a message.",
   UNKNOWN: "Something went wrong.",
 };

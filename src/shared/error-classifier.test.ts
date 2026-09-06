@@ -65,7 +65,8 @@ describe("classifyError - fallbacks", () => {
   it("classifies kill-switch block messages as BLOCKED with a clear message", () => {
     const r = classifyError("Blocked: raw line contains blocked operator \";\". Read-only mode — mutating commands and operators (; & | > <) are not allowed. Session terminated for safety.");
     expect(r.category).toBe("BLOCKED");
-    expect(r.message).toMatch(/read-only mode/i);
+    expect(r.message).toMatch(/ONE command at a time/i);
+    expect(r.message).toMatch(/stopped for safety/i);
     expect(r.recoveryAction).toBe("retry");
   });
 
