@@ -60,7 +60,6 @@ AI's map of hidden knowledge in this repo. Before acting on any task, read this 
 - `src/main/index.ts` | Main entry — window lifecycle, hotkey wiring, tray | Read when modifying app startup or window management.
 - `src/main/opencode-client.ts` | Spawns and streams from OpenCode CLI binary | Read when modifying AI subprocess communication.
 - `src/main/vision.ts` | Screenshot capture and optimization | Read when modifying image capture.
-- `src/main/ocr.ts` | OCR script for text extraction from screenshots | Read when modifying text recognition.
 
 ## Build & CI
 
@@ -72,10 +71,6 @@ AI's map of hidden knowledge in this repo. Before acting on any task, read this 
 - `vitest.config.ts` | Test config — `node` environment, `src/**/*.test.ts` | Read when modifying test setup.
 - `scripts/prune-platform-bins.js` | Post-install: prunes cross-platform native binaries | Read when modifying install scripts.
 - `scripts/check-no-env.js` | Pre-release: scans for leaked `.env` files and token strings | Read when modifying security checks.
-
-## Tools & playgrounds
-
-- `playground/index.html` | Self-contained UI lab — HTML clone of the panel + settings with live theme controls (colors, fonts, radii, panel size, scenes) and a mesh-variant editor (spots/position/fade/colors, localStorage persistence, CSS export for themes.css/global.css) | Open directly in a browser to preview UI changes without rebuilding the app.
 
 ## Tests
 
