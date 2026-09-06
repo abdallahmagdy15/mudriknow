@@ -628,30 +628,46 @@ function applyLoginItemSetting(launchOnStartup: boolean): void {
   }
 }
 
-// One-time cleanup: if the user previously toggled "Launch on startup"
-// while running in dev mode, a stale registry entry was created under
-// "electron.app.Electron" pointing to the dev electron.exe without the
-// app path. On Windows startup, that entry launches electron.exe --hidden
-// which shows the default Electron welcome page. We proactively remove
-// it if the value references our project directory.
-function cleanupStaleDevStartupEntry(): void {
+// Startup-entry normalization: Electron registers the Run entry under the
+// app's AUMID (= electron-builder appId), and our appId changed across
+// rebrands (com.hoverbuddy.app → com.mudrik.app → com.mudriknow.app). Each
+// rename orphaned the previous entry, so Windows could launch two or more
+// instances on boot (clashing with the single-instance guard). Enumerate
+// HKCU Run once and delete every entry that is NOT the canonical current
+// one but references a legacy app id or one of our exe names. Other apps'
+// Electron entries never match (their exes/names differ). Runs before
+// applyLoginItemSetting() so exactly one canonical entry remains after it.
+const RUN_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+const CANONICAL_STARTUP_NAME = "com.mudriknow.app";
+const LEGACY_NAME_PATTERN = /com\.hoverbuddy\.app|com\.mudrik\.app/i;
+// Matches dev-mode entries (project dir in args) and packaged entries
+// pointing at any of our historical exe names (HoverBuddy/Mudrik/MudrikNow).
+const OUR_DATA_PATTERN = /hoverbuddy|mudrik\.exe|mudriknow\.exe/i;
+
+function normalizeStartupEntries(): void {
   if (!app.isPackaged) return; // don't touch registry in dev mode
   try {
     const out = execFileSync(
       "reg",
-      ["query", "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "electron.app.Electron"],
+      ["query", RUN_KEY],
       { encoding: "utf-8", timeout: 2000, windowsHide: true }
     ).toString();
-    // Only delete if the value points to our project dir (hoverbuddy).
-    // Another Electron app might legitimately use the default "Electron"
-    // name — we don't want to nuke its startup entry.
-    if (out.includes("hoverbuddy")) {
+    for (const line of out.split(/\r?\n/)) {
+      // Lines look like: "    Name    REG_SZ    C:\path\to\app.exe --args"
+      const m = line.match(/^\s*(\S+)\s+REG_SZ\s+(.+)$/);
+      if (!m) continue;
+      const [, name, data] = m;
+      if (name.toLowerCase() === CANONICAL_STARTUP_NAME) continue; // applyLoginItemSetting owns this one
+      // A default-AUMID name (electron.app.*) is only ours if its data says so.
+      const nameIsOurs = LEGACY_NAME_PATTERN.test(name);
+      const dataIsOurs = OUR_DATA_PATTERN.test(data);
+      if (!nameIsOurs && !dataIsOurs) continue;
       execFileSync(
         "reg",
-        ["delete", "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "electron.app.Electron", "/f"],
+        ["delete", RUN_KEY, "/v", name, "/f"],
         { encoding: "utf-8", timeout: 2000, windowsHide: true }
       );
-      log("cleanupStaleDevStartupEntry: removed stale electron.app.Electron (hoverbuddy) entry");
+      log(`normalizeStartupEntries: removed stale startup entry "${name}" = ${data.trim()}`);
     }
   } catch {
     // Key doesn't exist or read failed — nothing to clean up.
@@ -769,8 +785,8 @@ app.whenReady().then(async () => {
   pruneOldLogs(30 * 24 * 60 * 60 * 1000); // 30 days
 
   applyTheme(config.theme);
+  normalizeStartupEntries();
   applyLoginItemSetting(config.launchOnStartup);
-  cleanupStaleDevStartupEntry();
 
   // Re-push acrylic state when the OS-level inputs change while the panel
   // is open: power-source transitions (AC ↔ battery) and high-contrast
