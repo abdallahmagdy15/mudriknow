@@ -24,18 +24,14 @@ declare global {
       onStreamTextReset: (cb: () => void) => void;
       onStreamDone: (cb: () => void) => void;
       onStreamError: (cb: (payload: any) => void) => void;
-      onToolUse: (cb: (event: any) => void) => void;
       onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) => void;
   onScrollToLatest: (cb: () => void) => void;
-      executeAction: (action: any) => void;
       onActionResult: (cb: (result: any) => void) => void;
       retryAction: (action: any) => void;
       dismiss: () => void;
-      minimize: () => void;
       toggleMaximize: () => void;
   resizePanel: (width: number, height: number) => void;
   minimizeToTaskbar: () => void;
-      windowMove: (deltaX: number, deltaY: number) => void;
       newSession: () => void;
       onFocusInput: (cb: () => void) => void;
       attachScreenshot: () => void;
@@ -50,7 +46,6 @@ declare global {
       onSessionHistory: (cb: (messages: any[]) => void) => void;
       getRecentChats: () => Promise<{ id: string; title: string; created: number }[]>;
       stopResponse: () => void;
-      validateModel: (model: string) => Promise<{ valid: boolean; modelId?: string; error?: string; suggestions?: string[]; needsAuth?: boolean; provider?: string }>;
       saveApiKey: (provider: string, key: string, verify?: boolean) => Promise<{ ok: boolean; code?: string; error?: string; message?: string }>;
       removeModel: (modelId: string) => Promise<any>;
       // Stage B: model-connection UX (wrap OpenCode's own provider/auth machinery).

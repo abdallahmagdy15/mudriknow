@@ -35,8 +35,8 @@ describe("prompts split", () => {
 });
 
 describe("ACTION_PROMPT_AWARE", () => {
-  it("is short (under 90 words)", () => {
-    expect(ACTION_PROMPT_AWARE.split(/\s+/).length).toBeLessThan(90);
+  it("is short (under 150 words)", () => {
+    expect(ACTION_PROMPT_AWARE.split(/\s+/).length).toBeLessThan(150);
   });
 
   it("forbids interactive markers but explicitly allows copy_to_clipboard", () => {
@@ -57,6 +57,11 @@ describe("ACTION_PROMPT_AWARE", () => {
     expect(ACTION_PROMPT_AWARE).toMatch(/Auto-Guide.*SEPARATE/i);
     expect(ACTION_PROMPT_AWARE).toContain("guide_offer");
     expect(ACTION_PROMPT_AWARE).toContain("guide_step");
+  });
+
+  it("forbids framing guide mode as a fallback for disabled actions", () => {
+    expect(ACTION_PROMPT_AWARE).toMatch(/NEVER frame guide mode as a substitute/i);
+    expect(ACTION_PROMPT_AWARE).toMatch(/chosen by task fit/i);
   });
 });
 
@@ -91,6 +96,11 @@ describe("GUIDE_PROMPT_AWARE", () => {
     expect(GUIDE_PROMPT_AWARE).toContain("DISABLED");
     expect(GUIDE_PROMPT_AWARE).toContain("Auto-Guide");
     expect(GUIDE_PROMPT_AWARE).toContain("settings");
+  });
+
+  it("yields to newer statements when the setting flips mid-conversation", () => {
+    expect(GUIDE_PROMPT_AWARE).toMatch(/trust that newer statement/i);
+    expect(GUIDE_PROMPT_FULL).toMatch(/supersedes them/i);
   });
 });
 
@@ -194,9 +204,14 @@ describe("COMMANDS_PROMPT_FULL", () => {
     expect(COMMANDS_PROMPT_FULL).toMatch(/NEVER.*write.*edit.*delete/i);
   });
 
-  it("overrides earlier six-tool references", () => {
-    expect(COMMANDS_PROMPT_FULL).toMatch(/seven.*tool|seven total/i);
-    expect(COMMANDS_PROMPT_FULL).toMatch(/superseded/i);
+  it("emphasizes one-command-per-call and first-offense termination", () => {
+    expect(COMMANDS_PROMPT_FULL).toMatch(/ONE command per bash call/i);
+    expect(COMMANDS_PROMPT_FULL).toMatch(/FIRST offense/i);
+  });
+
+  it("lists reg query and sc query as allowed system queries", () => {
+    expect(COMMANDS_PROMPT_FULL).toMatch(/reg query/);
+    expect(COMMANDS_PROMPT_FULL).toMatch(/sc query/);
   });
 });
 

@@ -2,6 +2,7 @@ import { ipcMain, BrowserWindow, app } from "electron";
 import { Config, ContextPayload, IPC, Action, VisibleWindow, ModelDisplay, ProviderStatus } from "../shared/types";
 import { OpenCodeClient, OpenCodeEvent, findOpenCodeBin, isNativeOpenCodeBin } from "./opencode-client";
 import { buildSystemPrompt } from "../shared/prompts";
+import { computeGridGeometry } from "../shared/grid-geometry";
 import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames, envVarForProvider } from "../shared/providers";
 import { classifyError, extractErrorMessage } from "../shared/error-classifier";
 import {
@@ -110,7 +111,7 @@ import * as fs from "fs";
 
 import { log } from "./logger";
 import { startTimer } from "./debug-timing";
-import { settingsDeltaParts, buildSettingsDeltaBlock, buildSettingsSnapshotBlock } from "./settings-delta";
+import { settingsDeltaParts, buildSettingsDeltaBlock, buildSettingsSnapshotBlock, stripInjectedPromptArtifacts } from "./settings-delta";
 
 function computeContextHash(context: ContextPayload | null, isArea: boolean, areaEls: any[]): string {
   if (!context) return "";
@@ -210,6 +211,15 @@ export function setContext(context: ContextPayload): void {
 
   if (isSameContext) {
     log(`setContext: same context — not marking for re-send (hash=${newHash})`);
+    // A model-visible setting (actions / guide) changed since the last send.
+    // The AI must receive the freshly rebuilt system prompt, so treat this
+    // capture as needing a re-send even though the element is identical —
+    // otherwise the next send becomes a follow-up and the session's first
+    // message keeps asserting the stale setting.
+    if (settingsDirty) {
+      contextNeedsSending = true;
+      log("setContext: settingsDirty — marking for re-send despite same context");
+    }
     // If restoreSessionOnActivate is disabled, start a fresh session even
     // on the same context. Otherwise a stale session ID from hours ago
     // gets reused and the provider returns empty responses.
@@ -278,21 +288,6 @@ export function setScreenshotMode(mode: ScreenshotMode, info: { physicalWidth: n
   screenshotMode = mode;
   screenInfo = info;
   log(`Screenshot mode: ${mode}, screen=${info.physicalWidth}x${info.physicalHeight} @${info.scaleFactor}x`);
-}
-
-export function resetScreenshotMode(): void {
-  screenshotMode = "none";
-  screenInfo = null;
-}
-
-/**
- * Returns the context that is *currently* active (i.e. the one most recently
- * set via setContext or setAreaContext). Used by deferred async work (like
- * pointer-flow image capture) to detect that the user has moved on to a
- * different element before pushing a stale update to the renderer.
- */
-export function getCurrentContext(): ContextPayload | null {
-  return currentContext;
 }
 
 export function setAreaContext(elements: any[], rect: { x1: number; y1: number; x2: number; y2: number }, cursorPos: { x: number; y: number }, imagePath?: string): ContextPayload {
@@ -377,7 +372,7 @@ const RICH_TEXT_TREE_TYPES = new Set([
   "ControlType.Text",
   "ControlType.Custom",
 ]);
-const RICH_TEXT_TREE_CAP = 8000;
+const RICH_TEXT_TREE_CAP = 15000;
 const PLAIN_TREE_VALUE_CAP = 200;
 
 function formatWindowTree(elements: { type: string; name: string; value: string; automationId?: string; bounds: { x: number; y: number; width: number; height: number }; depth?: number; isTarget?: boolean; isOffscreen?: boolean }[]): string {
@@ -676,8 +671,9 @@ async function initGuideControllerIfNeeded(): Promise<void> {
         }
       }
 
-      const cellW = Math.max(60, Math.round(pw / 20));
-      const cellH = Math.max(60, Math.round(ph / 20));
+      const geo = computeGridGeometry(pw, ph);
+      const cellW = geo.cellWPhys;
+      const cellH = geo.cellHPhys;
       const prompt = `--- USER MESSAGE ---\n${desc}\n--- END MESSAGE ---\n\n${screen}${candidatesBlock}\n\nA fresh full-screen screenshot is attached with a faint numbered coordinate grid overlay. Each grid cell is approximately ${cellW}×${cellH} pixels. Top-left cell is (0,0). When estimating positions from the screenshot, count grid cells from the top-left for accuracy: x ≈ column × ${cellW}, y ≈ row × ${cellH}. The user's screen is ${pw}×${ph} pixels (DPI scale ${sf}×). Coordinates in the candidates list above and in the screenshot are in the SAME physical pixel space.\n\nTarget rules (BINARY — pick one):\n1. Target IS in the candidates list above → COPY its name as selector, its automationId verbatim, its bounds verbatim into target.uiaBounds. The owl will land pixel-perfect.\n2. Target is NOT in the list, OR you're not sure, OR the step has no single point target (typing, scrolling, keyboard shortcut) → set target:null. The user navigates from your caption alone — better than a misplaced owl.\n3. For Chromium/Electron apps where UIA is blind: estimate the position from the screenshot by counting grid cells and set target.guessBounds with your estimate.\n\nNEVER set both uiaBounds and guessBounds. Pick one: uiaBounds when the target IS in the UIA list, guessBounds when estimating from the screenshot, null when unsure.\n\nDo NOT include a "confidence" field — it's no longer used.\n\nIMPORTANT: if "Active window" above is NOT what you'd expect for the current step (e.g. you told the user to click in Excel but active window is "unknown" / "Shell" / a different app), the user likely IS still in their app — MudrikNow's panel hides briefly during recapture and Windows occasionally fails to restore the right foreground window. Trust the user's progress unless their captions clearly contradict it; only emit "click app in taskbar" if the candidates list AND the screenshot both confirm a different app is active.\n\nDecide the next guide marker (guide_step, guide_complete, or guide_abort).`;
 
       // Stream tokens to the renderer for visibility; accumulate the response
@@ -898,11 +894,6 @@ export function registerIpcHandlers(
     shell.openExternal(url).catch((err: unknown) => log(`openExternal failed: ${String(err)}`));
   });
 
-  ipcMain.on(IPC.MINIMIZE, () => {
-    log("MINIMIZE received — hiding panel, will notify when response arrives");
-    hidePanel();
-  });
-
   // Real minimize to the Windows taskbar — NOT tray-hide. The panel normally
   // runs skipTaskbar:true (floating overlay). To let the user click the
   // taskbar to restore, we un-skip the taskbar so a button appears while
@@ -1014,72 +1005,6 @@ export function registerIpcHandlers(
       log(`Model-visible setting changed (actions:${actionsChanged} guide:${guideChanged}) — delta queued for next send`);
     }
     return config;
-  });
-
-  ipcMain.handle(IPC.VALIDATE_MODEL, async (_e, modelId: string) => {
-    try {
-      const opencodeBin = findOpenCodeBin();
-      if (!opencodeBin) return { valid: false, error: "opencode not found" };
-      const cwd = appConfig.workingDir || os.homedir();
-      const env = buildCleanOpenCodeEnv(process.env, config.apiKeys);
-      const raw = await execOpenCode(opencodeBin, ["models"], { encoding: "utf-8", timeout: 30000, cwd, env, maxBuffer: 5*1024*1024 });
-      const allModels = raw.trim().split("\n").map((l: string) => l.trim()).filter(Boolean);
-      const match = allModels.find((m: string) => m.toLowerCase() === modelId.toLowerCase());
-      if (match) {
-        return { valid: true, modelId: match };
-      }
-      // Miss — classify it so the renderer can show a useful message and pick
-      // the right recovery (paste API key, or show suggestions).
-      const provider = providerFromModelId(modelId);
-      const hasSlash = modelId.includes("/");
-      const known = knownProviderNames.includes(provider.toLowerCase());
-      const providerHasAnyModel = allModels.some((m: string) =>
-        providerFromModelId(m).toLowerCase() === provider.toLowerCase(),
-      );
-      const needsAuth = !providerHasAnyModel && !!provider && hasSlash;
-      log(`VALIDATE_MODEL miss: modelId=${modelId}, provider=${provider}, known=${known}, hasSlash=${hasSlash}, needsAuth=${needsAuth}`);
-
-      // Pick the most helpful error text. Order of priority:
-      //   1. No slash → "wrong format" hint, since neither auth nor model
-      //      lookup can succeed without it.
-      //   2. Unknown provider name → tell the user the provider doesn't
-      //      exist (typo? made-up?). This is more honest than "needs auth",
-      //      which would just bounce them into a dead-end key prompt.
-      //   3. Known provider, no models visible → "needs auth" prompt.
-      //   4. Provider authed, model name wrong → "model not found" plus a
-      //      list of the provider's actually-available models.
-      let error: string;
-      let suggestions: string[] = [];
-      const queryTail = modelId.split("/").pop() || "";
-      if (!hasSlash) {
-        error = `Model must be in the form "provider/model-name" (e.g. "anthropic/claude-3-5-sonnet-20241022"). Got "${modelId}".`;
-      } else if (!known) {
-        error = `Unknown provider "${provider}". Known providers: ${knownProviderNames.join(", ")}.`;
-      } else if (needsAuth) {
-        error = `Provider "${provider}" is not authenticated. Add an API key to use its models.`;
-      } else {
-        error = `Model "${modelId}" not found for provider "${provider}".`;
-        const providerModels = allModels.filter((m: string) =>
-          providerFromModelId(m).toLowerCase() === provider.toLowerCase(),
-        );
-        if (providerModels.length > 0) {
-          suggestions = providerModels.slice(0, 6);
-        } else {
-          suggestions = allModels
-            .filter((m: string) => m.toLowerCase().includes(queryTail.toLowerCase()))
-            .slice(0, 5);
-        }
-      }
-      return {
-        valid: false,
-        error,
-        suggestions,
-        needsAuth,
-        provider: needsAuth ? provider : undefined,
-      };
-    } catch (err: any) {
-      return { valid: false, error: err.message };
-    }
   });
 
   /**
@@ -1499,13 +1424,15 @@ contextBlock += `\n  ${formatElementType(el.type)}`;
         if (attachScreenshotNext && (currentContext.imagePath || areaImagePath)) {
           if (screenshotMode === "chromium-auto" && screenInfo) {
             const si = screenInfo;
-            const cellW = Math.max(60, Math.round(si.physicalWidth / 20));
-            const cellH = Math.max(60, Math.round(si.physicalHeight / 20));
+            const geo = computeGridGeometry(si.physicalWidth, si.physicalHeight);
+            const cellW = geo.cellWPhys;
+            const cellH = geo.cellHPhys;
             contextBlock += `\n\n[A full-screen screenshot is attached with a faint numbered coordinate grid overlay. Each grid cell is approximately ${cellW}×${cellH} pixels. Top-left cell is (0,0). When estimating positions from the screenshot, count grid cells from the top-left for accuracy: x ≈ column × ${cellW}, y ≈ row × ${cellH}. This is a Chromium/Electron app — the UIA accessibility tree may NOT expose web content. THE SCREENSHOT IS THE PRIMARY SOURCE. Screen: ${si.physicalWidth}×${si.physicalHeight} pixels (DPI scale ${si.scaleFactor}×). Coordinate frame: left≈0, right≈${si.physicalWidth}, top≈0, bottom≈${si.physicalHeight}. The UIA layout tree above may only show shell chrome — trust the screenshot for actual page content.]`;
           } else if (screenInfo) {
             const si = screenInfo;
-            const cellW = Math.max(60, Math.round(si.physicalWidth / 20));
-            const cellH = Math.max(60, Math.round(si.physicalHeight / 20));
+            const geo = computeGridGeometry(si.physicalWidth, si.physicalHeight);
+            const cellW = geo.cellWPhys;
+            const cellH = geo.cellHPhys;
             contextBlock += `\n\n[A screenshot is attached with a faint numbered coordinate grid overlay. Each grid cell is approximately ${cellW}×${cellH} pixels. Top-left cell is (0,0). When estimating positions, count grid cells from the top-left: x ≈ column × ${cellW}, y ≈ row × ${cellH}. Screen: ${si.physicalWidth}×${si.physicalHeight} pixels @${si.scaleFactor}× DPI scale.]`;
           } else {
             contextBlock += `\n\n[A screenshot showing what you pointed at is attached as an image]`;
@@ -1549,7 +1476,7 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       // newest SETTINGS timestamp over older ones.
       const actionsBlock = config.actionsEnabled
         ? `\n--- USER SETTING ---\nactionsEnabled: true — you MAY emit interactive action markers (click, type, paste, press_keys, invoke, set_value). This is the live, current setting; if earlier in this conversation you said you were in read-only mode, that instruction is now superseded.\n--- END SETTING ---\n`
-        : `\n--- USER SETTING ---\nactionsEnabled: false — READ-ONLY MODE. Do NOT emit interactive action markers (click, type, paste, press_keys, invoke, set_value) — they will be blocked and the user will see a "blocked" error. You MAY still emit copy_to_clipboard markers and COPY chips so the user can paste content themselves. NOTE: Auto-Guide mode is a SEPARATE setting — if guide mode is enabled, you MAY still emit guide_offer / guide_step markers; do not refuse a guide request just because desktop actions are off. This is the live, current setting; if earlier in this conversation you said actions were enabled, that instruction is now superseded. If the user wants to re-enable actions: tell them to toggle 'Allow desktop actions' in ⚙ settings — the change takes effect on their next message.\n--- END SETTING ---\n`;
+        : `\n--- USER SETTING ---\nactionsEnabled: false — READ-ONLY MODE. Do NOT emit interactive action markers (click, type, paste, press_keys, invoke, set_value) — they will be blocked and the user will see a "blocked" error. You MAY still emit copy_to_clipboard markers and COPY chips so the user can paste content themselves. NOTE: Auto-Guide mode is a SEPARATE setting, unrelated to this one — if guide mode is enabled, you MAY still emit guide_offer / guide_step markers; do not refuse a guide request just because desktop actions are off. But NEVER present guide mode as a substitute or fallback for disabled actions (no "since I can't act for you, I can walk you through it") — offer guide mode only by task fit (user wants to learn / asked to be walked through). This is the live, current setting; if earlier in this conversation you said actions were enabled, that instruction is now superseded. If the user wants to re-enable actions: tell them to toggle 'Allow desktop actions' in ⚙ settings — the change takes effect on their next message.\n--- END SETTING ---\n`;
       // Timestamped snapshot of BOTH model-visible settings. The AI resolves
       // conflicts with earlier turns by newest timestamp. Recorded so a
       // later toggle delta can show old->new.
@@ -1757,51 +1684,6 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         const c = classifyError(msg);
         emitStreamError(win, { category: c.category, message: c.message, recoveryAction: c.recoveryAction });
       }
-    }
-  });
-
-  ipcMain.on(IPC.EXECUTE_ACTION, async (_e, payload: unknown) => {
-    const win = getPanelWindow();
-    const v = validateAction(payload, { actionsEnabled: config.actionsEnabled, autoGuideEnabled: config.autoGuideEnabled });
-    if ("error" in v) {
-      log(`EXECUTE_ACTION REJECTED: ${v.error}`);
-      if (win) {
-        const rejectedType = typeof (payload as any)?.type === "string" ? (payload as any).type : "(unknown)";
-        win.webContents.send(IPC.ACTION_RESULT, {
-          action: { type: rejectedType },
-          result: { success: false, error: `Blocked: ${v.error}` },
-        });
-      }
-      return;
-    }
-    const action = v.action;
-    if (!config.actionsEnabled && isInteractiveAction(action.type)) {
-      log(`EXECUTE_ACTION BLOCKED (read-only): ${action.type}`);
-      if (win) {
-        win.webContents.send(IPC.ACTION_RESULT, {
-          action,
-          result: { success: false, error: "Desktop actions are disabled (read-only mode). Toggle 'Allow desktop actions' in settings to enable." },
-        });
-      }
-      return;
-    }
-    log(`EXECUTE_ACTION: type=${action.type}`);
-
-    // Hide panel before interactive actions so clicks/paste go to the target
-    // window, not the panel. The panel covers the target and steals focus.
-    if (win && isInteractiveAction(action.type)) {
-      log('Hiding panel before interactive action');
-      win.hide();
-      win.blur();
-      await new Promise((r) => setTimeout(r, 400)); // let target window regain focus
-    }
-
-    const result = await executeAction(action, { actionsEnabled: config.actionsEnabled, autoGuideEnabled: config.autoGuideEnabled });
-    log(`Action result: success=${result.success}${result.error ? ` error=${result.error}` : ""}`);
-
-    if (win && !win.isDestroyed()) {
-      win.show();
-      win.webContents.send(IPC.ACTION_RESULT, { action, result });
     }
   });
 
@@ -2144,6 +2026,10 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         if (role === "system") continue; // never replay system prompts
         let content = rawContent;
         if (role === "user") {
+          // Follow-up turns carry no USER MESSAGE wrapper, so injected
+          // artifacts (SETTINGS blocks, guide stop-note) would otherwise be
+          // replayed as if the user typed them. Strip before extraction.
+          content = stripInjectedPromptArtifacts(content);
           // Tolerate CRLF from Windows-hosted OpenCode exports.
           const msgMatch = content.match(/--- USER MESSAGE ---\r?\n([\s\S]*?)\r?\n--- END MESSAGE ---/);
           if (msgMatch) {

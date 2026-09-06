@@ -34,24 +34,18 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
     ipcRenderer.on("stream-done", () => cb()),
   onStreamError: (cb: (payload: any) => void) =>
     ipcRenderer.on("stream-error", (_e, payload) => cb(payload)),
-  onToolUse: (cb: (event: any) => void) =>
-    ipcRenderer.on("tool-use", (_e, event) => cb(event)),
   onSessionReset: (cb: (data?: { hasImage?: boolean }) => void) =>
     ipcRenderer.on("session-reset", (_e, data) => cb(data)),
   onScrollToLatest: (cb: () => void) =>
     ipcRenderer.on("scroll-to-latest", () => cb()),
-  executeAction: (action: any) =>
-    ipcRenderer.send("execute-action", action),
   onActionResult: (cb: (result: any) => void) =>
     ipcRenderer.on("action-result", (_e, result) => cb(result)),
   retryAction: (action: any) =>
     ipcRenderer.send("retry-action", action),
   dismiss: () => ipcRenderer.send("dismiss"),
-  minimize: () => ipcRenderer.send("minimize"),
   toggleMaximize: () => ipcRenderer.send("toggle-maximize"),
   resizePanel: (width: number, height: number) => ipcRenderer.send("resize-panel", width, height),
   minimizeToTaskbar: () => ipcRenderer.send("minimize-to-taskbar"),
-  windowMove: (deltaX: number, deltaY: number) => ipcRenderer.send("window-move", deltaX, deltaY),
   newSession: () => ipcRenderer.send("new-session"),
   onFocusInput: (cb: () => void) =>
     ipcRenderer.on("focus-input", () => cb()),
@@ -70,7 +64,6 @@ contextBridge.exposeInMainWorld("hoverbuddy", {
     ipcRenderer.on("session-history", (_e, messages) => cb(messages)),
   getRecentChats: () => ipcRenderer.invoke("get-recent-chats"),
   stopResponse: () => ipcRenderer.send("stop-response"),
-  validateModel: (model: string) => ipcRenderer.invoke("validate-model", model),
   saveApiKey: (provider: string, key: string, verify?: boolean) =>
     ipcRenderer.invoke("save-api-key", provider, key, verify),
   removeModel: (modelId: string) => ipcRenderer.invoke("remove-model", modelId),

@@ -233,7 +233,6 @@ export interface ContextPayload {
 }
 
 export const IPC = {
-  ACTIVATE: "activate",
   CONTEXT_READY: "context-ready",
   SEND_PROMPT: "send-prompt",
   STREAM_TOKEN: "stream-token",
@@ -246,16 +245,12 @@ export const IPC = {
   // Without this, OpenCode versions that emit multiple text-then-tool
   // cycles produce duplicated/contradicting walls of text in the chat.
   STREAM_TEXT_RESET: "stream-text-reset",
-  TOOL_USE: "tool-use",
   SESSION_RESET: "session-reset",
-  EXECUTE_ACTION: "execute-action",
   ACTION_RESULT: "action-result",
   GET_CONFIG: "get-config",
   SET_CONFIG: "set-config",
   NEW_SESSION: "new-session",
   DISMISS: "dismiss",
-  MINIMIZE: "minimize",
-  WINDOW_MOVE: "window-move",
   RETRY_ACTION: "retry-action",
   FOCUS_INPUT: "focus-input",
   ATTACH_SCREENSHOT: "attach-screenshot",
@@ -265,7 +260,6 @@ export const IPC = {
   RESTORE_SESSION: "restore-session",
   SESSION_HISTORY: "session-history",
   STOP_RESPONSE: "stop-response",
-  VALIDATE_MODEL: "validate-model",
   SAVE_API_KEY: "save-api-key",
   REMOVE_MODEL: "remove-model",
   // Model-connection UX (Phase A). These wrap OpenCode's own provider/auth/
@@ -289,12 +283,6 @@ export const IPC = {
   ACRYLIC_STATE: "acrylic-state",
   OPEN_EXTERNAL: "open-external",
 } as const;
-
-export interface RecentChat {
-  id: string;
-  title: string;
-  created: number;
-}
 
 // ── Model-connection UX types ──────────────────────────────────────────────
 
@@ -345,14 +333,4 @@ export interface VerifyResult {
   ok: boolean;
   category?: string;
   message?: string;
-}
-
-/** Structured error payload sent on STREAM_ERROR so the renderer can render
- *  category-aware recovery affordances (e.g. "Fix in Settings" for auth). */
-export interface StreamErrorPayload {
-  category: string;
-  message: string;
-  /** Provider id when the error could be attributed to the current model's provider. */
-  provider?: string;
-  recoveryAction: string;
 }
