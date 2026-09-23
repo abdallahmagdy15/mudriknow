@@ -231,7 +231,15 @@ export function startCaptureShimmer(): void {
 export function finishCaptureShimmer(onDone?: () => void): void {
   if (!overlayWin || overlayWin.isDestroyed()) { onDone?.(); return; }
   overlayWin.webContents.send("guide-overlay-capture-finish");
-  setTimeout(() => onDone?.(), CAPTURE_SHIMMER_END_MS);
+  setTimeout(() => {
+    onDone?.();
+    // No owl/bubble content → nothing guide-related to keep on screen.
+    // Hiding frees the fullscreen compositor layer (perf) and prevents a
+    // parked transparent window from lingering over the desktop.
+    if (!interactiveOwl && !interactiveBubble && !userDragging) {
+      hideOverlay();
+    }
+  }, CAPTURE_SHIMMER_END_MS);
 }
 
 export function cancelCaptureShimmer(): void {

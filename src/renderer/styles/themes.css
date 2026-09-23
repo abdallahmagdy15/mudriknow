@@ -37,7 +37,7 @@
 
   /* Light Theme (default) */
   --bg-page: #141a24;
-  --bg-panel: rgba(240, 244, 248, 0.60);
+  --bg-panel: #f0f4f8;
   --bg-overlay: #f5f8fb;
   --bg-surface: #e8eef4;
   --bg-inset: #dde5ee;
@@ -68,10 +68,9 @@
   --syntax-attr: #b6723c;
 
   /* Aurora background — subtle, slow-moving gradient glow on the panel.
-      Rendered as extra background layers ON TOP of the translucent
-      --bg-panel fill. The Electron window is transparent and the main
-      process applies native Windows acrylic blur via setBackgroundMaterial;
-      --bg-panel is translucent so that blur shows through. */
+      Rendered as extra background layers ON TOP of the opaque --bg-panel
+      fill (the native acrylic blur was removed — it caused DWM ghost-bar
+      artifacts and compositor lag). */
   --aurora-cyan: rgba(116, 153, 194, 0.26);
   --aurora-gold: rgba(232, 148, 35, 0.09);
   --aurora-surface-cyan: rgba(116, 153, 194, 0.28);
@@ -109,24 +108,9 @@
   --font-size-base: 14px;
 }
 
-/* Acrylic fallback: when Windows disables transparency effects (Settings →
-   Personalization → Colors → Transparency effects OFF, battery saver,
-   high-contrast mode, RDP/VM), the native acrylic blur behind our
-   translucent --bg-panel vanishes and the panel would look broken
-   (see-through to whatever is behind the window, or solid black). Main
-   process detects this and toggles data-acrylic="off" on <html>; we
-   swap --bg-panel back to its pre-1.12.5 opaque value so the panel
-   looks clean. Aurora gradients keep working on the opaque base. */
-[data-acrylic="off"] {
-  --bg-panel: #f0f4f8;
-}
-[data-theme="dark"][data-acrylic="off"] {
-  --bg-panel: #111820;
-}
-
 [data-theme="dark"] {
   --bg-page: #0a0e14;
-  --bg-panel: rgba(17, 24, 32, 0.60);
+  --bg-panel: #111820;
   --bg-overlay: #141d28;
   --bg-surface: #1a2530;
   --bg-inset: #0a1118;

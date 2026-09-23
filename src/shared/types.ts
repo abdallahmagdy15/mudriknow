@@ -280,7 +280,6 @@ export const IPC = {
   RESIZE_PANEL: "resize-panel",
   MINIMIZE_TO_TASKBAR: "minimize-to-taskbar",
   SCROLL_TO_LATEST: "scroll-to-latest",
-  ACRYLIC_STATE: "acrylic-state",
   OPEN_EXTERNAL: "open-external",
 } as const;
 
