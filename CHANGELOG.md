@@ -4,6 +4,24 @@ All notable changes to MudrikNow are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-09-24
+
+### Fixed
+- **Point-at & guide coordinates now land pixel-tight.** The screenshot grid protocol was advisory — the AI sometimes picked coordinates from screen-region intuition (e.g. "the sidebar is on the left, so x=20") or reported image-space pixels against a physical-pixel click target. Prompts now state the attached image's exact dimensions and the downscale conversion, mandate grid-derived coordinates on both axes, require reading the printed 0-indexed edge labels instead of counting bands, and self-check impossible values.
+- **Ghost top bar eliminated.** The native Windows acrylic blur (`setBackgroundMaterial`) on the transparent panel left DWM composition artifacts — a gradient strip over the whole screen, above all windows, click-through, persisting until the app was force-quit — plus compositor lag. Acrylic and its detection/fallback subsystem are removed entirely; the panel now uses the opaque background in both themes, and the fullscreen capture-overlay window hides itself after each capture animation instead of parking over the desktop.
+- **Restored chats no longer replay injected settings blocks** — prompt artifacts (`SETTINGS` snapshots/deltas) are stripped from session history on restore, so the AI doesn't act on stale instructions from a previous conversation.
+- **Sandbox: read-only `reg query` / `sc query` no longer falsely blocked**, and the BLOCKED error now tells the user the real reason (the model chained multiple commands) instead of a generic failure.
+- **No more double-launch after upgrading across rebrands** — startup normalizes legacy Run entries (com.hoverbuddy.app / com.mudrik.app orphans) to the current appId.
+
+### Changed
+- **Once-per-session system prompt (~4k tokens saved per context capture).** The full system prompt rides only on a session's first message; mid-session captures send just the fresh context + a timestamped settings snapshot. A capability (desktop actions / Auto-Guide) enabled mid-session after starting off gets its full reference injected exactly once; toggling a setting on an unchanged context triggers a settings-only refresh without re-sending the context.
+- **Resolution-adaptive screenshot grid.** Screenshots run at native resolution up to 1920px (previously downscaled to 1280), grid cells are a fixed 64 image pixels so density scales with the screen (30×16 cells on 1080p, 20×11 on 720p), and JPEG compression is quality-only — a gridded capture is never rescaled, so the dimensions described to the AI always match the attached file. Grid lines are brand-orange, visible on light backgrounds.
+- **Duplicate-match disambiguation.** When the same text or element (button, icon, tab, image…) appears multiple times on screen, the AI must satisfy every qualifier in your wording — position, order, traits, context — or ask which instance you meant, instead of grabbing the first match.
+- **Truthful prompt caps** — documented limits now match the enforced ones (15,000 chars for rich tree values).
+
+### Removed
+- WinRT OCR pipeline, dead exports (tray/updater/splash/guide), ActionBar, orphaned assets, and unused IPC channels.
+
 ## [3.3.0] - 2026-07-31
 
 ### Added
@@ -478,6 +496,7 @@ First public preview release. Pre-v1 — breaking changes possible while the API
 [1.12.2]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.1...v1.12.2
 [1.12.1]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v1.11.0...v1.12.0
+[3.4.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.2.0...v3.3.0
 [3.2.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/abdallahmagdy15/mudriknow/compare/v3.0.0...v3.1.0
