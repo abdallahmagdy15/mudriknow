@@ -259,9 +259,6 @@ export const GUIDE_PROMPT_AWARE = `Auto-Guide mode (step-by-step walkthroughs of
 
 export const GUIDE_PROMPT_FULL = `# AUTO-GUIDE MODE
 
-This is the LIVE setting. If earlier messages in this conversation said
-Auto-Guide was disabled, this section supersedes them.
-
 You can walk the user through UI tasks step-by-step instead of doing them
 yourself. YOU decide whether to use guide mode. The runtime does NOT reject offers based on step count or topic. Use guide mode when EITHER is true:
 

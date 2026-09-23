@@ -100,7 +100,6 @@ describe("GUIDE_PROMPT_AWARE", () => {
 
   it("yields to newer statements when the setting flips mid-conversation", () => {
     expect(GUIDE_PROMPT_AWARE).toMatch(/trust that newer statement/i);
-    expect(GUIDE_PROMPT_FULL).toMatch(/supersedes them/i);
   });
 });
 

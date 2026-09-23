@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow, app } from "electron";
 import { Config, ContextPayload, IPC, Action, VisibleWindow, ModelDisplay, ProviderStatus } from "../shared/types";
 import { OpenCodeClient, OpenCodeEvent, findOpenCodeBin, isNativeOpenCodeBin } from "./opencode-client";
-import { buildSystemPrompt } from "../shared/prompts";
+import { buildSystemPrompt, ACTION_PROMPT_FULL, GUIDE_PROMPT_FULL } from "../shared/prompts";
 import { computeGridGeometry } from "../shared/grid-geometry";
 import { buildCleanOpenCodeEnv, providerFromModelId, OpenCodeAuthFile, knownProviderNames, envVarForProvider } from "../shared/providers";
 import { classifyError, extractErrorMessage } from "../shared/error-classifier";
@@ -152,6 +152,18 @@ let hasSentFirstMessage: boolean = false;
 // fresh snapshot line instead. The AI resolves conflicts by newest timestamp.
 let settingsSnapshot: { actionsEnabled: boolean; autoGuideEnabled: boolean; time: string } | null = null;
 let settingsDirty = false;
+// Once-per-session prompt architecture: the full system prompt rides ONLY on
+// a session's first message. Mid-session context captures send context +
+// settings (never a constitution re-dump). When a capability (actions /
+// guide) is enabled mid-session AFTER the session started with it off, its
+// reference block is injected exactly once so the model learns the marker
+// syntax. Reset wherever the session resets (hasSentFirstMessage = false).
+let sessionInjectedActionRef = false;
+let sessionInjectedGuideRef = false;
+// True when the pending non-followup send was forced by a settings toggle on
+// an UNCHANGED context — the send carries settings (+ capability refs) but
+// skips the duplicate context block.
+let contextResendOnlyForSettings = false;
 // Cached recent chats list (cleared on startup and when a new chat starts)
 let recentChatsCache: { id: string; title: string; created: number }[] | null = null;
 // Mirror of the guide controller's phase, updated by onStateUpdate. Lets
@@ -212,24 +224,28 @@ export function setContext(context: ContextPayload): void {
   if (isSameContext) {
     log(`setContext: same context — not marking for re-send (hash=${newHash})`);
     // A model-visible setting (actions / guide) changed since the last send.
-    // The AI must receive the freshly rebuilt system prompt, so treat this
-    // capture as needing a re-send even though the element is identical —
-    // otherwise the next send becomes a follow-up and the session's first
-    // message keeps asserting the stale setting.
+    // Force a non-followup send so the fresh settings snapshot (and any
+    // newly-enabled capability reference) reaches the model — but skip the
+    // duplicate context block, since the element is identical.
     if (settingsDirty) {
       contextNeedsSending = true;
-      log("setContext: settingsDirty — marking for re-send despite same context");
+      contextResendOnlyForSettings = true;
+      log("setContext: settingsDirty — marking settings-only re-send despite same context");
     }
     // If restoreSessionOnActivate is disabled, start a fresh session even
     // on the same context. Otherwise a stale session ID from hours ago
     // gets reused and the provider returns empty responses.
     if (!appConfig?.restoreSessionOnActivate) {
       hasSentFirstMessage = false;
+      sessionInjectedActionRef = false;
+      sessionInjectedGuideRef = false;
+      contextResendOnlyForSettings = false;
       client.resetSession();
       log("setContext: restoreSessionOnActivate=false — resetting session");
     }
   } else {
     contextNeedsSending = true;
+    contextResendOnlyForSettings = false;
     lastContextHash = newHash;
     log(`setContext: NEW context — marked for sending (hash=${newHash})`);
   }
@@ -324,7 +340,10 @@ export function setAreaContext(elements: any[], rect: { x1: number; y1: number; 
   currentContext = context;
   lastContext = context;
   contextNeedsSending = true;
+  contextResendOnlyForSettings = false;
   hasSentFirstMessage = false;
+  sessionInjectedActionRef = false;
+  sessionInjectedGuideRef = false;
   lastContextHash = computeContextHash(context, true, elements);
   client.resetSession();
 
@@ -1235,7 +1254,10 @@ export function registerIpcHandlers(
     log("NEW_SESSION: resetting OpenCode session — preserving context/image");
     client.resetSession();
     contextNeedsSending = true;
+    contextResendOnlyForSettings = false;
     hasSentFirstMessage = false;
+    sessionInjectedActionRef = false;
+    sessionInjectedGuideRef = false;
     // Preserve currentContext, areaImagePath, isAreaContext, areaElements so
     // the user's selection and attached image carry into the new chat. If a
     // pointer-context screenshot is present, re-arm it for the next send
@@ -1328,8 +1350,10 @@ export function registerIpcHandlers(
       fullPrompt = stopNote + deltaNote + prompt;
     } else {
       // First message of a new conversation — clear cached recent chats
-      // so the popup reflects the newly created session
-      recentChatsCache = null;
+      // so the popup reflects the newly created session. Mid-session
+      // context refreshes keep the cache (no new session is created).
+      const isFirstMessage = !hasSentFirstMessage;
+      if (isFirstMessage) recentChatsCache = null;
       let contextBlock = "";
       if (isAreaContext && areaElements.length > 0) {
         contextBlock = `\n--- SCREEN CONTEXT (use this data for actions, do not describe it back to the user) ---\n`;
@@ -1463,10 +1487,15 @@ contextBlock += `\n--- END CONTEXT ---\n`;
         }
       }
 
-      const systemPrefix = `${buildSystemPrompt({
-        actionsEnabled: config.actionsEnabled,
-        autoGuideEnabled: config.autoGuideEnabled,
-      })}\n\n`;
+      // Settings-only refresh (toggled a setting on an UNCHANGED context):
+      // the context block below would be a byte-for-byte duplicate of what
+      // the session already has — drop it; the settings snapshot + any
+      // capability reference + the user message are enough.
+      if (contextResendOnlyForSettings) {
+        contextBlock = "";
+        log("Mid-session SETTINGS-ONLY refresh — skipping duplicate context block");
+      }
+
       // Tell the AI about the current actions permission. The toggle is
       // LIVE — when the user flips it in settings, the next message carries
       // a timestamped "SETTINGS UPDATE" notice (follow-up) or this fresh
@@ -1482,9 +1511,41 @@ contextBlock += `\n--- END CONTEXT ---\n`;
       // later toggle delta can show old->new.
       const nowSnap = settingsTimestamp();
       const settingsBlock = buildSettingsSnapshotBlock(config.actionsEnabled, config.autoGuideEnabled, nowSnap);
-      fullPrompt = systemPrefix + contextBlock + actionsBlock + settingsBlock + `\n--- USER MESSAGE ---\n${stopNote}${prompt}\n--- END MESSAGE ---\n`;
+
+      // ONCE-PER-SESSION system prompt: the full constitution (BASE +
+      // ACTION + GUIDE + COMMANDS) rides ONLY on a session's first message.
+      // Mid-session captures send context + settings — re-sending the whole
+      // constitution on every capture piled duplicate (and contradictory)
+      // copies into the history at ~4k tokens each.
+      let systemPrefix = "";
+      let capabilityRefs = "";
+      if (isFirstMessage) {
+        systemPrefix = `${buildSystemPrompt({
+          actionsEnabled: config.actionsEnabled,
+          autoGuideEnabled: config.autoGuideEnabled,
+        })}\n\n`;
+        // The model just saw the FULL reference for every enabled
+        // capability; only capabilities that were OFF at session start ever
+        // need a later one-time injection.
+        sessionInjectedActionRef = config.actionsEnabled;
+        sessionInjectedGuideRef = config.autoGuideEnabled;
+      } else {
+        log("Mid-session context refresh — sending context + settings only (system prompt already in session)");
+        if (config.actionsEnabled && !sessionInjectedActionRef) {
+          capabilityRefs += `\n--- CAPABILITY ENABLED @ ${nowSnap} — desktop actions are now ON. Earlier read-only instructions are superseded. Reference: ---\n${ACTION_PROMPT_FULL}\n--- END CAPABILITY REFERENCE ---\n`;
+          sessionInjectedActionRef = true;
+          log("Injecting ACTION_PROMPT_FULL once — actions enabled mid-session after starting off");
+        }
+        if (config.autoGuideEnabled && !sessionInjectedGuideRef) {
+          capabilityRefs += `\n--- CAPABILITY ENABLED @ ${nowSnap} — Auto-Guide mode is now ON. Earlier "guide is disabled" instructions are superseded. Reference: ---\n${GUIDE_PROMPT_FULL}\n--- END CAPABILITY REFERENCE ---\n`;
+          sessionInjectedGuideRef = true;
+          log("Injecting GUIDE_PROMPT_FULL once — guide enabled mid-session after starting off");
+        }
+      }
+      fullPrompt = systemPrefix + contextBlock + actionsBlock + settingsBlock + capabilityRefs + `\n--- USER MESSAGE ---\n${stopNote}${prompt}\n--- END MESSAGE ---\n`;
       settingsSnapshot = { actionsEnabled: config.actionsEnabled, autoGuideEnabled: config.autoGuideEnabled, time: nowSnap };
       settingsDirty = false;
+      contextResendOnlyForSettings = false;
     }
 
     contextNeedsSending = false;
@@ -1960,7 +2021,10 @@ contextBlock += `\n--- END CONTEXT ---\n`;
     // Reset the session so the old image's context doesn't leak into the next send
     client.resetSession();
     contextNeedsSending = true;
+    contextResendOnlyForSettings = false;
     hasSentFirstMessage = false;
+    sessionInjectedActionRef = false;
+    sessionInjectedGuideRef = false;
     const win = getPanelWindow();
     if (win && !win.isDestroyed()) {
       win.webContents.send(IPC.SESSION_RESET, { hasImage: false });

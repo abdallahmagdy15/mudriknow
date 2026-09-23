@@ -95,8 +95,8 @@ After regenerating, run `npm run build` so `dist/` picks up the new PNGs. The Wi
 
 - `Config.actionsEnabled` is the master switch for desktop-interactive actions. It is read **live** at execution time, never cached:
   - `validateAction` / `executeAction` read it directly.
-  - The system-prompt `actionsBlock` is built fresh on every non-followup send (every Alt+Space / Ctrl+Space that captures new context, since `setContext` / `setAreaContext` flip `contextNeedsSending = true`).
-  - Mid-conversation toggles do **not** auto-trigger a re-send. The new setting lands on the **next context capture**.
+  - The small `actionsBlock` + settings snapshot ride on every non-followup send; the full system prompt rides once per session (see "Action gating is live" below).
+  - Mid-conversation toggles do **not** auto-trigger a re-send. The new setting lands on the **next message** (follow-up delta note) or **next context capture** (settings-only refresh).
 - `Config.autoGuideEnabled` follows the same live-read pattern at three layers: `buildSystemPrompt`, `validateAction`, and `executeAction`.
 - `Config.apiKeys` is a `provider → key` map persisted in plaintext `config.json`. `buildProviderEnv` in `src/shared/providers.ts` translates it into env vars per the OpenCode convention (`anthropic` → `ANTHROPIC_API_KEY`). Existing shell-level env vars win over config.
 - `saveConfig` writes to `%APPDATA%/mudrik/config.json`. `config-store.ts#migrateLegacyConfig` copies `%APPDATA%\hoverbuddy\` → `%APPDATA%\mudrik\` on startup for pre-rebrand installs. Do not rename legacy paths.
@@ -189,12 +189,12 @@ Action types are defined by the `ActionType` union in `src/shared/types.ts`. Eac
 
 `Config.actionsEnabled` is the user's master switch for desktop-interactive actions (everything except `copy_to_clipboard`). It is read **live** in two places, never cached:
 
-1. **Runtime action guards** — `EXECUTE_ACTION`, `RETRY_ACTION` all read `config.actionsEnabled` directly at execution time. Toggling the setting in ⚙ blocks (or unblocks) the very next action attempt, even mid-stream.
-2. **System-prompt actionsBlock** — built fresh on every non-followup send (every Alt+Space / Ctrl+Space that captures new context). The block reads `config.actionsEnabled` at that moment.
+1. **Runtime action guards** — `RETRY_ACTION` and the streaming auto-execution paths read `config.actionsEnabled` directly at execution time. Toggling the setting in ⚙ blocks (or unblocks) the very next action attempt, even mid-stream.
+2. **System-prompt lifecycle (once per session)** — the full system prompt (BASE + ACTION + GUIDE + COMMANDS blocks via `buildSystemPrompt`) rides ONLY on a session's first message. Mid-session context captures send just the context block + a fresh timestamped settings snapshot — never a constitution re-dump. If a capability (actions / guide) is enabled mid-session after the session started with it off, its FULL reference block is injected exactly once (`sessionInjectedActionRef` / `sessionInjectedGuideRef`, reset wherever the session resets). Toggling a setting on an UNCHANGED context (same hash) triggers a settings-only refresh (`contextResendOnlyForSettings`) — snapshot + capability refs, no duplicate context.
 
-Mid-conversation toggles do **not** auto-trigger a re-send. The new setting lands on the **next context capture** (Alt+Space / Ctrl+Space). Earlier turns may carry the opposite instruction in their history; the actionsBlock explicitly tells the model to trust the latest block over older ones.
+Mid-conversation toggles do **not** auto-trigger a re-send. The new setting lands on the **next message** (follow-up: tiny timestamped SETTINGS UPDATE delta note) or the **next context capture** (settings-only refresh / capability injection as described above). Earlier turns may carry the opposite instruction in their history; the settings snapshot carries the newest timestamp and explicitly tells the model it wins.
 
-If you add another setting that the model must see, build it into the same actionsBlock-style block so it refreshes naturally on every non-followup send.
+If you add another setting that the model must see, build it into the settings snapshot block so it refreshes naturally on every non-followup send.
 
 ### Auto-Guide mode (multi-step UI walkthroughs)
 
