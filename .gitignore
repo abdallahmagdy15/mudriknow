@@ -13,6 +13,7 @@ scripts/out/
 .local/
 .impeccable/
 .planning/
+user-progress.md
 docs/superpowers/
 docs/ROADMAP.md
 /.opencode/instructions.md
