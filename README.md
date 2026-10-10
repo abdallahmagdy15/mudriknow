@@ -59,6 +59,9 @@ From there it's not just chat — it's an AI agent. Flip on **Auto-Guide** and i
 
 > Installer is **unsigned** — SmartScreen will warn on first launch. *More info → Run anyway*.
 
+> [!NOTE]
+> **Code signing:** Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). The setup is in progress. Until it is complete, the installer is unsigned.
+
 **From source:** `git clone https://github.com/abdallahmagdy15/mudriknow && cd mudriknow && npm install && npm start`
 
 > **Windows build prerequisite:** `npm install` requires Visual Studio with the **"Desktop development with C++"** workload (for `robotjs` and `koffi` native compilation). Node.js ≥ 20 LTS recommended. See [`AGENTS.md`](AGENTS.md) for full details.
@@ -124,6 +127,7 @@ MudrikNow runs the AI in a sandbox with deliberately narrow capabilities:
 | Screen pixels                                     | ✅ Auto on every Alt+Space |
 
 Full threat model + reporting in **[SECURITY.md](SECURITY.md)**.
+What data leaves your computer, and where it goes: **[PRIVACY.md](PRIVACY.md)**.
 
 ## 👋 About
 
